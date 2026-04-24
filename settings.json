@@ -1,0 +1,11 @@
+{
+    "intelephense.environment.includePaths": [
+        "./vendor/filament"
+    ],
+    "intelephense.diagnostics.undefinedTypes": false,
+    "css.validate": false,
+    "scss.validate": false,
+    "files.associations": {
+        "*.blade.php": "html"
+    }
+}
