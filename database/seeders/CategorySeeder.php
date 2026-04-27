@@ -15,7 +15,14 @@ class CategorySeeder extends Seeder
 
         $categories = [
             ['name_ar' => 'عقارات',               'name_en' => 'Real Estate',        'color' => '#10b981', 'sort' => 1],
-            ['name_ar' => 'سيارات',               'name_en' => 'Cars',               'color' => '#3b82f6', 'sort' => 2],
+            ['name_ar' => 'سيارات',
+    'slug' => 'cars',
+    'custom_fields_schema' => [
+        ['name' => 'engine_cc', 'label_ar' => 'سعة المحرك (CC)', 'type' => 'number'],
+        ['name' => 'year', 'label_ar' => 'سنة الصنع', 'type' => 'number'],
+        ['name' => 'model', 'label_ar' => 'الموديل', 'type' => 'text'],
+    ],
+    'is_active' => true, 2],
             ['name_ar' => 'إلكترونيات وأجهزة',   'name_en' => 'Electronics',        'color' => '#8b5cf6', 'sort' => 3],
             ['name_ar' => 'أثاث ومنزل',           'name_en' => 'Furniture & Home',   'color' => '#f59e0b', 'sort' => 4],
             ['name_ar' => 'ملابس وموضة',          'name_en' => 'Fashion',            'color' => '#ec4899', 'sort' => 5],

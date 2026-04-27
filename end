@@ -1,0 +1,322 @@
+[1mdiff --git a/app/Filament/Admin/Resources/Listings/ListingResource.php b/app/Filament/Admin/Resources/Listings/ListingResource.php[m
+[1mindex e928952..18a64ee 100644[m
+[1m--- a/app/Filament/Admin/Resources/Listings/ListingResource.php[m
+[1m+++ b/app/Filament/Admin/Resources/Listings/ListingResource.php[m
+[36m@@ -8,17 +8,17 @@[m
+ use Filament\Resources\Resource;[m
+ use Filament\Schemas\Schema;[m
+ use Filament\Tables\Table;[m
+[31m-use Filament\Schemas\Components\Section  as FormSection;[m
+[31m-use Filament\Schemas\Components\Actions  as FormActions;[m
+[31m-use Filament\Actions\Action              as FormAction;[m
+[31m-use Filament\Forms\Components\TextInput  as FormTextInput;[m
+[31m-use Filament\Forms\Components\Select     as FormSelect;[m
+[32m+[m[32muse Filament\Schemas\Components\Section as FormSection;[m
+[32m+[m[32muse Filament\Schemas\Components\Actions as FormActions;[m
+[32m+[m[32muse Filament\Actions\Action as FormAction;[m
+[32m+[m[32muse Filament\Forms\Components\TextInput as FormTextInput;[m
+[32m+[m[32muse Filament\Forms\Components\Select as FormSelect;[m
+ use Filament\Forms\Components\RichEditor as FormRichEditor;[m
+ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;[m
+[31m-use Filament\Forms\Components\Repeater   as FormRepeater;[m
+[31m-use Filament\Forms\Components\FileUpload as FormFileUpload;[m
+[32m+[m[32muse Filament\Forms\Components\Toggle;[m
+ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;[m
+ use Filament\Tables\Columns\TextColumn;[m
+[32m+[m[32muse Filament\Infolists\Components\TextEntry;[m
+ use Illuminate\Support\Facades\Auth;[m
+ use Illuminate\Support\Str;[m
+ use BackedEnum;[m
+[36m@@ -38,163 +38,119 @@[m [mpublic static function form(Schema $schema): Schema[m
+     {[m
+         return $schema->components([[m
+ [m
+[31m-            // ── AI Assistant — بدون modal، يشتغل مباشرة ──────────────────────[m
+[32m+[m[32m            // ── AI Assistant ──────────────────────────────────────────────────[m
+             FormSection::make('AI Assistant ✨')[m
+[31m-              ->description('ارفع الصور أولاً ثم اضغط الزرار')[m
+[31m-              ->icon('heroicon-m-sparkles')[m
+[31m-              ->schema([[m
+[31m-             FormActions::make([[m
+[31m-             FormAction::make('generateWithAI')[m
+[31m-                ->label('ولّد الإعلان بالـ AI ✨')[m
+[32m+[m[32m                ->description('ارفع الصور أولاً ثم اضغط الزرار')[m
+                 ->icon('heroicon-m-sparkles')[m
+[31m-                ->color('success')[m
+[31m-                ->action(function () {[m
+[31m-                    // الـ action هيتنفذ في الـ Page مباشرة[m
+[31m-                        }),[m
+[31m-                 ])->alignCenter(),[m
+[31m-             ])->columnSpanFull()->collapsible(),[m
+[32m+[m[32m                ->schema([[m
+[32m+[m[32m                    FormActions::make([[m
+[32m+[m[32m                        FormAction::make('generateWithAI')[m
+[32m+[m[32m                            ->label('ولّد الإعلان بالـ AI ✨')[m
+[32m+[m[32m                            ->icon('heroicon-m-sparkles')[m
+[32m+[m[32m                            ->color('success')[m
+[32m+[m[32m                            ->action(fn() => null), // التنفيذ في الـ Page[m
+[32m+[m[32m                    ])->alignCenter(),[m
+[32m+[m[32m                ])->columnSpanFull()->collapsible(),[m
+[32m+[m
+             // ── بيانات الإعلان الأساسية ───────────────────────────────────────[m
+             FormSection::make('بيانات الإعلان الأساسية')[m
+                 ->columns(2)[m
+                 ->schema([[m
+                     FormTextInput::make('title')[m
+                         ->label('عنوان الإعلان')[m
+[31m-                        ->id('ad-title')[m
+                         ->required()[m
+                         ->live(onBlur: true)[m
+[31m-                        ->afterStateUpdated(fn ($state, $set) => $set('slug', Str::slug($state, '-', 'ar'))),[m
+[32m+[m[32m                        ->afterStateUpdated(fn($state, $set) => $set('slug', Str::slug($state, '-', 'ar'))),[m
+ [m
+                     FormTextInput::make('slug')[m
+                         ->label('رابط الإعلان (Slug)')[m
+[31m-                        ->id('ad-slug')[m
+                         ->required()[m
+                         ->unique(Listing::class, 'slug', ignoreRecord: true),[m
+ [m
+                     FormSelect::make('category_id')[m
+                         ->label('القسم')[m
+[31m-                        ->id('ad-category')[m
+[31m-                        ->options(fn () => Category::where('is_active', true)[m
+[31m-                        ->required()[m
+[31m-                        ->live() // يجعل الفورم يتفاعل لحظياً عند تغيير القسم[m
+[31m-                        ->orderBy('sort_order')[m
+[31m-                        ->pluck('name_ar', 'id')[m
+[31m-                        ->toArray()[m
+[31m-                        ->afterStateUpdated(fn ($set) => $set('custom_fields_values', [])), // تصغير القيم عند تغيير القسم[m
+[31m-                        )[m
+[32m+[m[32m                        ->options(Category::where('is_active', true)->orderBy('sort_order')->pluck('name_ar', 'id'))[m
+                         ->searchable()[m
+                         ->preload()[m
+[31m-                        ->required(),[m
+[32m+[m[32m                        ->required()[m
+[32m+[m[32m                        ->live()[m
+[32m+[m[32m                        ->afterStateUpdated(fn($set) => $set('custom_fields_values', [])),[m
+ [m
+                     FormTextInput::make('price')[m
+                         ->label('السعر')[m
+[31m-                        ->id('ad-price')[m
+                         ->numeric()[m
+                         ->prefix('ج.م'),[m
+                 ]),[m
+ [m
+[32m+[m[32m            // ── المواصفات الديناميكية (عقل المنصة) ────────────────────────────[m
+[32m+[m[32m            FormSection::make('المواصفات الإضافية')[m
+[32m+[m[32m                ->visible(fn($get) => !blank($get('category_id')))[m
+[32m+[m[32m                ->schema(function ($get) {[m
+[32m+[m[32m                    $category = Category::find($get('category_id'));[m
+[32m+[m[32m                    if (!$category || !$category->custom_fields_schema) {[m
+[32m+[m[32m                        return [TextEntry::make('no_fields')->label('لا توجد مواصفات إضافية لهذا القسم.')];[m
+[32m+[m[32m                    }[m
+[32m+[m
+[32m+[m[32m                    return collect($category->custom_fields_schema)->map(function ($field) {[m
+[32m+[m[32m                        return match ($field['type']) {[m
+[32m+[m[32m                            'text'     => FormTextInput::make("custom_fields_values.{$field['name']}")->label($field['label_ar']),[m
+[32m+[m[32m                            'number'   => FormTextInput::make("custom_fields_values.{$field['name']}")->label($field['label_ar'])->numeric(),[m
+[32m+[m[32m                            'textarea' => FormRichEditor::make("custom_fields_values.{$field['name']}")->label($field['label_ar']),[m
+[32m+[m[32m                            'boolean'  => Toggle::make("custom_fields_values.{$field['name']}")->label($field['label_ar']),[m
+[32m+[m[32m                            default    => FormTextInput::make("custom_fields_values.{$field['name']}")->label($field['label_ar']),[m
+[32m+[m[32m                        };[m
+[32m+[m[32m                    })->toArray();[m
+[32m+[m[32m                }),[m
+[32m+[m
+             // ── وصف الإعلان ───────────────────────────────────────────────────[m
+             FormSection::make('وصف الإعلان')[m
+                 ->schema([[m
+                     FormRichEditor::make('description')[m
+                         ->label('تفاصيل الإعلان')[m
+[31m-                        ->id('ad-description')[m
+                         ->required()[m
+                         ->columnSpanFull(),[m
+                 ]),[m
+ [m
+[32m+[m[32m            // ── معرض الصور الاحترافي (Spatie) ──────────────────────────────────[m
+[32m+[m[32m            FormSection::make('صور الإعلان')[m
+[32m+[m[32m                ->description('اسحب الصور لترتيبها. الصورة الأولى هي الغلاف.')[m
+[32m+[m[32m                ->schema([[m
+[32m+[m[32m                    SpatieMediaLibraryFileUpload::make('images')[m
+[32m+[m[32m                        ->label('')[m
+[32m+[m[32m                        ->collection('listings')[m
+[32m+[m[32m                        ->multiple()[m
+[32m+[m[32m                        ->reorderable() // تفعيل السحب والإفلات للترتيب[m
+[32m+[m[32m                        ->image()[m
+[32m+[m[32m                        ->imageEditor() // تفعيل محرر الصور (قص وتدوير)[m
+[32m+[m[32m                        ->imageOptimizer() // ضغط الصورة تلقائياً[m
+[32m+[m[32m                        ->responsiveImages() // توليد أحجام مختلفة للموبايل والويب[m
+[32m+[m[32m                        ->maxSize(2048) // بحد أقصى 2 ميجا للصورة[m
+[32m+[m[32m                        ->columnSpanFull(),[m
+[32m+[m[32m                ]),[m
+[32m+[m
+             // ── الموقع والمعلن ────────────────────────────────────────────────[m
+             FormSection::make('الموقع والمعلن')[m
+                 ->columns(3)[m
+                 ->schema([[m
+                     FormSelect::make('province_id')[m
+                         ->label('المحافظة')[m
+[31m-                        ->options(fn () => Location::where('level', Location::LEVEL_GOVERNORATE)[m
+[31m-                            ->orderBy('sort_order')[m
+[31m-                            ->pluck('name_ar', 'id')[m
+[31m-                            ->toArray()[m
+[31m-                        )[m
+[31m-                        ->searchable()[m
+[32m+[m[32m                        ->options(Location::where('level', Location::LEVEL_GOVERNORATE)->pluck('name_ar', 'id'))[m
+                         ->live()[m
+[31m-                        ->afterStateUpdated(fn ($set) => $set('location_id', null))[m
+[32m+[m[32m                        ->afterStateUpdated(fn($set) => $set('location_id', null))[m
+                         ->required(),[m
+ [m
+                     FormSelect::make('location_id')[m
+                         ->label('المدينة')[m
+[31m-                        ->options(function ($get) {[m
+[31m-                            $provinceId = $get('province_id');[m
+[31m-                            if (blank($provinceId)) return [];[m
+[31m-                            return Location::where('parent_id', $provinceId)[m
+[31m-                                ->where('level', Location::LEVEL_CITY)[m
+[31m-                                ->orderBy('sort_order')[m
+[31m-                                ->pluck('name_ar', 'id')[m
+[31m-                                ->toArray();[m
+[31m-                        })[m
+[31m-                        ->searchable()[m
+[31m-                        ->live()[m
+[31m-                        ->disabled(fn ($get) => blank($get('province_id')))[m
+[31m-                        ->helperText('اختر المحافظة أولاً')[m
+[32m+[m[32m                        ->options(fn($get) => Location::where('parent_id', $get('province_id'))->pluck('name_ar', 'id'))[m
+[32m+[m[32m                        ->disabled(fn($get) => blank($get('province_id')))[m
+                         ->required(),[m
+ [m
+                     FormSelect::make('user_id')[m
+                         ->label('المعلن')[m
+                         ->relationship('user', 'name')[m
+[31m-                        ->default(fn () => Auth::id())[m
+[32m+[m[32m                        ->default(fn() => Auth::id())[m
+                         ->required(),[m
+                 ]),[m
+[31m-                // ✨ السحر هنا: الحقول الديناميكية بناءً على القسم المختبر ✨[m
+[31m-        FormSection::make('المواصفات الإضافية')[m
+[31m-            ->description('حقول مخصصة تظهر بناءً على القسم المختار')[m
+[31m-            ->visible(fn ($get) => !blank($get('category_id'))) // تظهر فقط لو اخترنا قسم[m
+[31m-            ->schema(function ($get) {[m
+[31m-                $categoryId = $get('category_id');[m
+[31m-                $category = Category::find($categoryId);[m
+[31m-[m
+[31m-                if (!$category || !$category->custom_fields_schema) {[m
+[31m-                    return [[m
+[31m-                        \Filament\Infolists\Components\TextEntry::make('no_fields')[m
+[31m-                            ->label('لا توجد مواصفات إضافية لهذا القسم.')[m
+[31m-                    ];[m
+[31m-                }[m
+[31m-[m
+[31m-                $fields = [];[m
+[31m-                foreach ($category->custom_fields_schema as $field) {[m
+[31m-                    // تحويل الـ Schema لمكونات Filament حقيقية[m
+[31m-                    $fields[] = match ($field['type']) {[m
+[31m-                        'text'     => FormTextInput::make("custom_fields_values.{$field['name']}")->label($field['label_ar']),[m
+[31m-                        'number'   => FormTextInput::make("custom_fields_values.{$field['name']}")->label($field['label_ar'])->numeric(),[m
+[31m-                        'textarea' => FormRichEditor::make("custom_fields_values.{$field['name']}")->label($field['label_ar']),[m
+[31m-                        'boolean'  => \Filament\Forms\Components\Toggle::make("custom_fields_values.{$field['name']}")->label($field['label_ar']),[m
+[31m-                        default    => FormTextInput::make("custom_fields_values.{$field['name']}")->label($field['label_ar']),[m
+[31m-                    };[m
+[31m-                }[m
+[31m-                return $fields;[m
+[31m-            }),[m
+[31m-[m
+[31m-            // ── معرض الصور ───────────────────────────────────────────────────[m
+[31m-            FormSection::make('معرض الصور')[m
+[31m-                ->schema([[m
+[31m-                    SpatieMediaLibraryFileUpload::make('images')[m
+[31m-                        ->label('الصور الرئيسية')[m
+[31m-                        ->collection('listings')[m
+[31m-                        ->multiple()[m
+[31m-                        ->reorderable()[m
+[31m-                        ->image()[m
+[31m-                        ->columnSpanFull(),[m
+[31m-[m
+[31m-                    FormRepeater::make('extra_images')[m
+[31m-                        ->label('صور إضافية')[m
+[31m-                        ->schema([[m
+[31m-                            FormFileUpload::make('image')[m
+[31m-                                ->label('تحميل صورة')[m
+[31m-                                ->disk('public')[m
+[31m-                                ->directory('extra-listings')[m
+[31m-                                ->image(),[m
+[31m-                        ])[m
+[31m-                        ->addActionLabel('أضف صورة أخرى')[m
+[31m-                        ->collapsible()[m
+[31m-                        ->defaultItems(0)[m
+[31m-                        ->columnSpanFull(),[m
+[31m-                ]),[m
+         ]);[m
+     }[m
+ [m
+[36m@@ -202,51 +158,33 @@[m [mpublic static function table(Table $table): Table[m
+     {[m
+         return $table[m
+             ->columns([[m
+[31m-                SpatieMediaLibraryImageColumn::make('listing_image')[m
+[32m+[m[32m                // عرض نسخة الـ thumb الصغيرة جداً لزيادة السرعة[m
+[32m+[m[32m                SpatieMediaLibraryImageColumn::make('images')[m
+                     ->label('الصورة')[m
+[31m-                    ->collection('listings'),[m
+[32m+[m[32m                    ->collection('listings')[m
+[32m+[m[32m                    ->conversion('thumb')[m[41m [m
+[32m+[m[32m                    ->circular(),[m
+[32m+[m
+                 TextColumn::make('title')[m
+                     ->label('العنوان')[m
+                     ->searchable()[m
+[31m-                    ->description(function (Listing $record): ?string {[m
+[31m-        // لو مفيش قيم ديناميكية، نرجع null[m
+[31m-        if (!$record->custom_fields_values) {[m
+[31m-            return null;[m
+[31m-        }[m
+[32m+[m[32m                    ->description(function (Listing $record) {[m
+[32m+[m[32m                        if (!$record->custom_fields_values) return null;[m
+[32m+[m[32m                        return collect($record->custom_fields_values)->take(3)->map(function($val, $key) use ($record) {[m
+[32m+[m[32m                            $label = collect($record->category->custom_fields_schema)->firstWhere('name', $key)['label_ar'] ?? $key;[m
+[32m+[m[32m                            return "{$label}: " . (is_bool($val) ? ($val ? 'نعم' : 'لا') : $val);[m
+[32m+[m[32m                        })->join(' | ');[m
+[32m+[m[32m                    })[m
+[32m+[m[32m                    ->wrap(),[m
+ [m
+[31m-        // هنجمع أول 3 قيم موجودة ونعرضهم كـ ملخص (Description) تحت العنوان[m
+[31m-        $summary = [];[m
+[31m-        foreach ($record->custom_fields_values as $key => $value) {[m
+[31m-            if (!empty($value)) {[m
+[31m-                // بنحاول نجيب اسم الحقل بالعربي من الـ Schema بتاع القسم[m
+[31m-                $fieldSchema = collect($record->category->custom_fields_schema ?? [])[m
+[31m-                    ->firstWhere('name', $key);[m
+[31m-                [m
+[31m-                $label = $fieldSchema['label_ar'] ?? $key;[m
+[31m-                [m
+[31m-                // لو القيمة true/false (بتاعة الـ Toggle) نحولها لنص[m
+[31m-                $displayValue = is_bool($value) ? ($value ? 'نعم' : 'لا') : $value;[m
+[31m-                [m
+[31m-                $summary[] = "{$label}: {$displayValue}";[m
+[31m-            }[m
+[31m-            [m
+[31m-            // نكتفي بظهور أول 3 مواصفات بس عشان الزحمة[m
+[31m-            if (count($summary) >= 3) break;[m
+[31m-        }[m
+[32m+[m[32m                TextColumn::make('category.name_ar')->label('القسم'),[m
+ [m
+[31m-        return implode(' | ', $summary);[m
+[31m-    })[m
+[31m-    ->wrap(),[m
+[31m-                TextColumn::make('category.name_ar')[m
+[31m-                    ->label('القسم'),[m
+                 TextColumn::make('price')[m
+                     ->label('السعر')[m
+                     ->sortable()[m
+[31m-                    ->formatStateUsing(fn ($state) => number_format($state) . ' ج.م'),[m
+[31m-                TextColumn::make('province.name_ar')[m
+[31m-                    ->label('المحافظة'),[m
+[31m-                TextColumn::make('location.name_ar')[m
+[31m-                    ->label('المدينة'),[m
+[32m+[m[32m                    ->formatStateUsing(fn($state) => number_format($state) . ' ج.م'),[m
+[32m+[m[41m                [m
+[32m+[m[32m                TextColumn::make('province.name_ar')->label('المحافظة'),[m
+             ]);[m
+     }[m
+ [m
