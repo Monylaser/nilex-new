@@ -17,8 +17,14 @@ class UserObserver
 
         // 2. 🛡️ الاختبار الرابع: منع الغش بتعدد الحسابات من نفس الـ IP
         // نتحقق: هل فيه يوزر "تاني" أخد هدية من نفس عنوان الـ IP ده؟
+        $ip = request()->ip();
+        $device_id = request()->header('X-Device-ID') ?? request()->input('device_id'); // هقولك نجيب ده ازاي
+
         $alreadyGifted = User::where('id', '!=', $user->id)
-            ->where('ip_address', request()->ip()) // تأكد إن حقل الـ IP موجود في قاعدة البيانات
+            ->where(function($query) use ($ip, $device_id) {
+                $query->where('ip_address', $ip)
+                      ->when($device_id, fn($q) => $q->orWhere('device_id', $device_id));
+            })
             ->where('points', '>', 0)
             ->exists();
 

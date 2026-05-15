@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -18,6 +19,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Livewire\SmartAdCreator;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use App\Filament\Admin\Widgets\StatsOverviewWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -28,9 +30,11 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->darkMode(true)
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Violet,
             ])
+            ->brandName('Nilex Admin')
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             ->pages([
@@ -38,8 +42,21 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->widgets([
+                StatsOverviewWidget::class,
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                \App\Filament\Admin\Widgets\ListingsChart::class,
+            ])
+            // ✅ الحل: NavigationGroup بدون icon
+            // لأن Filament v5 لا يسمح بـ icon على الـ Group والـ Items في نفس الوقت
+            ->navigationGroups([
+                NavigationGroup::make('الإشراف')
+                    ->collapsed(false),
+
+                NavigationGroup::make('المحتوى')
+                    ->collapsed(false),
+
+                NavigationGroup::make('الإدارة')
+                    ->collapsed(true),
             ])
             ->livewireComponents([
                 'smart-ad-creator' => SmartAdCreator::class,
@@ -53,7 +70,6 @@ class AdminPanelProvider extends PanelProvider
                 StartSession::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
-                // لارفيل 13 بيتعرف على الـ CSRF تلقائياً من الـ Global Middleware
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,

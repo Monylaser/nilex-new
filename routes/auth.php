@@ -19,7 +19,9 @@ Route::middleware('guest')->group(function () {
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
-
+              // مسارات السوشيال ميديا
+    Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialiteController::class, 'redirect'])->name('social.redirect');
+    Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialiteController::class, 'callback'])->name('social.callback');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
@@ -36,6 +38,16 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+     
+    // 👇 مسارات الـ OTP الجديدة
+    Route::get('verify-otp', [App\Http\Controllers\Auth\OtpController::class, 'show'])->name('otp.notice');
+    Route::post('verify-otp', [App\Http\Controllers\Auth\OtpController::class, 'verify'])->name('otp.verify');
+    Route::post('resend-otp', [App\Http\Controllers\Auth\OtpController::class, 'resend'])->name('otp.resend');
+    // 👆 نهاية مسارات الـ OTP
+
+    Route::get('verify-email', EmailVerificationPromptController::class)
+        ->name('verification.notice');
+    // ... باقي الكود زي ما هو
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

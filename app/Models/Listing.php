@@ -2,18 +2,71 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Image\Enums\Fit;
-
+use Spatie\Image\Enums\AlignPosition; // 🟢 استدعاء مهم لتحديد مكان العلامة المائية
+use Laravel\Scout\Searchable;
 class Listing extends Model implements HasMedia
 {
-    use InteractsWithMedia;
+    use InteractsWithMedia, Searchable; 
 
     protected $guarded = [];
+
+    // ── Status Constants ──────────────────────────────────────────────────────
+
+    const STATUS_PENDING   = 'pending';
+    const STATUS_PUBLISHED = 'published';
+    const STATUS_REJECTED  = 'rejected';
+    const STATUS_FLAGGED   = 'flagged';
+
+    // ── Rejection Reason Constants ────────────────────────────────────────────
+
+    const REASON_INAPPROPRIATE  = 'inappropriate_content';
+    const REASON_SCAM           = 'scam_fraud';
+    const REASON_INCOMPLETE     = 'incomplete_info';
+    const REASON_WRONG_CATEGORY = 'wrong_category';
+    const REASON_PROHIBITED     = 'prohibited_items';
+    const REASON_DUPLICATE      = 'duplicate';
+
+    const STRIKE_REASONS = [
+        self::REASON_INAPPROPRIATE,
+        self::REASON_SCAM,
+        self::REASON_PROHIBITED,
+    ];
+
+    // ✅ تكلفة التمييز: 10 نقاط / يوم — غيّر من هنا
+    const FEATURE_COST_PER_DAY = 10;
+
+    // ── Options ───────────────────────────────────────────────────────────────
+
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_PENDING   => 'قيد المراجعة',
+            self::STATUS_PUBLISHED => 'منشور',
+            self::STATUS_REJECTED  => 'مرفوض',
+            self::STATUS_FLAGGED   => 'مُبلَّغ عنه',
+        ];
+    }
+
+    public static function rejectionReasonOptions(): array
+    {
+        return [
+            self::REASON_INAPPROPRIATE  => '🚫 محتوى غير لائق — مخالفة أخلاقية أو دينية',
+            self::REASON_SCAM           => '⚠️ احتيال أو نصب — سعر مريب أو بيانات مزورة',
+            self::REASON_INCOMPLETE     => '📝 معلومات ناقصة — وصف غير كافٍ أو صور غير واضحة',
+            self::REASON_WRONG_CATEGORY => '📂 قسم خاطئ — الإعلان في القسم غير المناسب',
+            self::REASON_PROHIBITED     => '⛔ منتج محظور — مخالف للقانون المصري',
+            self::REASON_DUPLICATE      => '🔁 إعلان مكرر — موجود بالفعل على المنصة',
+        ];
+    }
+
+    // ── Casts ─────────────────────────────────────────────────────────────────
 
     protected function casts(): array
     {
@@ -21,20 +74,32 @@ class Listing extends Model implements HasMedia
             'extra_images'         => 'array',
             'price'                => 'decimal:2',
             'custom_fields_values' => 'array',
+            'moderated_at'         => 'datetime',
+            'featured_until'       => 'datetime',
+            'is_featured'          => 'boolean',
             'created_at'           => 'datetime',
             'updated_at'           => 'datetime',
         ];
     }
 
+    // ── Media ─────────────────────────────────────────────────────────────────
+
     public function registerMediaConversions(?Media $media = null): void
     {
+        // 1. الصورة المصغرة (للسرعة - بدون علامة مائية)
         $this->addMediaConversion('thumb')
             ->fit(Fit::Contain, 300, 300)
             ->format('webp')
             ->nonQueued();
 
+        // 2. 🟢 الصورة الكاملة (مع إضافة العلامة المائية)
         $this->addMediaConversion('full_hd')
             ->fit(Fit::Max, 1920, 1080)
+            ->watermark(public_path('images/watermark.png')) // مسار اللوجو بتاعك
+            ->watermarkPosition(AlignPosition::BottomRight)  // مكان العلامة المائية
+            ->watermarkOpacity(40)                           // الشفافية 40% عشان متبوظش الصورة
+            ->watermarkPadding(20, 20)                       // المسافة من الحواف
+            ->watermarkWidth(150)                            // عرض اللوجو
             ->format('webp')
             ->quality(80)
             ->nonQueued();
@@ -52,6 +117,11 @@ class Listing extends Model implements HasMedia
         return $this->belongsTo(User::class);
     }
 
+    public function moderator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'moderated_by');
+    }
+
     public function province(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'province_id');
@@ -62,10 +132,168 @@ class Listing extends Model implements HasMedia
         return $this->belongsTo(Location::class, 'location_id');
     }
 
+    public function carBrand(): BelongsTo
+    {
+        return $this->belongsTo(CarBrand::class, 'car_brand_id');
+    }
+
+    public function carModel(): BelongsTo
+    {
+        return $this->belongsTo(CarModel::class, 'car_model_id');
+    }
+
     // ── Scopes ────────────────────────────────────────────────────────────────
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', self::STATUS_PUBLISHED);
     }
-}
+
+    public function scopePending(Builder $query)
+    {
+        return $query->where('status', self::STATUS_PENDING);
+    }
+
+    public function scopeFlagged(Builder $query)
+    {
+        return $query->where('status', self::STATUS_FLAGGED);
+    }
+
+    public function scopeFeatured(Builder $query)
+    {
+        return $query->where('is_featured', true)
+             ->where('featured_until', '>=', now());
+    }
+
+    // ── Moderation Helpers ────────────────────────────────────────────────────
+
+    public function approve(int $adminId): void
+    {
+        $this->update([
+            'status'       => self::STATUS_PUBLISHED,
+            'moderated_by' => $adminId,
+            'moderated_at' => now(),
+        ]);
+    }
+
+    public function reject(int $adminId, string $reason): void
+    {
+        $this->update([
+            'status'           => self::STATUS_REJECTED,
+            'rejection_reason' => $reason,
+            'moderated_by'     => $adminId,
+            'moderated_at'     => now(),
+        ]);
+    }
+
+    public function flag(int $adminId, string $reason): void
+    {
+        $this->update([
+            'status'       => self::STATUS_FLAGGED,
+            'flag_reason'  => $reason,
+            'moderated_by' => $adminId,
+            'moderated_at' => now(),
+        ]);
+    }
+
+    public function rejectionCausesStrike(string $reason): bool
+    {
+        return in_array($reason, self::STRIKE_REASONS);
+    }
+
+    // ── Feature Helpers ───────────────────────────────────────────────────────
+
+    /**
+     * حساب تكلفة التمييز
+     */
+    public static function featureCost(int $days): int
+    {
+        return $days * self::FEATURE_COST_PER_DAY;
+    }
+
+    /**
+     * تمييز الإعلان بخصم نقاط من المعلن
+     *
+     * @throws \Exception لو النقاط مش كافية
+     */
+    public function featureWithPoints(int $days): void
+    {
+        $cost = self::featureCost($days);
+        $user = $this->user;
+
+        // ✅ تأكد من كفاية النقاط
+        if (! $user->hasPoints($cost)) {
+            throw new \Exception(
+                "نقاط غير كافية — المطلوب: {$cost} نقطة، المتاح: {$user->points} نقطة"
+            );
+        }
+
+        // ✅ خصم النقاط
+        $user->decrement('points', $cost);
+
+        // ✅ تسجيل معاملة النقاط (لو جدول point_transactions موجود)
+        if (class_exists(\App\Models\PointTransaction::class)) {
+            \App\Models\PointTransaction::create([
+                'user_id'     => $user->id,
+                'amount'      => -$cost,
+                'type'        => 'feature_listing',
+                'description' => "تمييز إعلان #{$this->id} لمدة {$days} أيام",
+                'meta'        => json_encode(['listing_id' => $this->id, 'days' => $days]),
+            ]);
+        }
+
+        // ✅ لو الإعلان مميز بالفعل — امتد من نهاية المدة الحالية
+        $from = ($this->is_featured && $this->featured_until?->isFuture())
+            ? $this->featured_until
+            : now();
+
+        $this->update([
+            'is_featured'    => true,
+            'featured_until' => $from->addDays($days),
+        ]);
+    }
+
+    /**
+     * إلغاء التمييز
+     */
+    public function unfeature(): void
+    {
+        $this->update([
+            'is_featured'    => false,
+            'featured_until' => null,
+        ]);
+    }
+
+    /**
+     * هل الإعلان مميز حالياً؟
+     */
+    public function isCurrentlyFeatured(): bool
+    {
+        return $this->is_featured
+            && $this->featured_until !== null
+            && $this->featured_until->isFuture();
+    }
+public function toSearchableArray(): array
+    {
+        return [
+            'id'           => $this->id,
+            'title'        => $this->title,
+            'price'        => (float) $this->price,
+            'status'       => $this->status,
+            'category_id'  => $this->category_id,
+            'car_brand_id' => $this->car_brand_id,
+            'created_at'   => $this->created_at->timestamp,
+            
+            // إضافة أسماء الأقسام والمحافظات عشان لو اليوزر بحث بكلمة "سيارات القاهرة" يلقطها
+            'category_name' => $this->category ? $this->category->name_ar : null,
+            'province_name' => $this->province ? $this->province->name_ar : null,
+            'location_name' => $this->location ? $this->location->name_ar : null,
+
+            // 🟢 الأهم: تجهيز الإحداثيات الجغرافية (_geo) لـ Meilisearch
+            '_geo' => ($this->location && $this->location->latitude && $this->location->longitude) ? [
+                'lat' => (float) $this->location->latitude,
+                'lng' => (float) $this->location->longitude,
+            ] : null,
+        ];
+    }
+    }

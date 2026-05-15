@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -13,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 class LoginRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * تحديد إذا كان المستخدم مخولاً لإجراء هذا الطلب.
      */
     public function authorize(): bool
     {
@@ -21,9 +20,7 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * قواعد التحقق من البيانات.
      */
     public function rules(): array
     {
@@ -34,9 +31,7 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
-     *
-     * @throws ValidationException
+     * محاولة مصادقة بيانات الاعتماد وتحديث بيانات الجهاز.
      */
     public function authenticate(): void
     {
@@ -50,13 +45,21 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // 🟢 التعديل الأمني (بصمة الجهاز والـ IP)
+        // يتم تحديث البيانات فور نجاح الدخول لربط الحساب بالجهاز الفعلي
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        $user->update([
+            'ip_address' => $this->ip(),
+            'device_id'  => $this->header('User-Agent'), // تسجيل بصمة المتصفح/الجهاز
+        ]);
+
         RateLimiter::clear($this->throttleKey());
     }
 
     /**
-     * Ensure the login request is not rate limited.
-     *
-     * @throws ValidationException
+     * التأكد من أن طلب تسجيل الدخول ليس مقيداً (Rate Limited).
      */
     public function ensureIsNotRateLimited(): void
     {
@@ -77,7 +80,7 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get the rate limiting throttle key for the request.
+     * مفتاح تقييد المحاولات (Throttle Key).
      */
     public function throttleKey(): string
     {

@@ -37,4 +37,16 @@ return [
     'gemini' => [
          'key' => env('GEMINI_API_KEY'),
     ],
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
+    ],
+
+    // لو حابب تضيف تيك توك مستقبلاً
+    'tiktok' => [
+        'client_id' => env('TIKTOK_CLIENT_ID'),
+        'client_secret' => env('TIKTOK_CLIENT_SECRET'),
+        'redirect' => env('TIKTOK_REDIRECT_URI', '/auth/tiktok/callback'),
+    ],
 ];

@@ -1,7 +1,7 @@
 <?php
 // app/Filament/Admin/Resources/Users/Tables/UsersTable.php
 
-namespace App\Filament\Admin\Resources\Users\Tables;
+namespace App\Filament\Admin\Resources\UserResource\Tables;
 
 use App\Services\PointService;
 use Filament\Tables\Table;

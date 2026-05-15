@@ -9,22 +9,32 @@ use App\Filament\Admin\Resources\Listings\Pages\CreateListing;
 use App\Filament\Admin\Resources\Listings\Pages\EditListing;
 use App\Filament\Admin\Resources\Listings\Pages\ListListings;
 use App\Filament\Admin\Resources\Listings\Pages\ViewListing;
+use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
-use BackedEnum;
 
 class ListingResource extends Resource
 {
     protected static ?string $model = Listing::class;
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationLabel = 'الإعلانات';
 
+    // ✅ Filament v5: navigationIcon = string|BackedEnum|null
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    // ✅ Filament v5: navigationGroup = string|UnitEnum|null
+    protected static string|UnitEnum|null $navigationGroup = 'المحتوى';
+
+    protected static ?string $navigationLabel = 'الإعلانات';
+    protected static ?int    $navigationSort  = 3;
+
+    // ✅ Filament v5: form يستقبل Schema — مش Form
     public static function form(Schema $schema): Schema
     {
         return ListingForm::configure($schema);
     }
 
+    // ✅ table يستقبل Table — طبيعي
     public static function table(Table $table): Table
     {
         return ListingTable::configure($table);

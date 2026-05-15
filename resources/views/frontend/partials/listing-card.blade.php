@@ -2,10 +2,11 @@
 
     {{-- منطقة الصورة --}}
     <div class="relative h-48 bg-gray-100 overflow-hidden">
-        @if($listing->images && is_array($listing->images) && count($listing->images) > 0)
-            <img src="{{ asset('storage/' . $listing->images[0]) }}"
+        {{-- التعديل هنا: استخدام Spatie Media Library لجلب النسخة المختومة --}}
+        @if($listing->hasMedia('images'))
+            <img src="{{ $listing->getFirstMediaUrl('images', 'full_hd') }}"
                  alt="{{ $listing->title }}"
-                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                 class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500">
         @else
             <div class="flex flex-col items-center justify-center h-full text-gray-400">
                 <span class="text-3xl">🖼️</span>
@@ -14,7 +15,7 @@
         @endif
 
         {{-- شارة "مميز" --}}
-        @if($isFeatured)
+        @if($isFeatured ?? false)
             <div class="absolute top-3 right-3 bg-yellow-400 text-gray-900 text-[10px] font-black px-2 py-1 rounded-md shadow-sm">
                 مُميز
             </div>
@@ -30,7 +31,7 @@
     <div class="p-5">
         <div class="flex items-center gap-2 mb-2">
             <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">
-                {{ $listing->category->name ?? 'عام' }}
+                {{ $listing->category->name_ar ?? 'عام' }}
             </span>
         </div>
 

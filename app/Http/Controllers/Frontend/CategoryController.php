@@ -14,7 +14,7 @@ class CategoryController extends Controller
         $category->increment('views_count');
 
         // جلب الإعلانات التابعة للقسم (مع الأقسام الفرعية لو حبيت)
-        $listings = $category->listings()->where('is_active', true)->latest()->paginate(12);
+        $listings = $category->listings()->where('status', 'published')->latest()->paginate(12);
 
         return view('frontend.category', compact('category', 'listings'));
     }

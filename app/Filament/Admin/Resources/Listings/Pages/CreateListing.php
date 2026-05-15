@@ -15,6 +15,31 @@ class CreateListing extends CreateRecord
 {
     protected static string $resource = ListingResource::class;
 
+    // ────────────────────────────────────────────────────────────────────────
+    // الحل الجذري لمشكلة validation على custom_fields_values
+    // بيتشغل تلقائياً قبل أي INSERT في قاعدة البيانات
+    // ────────────────────────────────────────────────────────────────────────
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        // تأكد إن custom_fields_values موجودة كـ array مش null
+        if (! is_array($data['custom_fields_values'] ?? null)) {
+            $data['custom_fields_values'] = [];
+        }
+
+        // تأكد إن year محفوظة كـ string مش null
+        if (isset($data['custom_fields_values']['year'])) {
+            $data['custom_fields_values']['year'] = (string) $data['custom_fields_values']['year'];
+        }
+
+        // نظّف القيم الفارغة من الـ JSON column
+        $data['custom_fields_values'] = array_filter(
+            $data['custom_fields_values'],
+            fn ($value) => $value !== null && $value !== ''
+        );
+
+        return $data;
+    }
+
     // ── زرار الـ AI في الـ header ─────────────────────────────────────────────
     protected function getHeaderActions(): array
     {
@@ -31,6 +56,7 @@ class CreateListing extends CreateRecord
     public function generateWithAI(): void
     {
         try {
+            // فحص أمان (Defensive Programming)
             $apiKey = env('GEMINI_API_KEY');
             if (empty($apiKey)) {
                 throw new \Exception('مفتاح Gemini API غير موجود في ملف .env');
@@ -45,14 +71,14 @@ class CreateListing extends CreateRecord
             // ── بناء البرومبت ─────────────────────────────────────────────
             $contextText = "أنت خبير تسويق في السوق المصري لمنصة Nilex.\n\n";
 
-            if (!empty($title)) {
+            if (! empty($title)) {
                 $contextText .= "عنوان الإعلان الحالي: {$title}\n";
             }
-            if (!empty($description)) {
+            if (! empty($description)) {
                 $cleanDesc    = strip_tags(is_array($description) ? json_encode($description) : (string) $description);
                 $contextText .= "الوصف الحالي: {$cleanDesc}\n";
             }
-            if (!empty($price)) {
+            if (! empty($price)) {
                 $contextText .= "السعر الحالي: {$price} ج.م\n";
             }
 
@@ -62,15 +88,30 @@ class CreateListing extends CreateRecord
 
             $parts = [['text' => $contextText]];
 
-            // ── إضافة الصور من الـ storage ───────────────────────────────
-            $imagesDir  = storage_path('app/public/listings/');
-            $imageFiles = glob($imagesDir . '*.{jpg,jpeg,png,webp,gif,JPG,JPEG,PNG,WEBP}', GLOB_BRACE);
+            // ── إضافة الصور المرفوعة مؤقتاً في الفورم ────────────────────────
+            // هنسحب الصور من الـ State الخاص بـ Filament/Livewire
+            $uploadedImages = $formState['images'] ?? [];
 
-            if (!empty($imageFiles)) {
-                usort($imageFiles, fn ($a, $b) => filemtime($b) - filemtime($a));
+            if (!empty($uploadedImages)) {
+                // تقييد بـ 5 صور كحد أقصى عشان سرعة الـ API
+                $imagesToProcess = array_slice(is_array($uploadedImages) ? $uploadedImages : [$uploadedImages], 0, 5);
 
-                foreach (array_slice($imageFiles, 0, 5) as $imagePath) {
-                    if (file_exists($imagePath)) {
+                foreach ($imagesToProcess as $image) {
+                    $imagePath = null;
+
+                    // Filament 5/Livewire 3 بيتعامل مع الملفات كـ TemporaryUploadedFile Object
+                    if (is_object($image) && method_exists($image, 'getRealPath')) {
+                        $imagePath = $image->getRealPath();
+                    } 
+                    // كاحتياطي لو رجع كـ string (اسم الملف المؤقت)
+                    elseif (is_string($image)) {
+                        $tempPath = storage_path('app/livewire-tmp/' . $image);
+                        if (file_exists($tempPath)) {
+                            $imagePath = $tempPath;
+                        }
+                    }
+
+                    if ($imagePath && file_exists($imagePath)) {
                         $parts[] = [
                             'inline_data' => [
                                 'mime_type' => mime_content_type($imagePath),
@@ -81,21 +122,19 @@ class CreateListing extends CreateRecord
                 }
             }
 
-            // ── FIX 1: الموديل الصح ───────────────────────────────────────
             $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}";
 
             $response = Http::timeout(120)
                 ->retry(2, 2000)
                 ->post($url, [
                     'contents' => [['parts' => $parts]],
-                    // ── FIX 2: شيلنا response_mime_type ─────────────────
                     'generationConfig' => [
                         'temperature'     => 0.7,
                         'maxOutputTokens' => 2048,
                     ],
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new \Exception('خطأ من Gemini: ' . ($response->json('error.message') ?? $response->status()));
             }
 
@@ -109,13 +148,11 @@ class CreateListing extends CreateRecord
             $data = json_decode($responseText, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                // محاولة استخراج JSON من وسط النص
                 if (preg_match('/\{[\s\S]*\}/u', $responseText, $matches)) {
                     $data = json_decode($matches[0], true);
                 }
             }
 
-            // لو فشل JSON خالص — نستخدم النص كوصف
             if (empty($data) || json_last_error() !== JSON_ERROR_NONE) {
                 $data = [
                     'title'       => $title ?: 'إعلان جديد',
@@ -125,15 +162,15 @@ class CreateListing extends CreateRecord
             }
 
             // ── ملء الفورم ───────────────────────────────────────────────
-            $newTitle = !empty($data['title'])
+            $newTitle = ! empty($data['title'])
                 ? mb_substr(strip_tags((string) $data['title']), 0, 100)
                 : $title;
 
-            $newDesc = !empty($data['description'])
+            $newDesc = ! empty($data['description'])
                 ? $data['description']
                 : $description;
 
-            $newPrice = !empty($data['price'])
+            $newPrice = ! empty($data['price'])
                 ? (float) preg_replace('/[^0-9.]/', '', (string) $data['price'])
                 : $price;
 
@@ -169,18 +206,18 @@ class CreateListing extends CreateRecord
         $formState = $this->form->getState();
         $formData  = [];
 
-        if (!empty($data['title'])) {
+        if (! empty($data['title'])) {
             $formData['title'] = $data['title'];
             $formData['slug']  = Str::slug($data['title'], '-', 'ar');
         }
-        if (!empty($data['description'])) {
+        if (! empty($data['description'])) {
             $formData['description'] = $data['description'];
         }
-        if (!empty($data['price'])) {
+        if (! empty($data['price'])) {
             $formData['price'] = (float) $data['price'];
         }
 
-        if (!empty($formData)) {
+        if (! empty($formData)) {
             $this->form->fill([...$formState, ...$formData]);
 
             Notification::make()

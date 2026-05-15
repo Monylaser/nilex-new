@@ -10,6 +10,18 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 font-['Inter']">
 
+                    {{-- 🌟 الإضافة الجديدة: كارت الرصيد الحالي --}}
+                    <div class="mb-8 flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-2xl p-6">
+                        <div>
+                            <h3 class="text-indigo-900 font-bold text-lg">Current Balance</h3>
+                            <p class="text-indigo-700/80 text-sm">إجمالي النقاط المتاحة في حسابك</p>
+                        </div>
+                        <div class="text-4xl font-black text-indigo-600 flex items-center gap-2">
+                            {{ number_format(Auth::user()->points) }}
+                            <span class="text-2xl">💎</span>
+                        </div>
+                    </div>
+
                     {{-- عنوان الصفحة الجانبي --}}
                     <div class="mb-6">
                         <h3 class="text-lg font-bold">Activity History</h3>
@@ -41,9 +53,9 @@
                                             <div class="flex items-center gap-3">
                                                 <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 {{ $transaction->amount > 0 ? 'text-emerald-600' : 'text-rose-600' }}">
                                                     @if($transaction->amount > 0)
-                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                                                     @else
-                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19.5 12h-15" /></svg>
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg>
                                                     @endif
                                                 </div>
                                                 <p class="font-medium text-slate-900">{{ $transaction->description }}</p>

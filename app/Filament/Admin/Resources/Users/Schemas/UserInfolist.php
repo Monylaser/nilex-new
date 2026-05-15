@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Admin\Resources\Users\Schemas;
+namespace App\Filament\Admin\Resources\UserResource\Schemas;
 
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;

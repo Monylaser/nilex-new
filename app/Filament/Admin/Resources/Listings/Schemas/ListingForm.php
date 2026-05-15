@@ -6,15 +6,14 @@ use App\Models\Listing;
 use App\Models\Location;
 use App\Models\Category;
 use App\Filament\Admin\Resources\Listings\Schemas\Fields\CarFields;
-use App\Filament\Admin\Resources\Listings\Schemas\Fields\PhoneFields;
 use App\Filament\Admin\Resources\Listings\Schemas\Fields\RealEstateFields;
 use App\Filament\Admin\Resources\Listings\Schemas\Fields\DynamicFields;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section  as FormSection;
-use Filament\Schemas\Components\Actions  as FormActions;
-use Filament\Actions\Action              as FormAction;
-use Filament\Forms\Components\TextInput  as FormTextInput;
-use Filament\Forms\Components\Select     as FormSelect;
+use Filament\Schemas\Components\Section as FormSection;
+use Filament\Schemas\Components\Actions as FormActions;
+use Filament\Actions\Action as FormAction;
+use Filament\Forms\Components\TextInput as FormTextInput;
+use Filament\Forms\Components\Select as FormSelect;
 use Filament\Forms\Components\RichEditor as FormRichEditor;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Illuminate\Support\Facades\Auth;
@@ -66,8 +65,7 @@ class ListingForm
                         ->searchable()
                         ->preload()
                         ->required()
-                        ->live()
-                        ->afterStateUpdated(fn ($set) => $set('custom_fields_values', [])),
+                        ->live(),
 
                     FormTextInput::make('price')
                         ->label('السعر')
@@ -75,11 +73,48 @@ class ListingForm
                         ->prefix('ج.م'),
                 ]),
 
+            // ── الموقع والمعلن (تم الرفع هنا لضمان مساحة القوائم المنسدلة) ───────────
+            FormSection::make('الموقع والمعلن')
+                ->columns(3)
+                ->schema([
+                    FormSelect::make('province_id')
+                        ->label('المحافظة')
+                        ->options(fn () => Location::where('level', Location::LEVEL_GOVERNORATE)
+                            ->orderBy('sort_order')
+                            ->pluck('name_ar', 'id')
+                            ->toArray()
+                        )
+                        ->searchable()
+                        ->preload()
+                        ->live()
+                        ->afterStateUpdated(fn ($set) => $set('location_id', null))
+                        ->required(),
+
+                    FormSelect::make('location_id')
+                        ->label('المدينة')
+                        ->options(fn ($get) => Location::where('parent_id', $get('province_id'))
+                            ->where('level', Location::LEVEL_CITY)
+                            ->orderBy('sort_order')
+                            ->pluck('name_ar', 'id')
+                            ->toArray()
+                        )
+                        ->searchable()
+                        ->preload()
+                        ->disabled(fn ($get) => blank($get('province_id')))
+                        ->helperText('اختر المحافظة أولاً')
+                        ->required(),
+
+                    FormSelect::make('user_id')
+                        ->label('المعلن')
+                        ->relationship('user', 'name')
+                        ->default(fn () => Auth::id())
+                        ->required(),
+                ]),
+
             // ── حقول ديناميكية حسب القسم ─────────────────────────────────────
-            CarFields::make(),        // سيارات  (ID: 12)
-            PhoneFields::make(),      // إلكترونيات (ID: 20)
-            RealEstateFields::make(), // عقارات  (ID: 1)
-            DynamicFields::make(),    // باقي الأقسام
+            CarFields::make(),
+            RealEstateFields::make(),
+            DynamicFields::make(),
 
             // ── وصف الإعلان ───────────────────────────────────────────────────
             FormSection::make('وصف الإعلان')
@@ -103,42 +138,6 @@ class ListingForm
                         ->imageEditor()
                         ->maxSize(2048)
                         ->columnSpanFull(),
-                ]),
-
-            // ── الموقع والمعلن ────────────────────────────────────────────────
-            FormSection::make('الموقع والمعلن')
-                ->columns(3)
-                ->schema([
-                    FormSelect::make('province_id')
-                        ->label('المحافظة')
-                        ->options(fn () => Location::where('level', Location::LEVEL_GOVERNORATE)
-                            ->orderBy('sort_order')
-                            ->pluck('name_ar', 'id')
-                            ->toArray()
-                        )
-                        ->searchable()
-                        ->live()
-                        ->afterStateUpdated(fn ($set) => $set('location_id', null))
-                        ->required(),
-
-                    FormSelect::make('location_id')
-                        ->label('المدينة')
-                        ->options(fn ($get) => Location::where('parent_id', $get('province_id'))
-                            ->where('level', Location::LEVEL_CITY)
-                            ->orderBy('sort_order')
-                            ->pluck('name_ar', 'id')
-                            ->toArray()
-                        )
-                        ->searchable()
-                        ->disabled(fn ($get) => blank($get('province_id')))
-                        ->helperText('اختر المحافظة أولاً')
-                        ->required(),
-
-                    FormSelect::make('user_id')
-                        ->label('المعلن')
-                        ->relationship('user', 'name')
-                        ->default(fn () => Auth::id())
-                        ->required(),
                 ]),
         ]);
     }
