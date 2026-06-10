@@ -1,39 +1,81 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
-        @csrf
+    <div dir="rtl">
 
-        <!-- Password Reset Token -->
-        <input type="hidden" name="token" value="{{ $request->route('token') }}">
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        {{-- Header --}}
+        <div class="mb-7 text-right">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-nilex/10 rounded-2xl mb-3">
+                <svg class="w-6 h-6 text-nilex" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-black text-zinc-900">تعيين كلمة مرور جديدة</h1>
+            <p class="text-zinc-500 text-sm mt-1">اختر كلمة مرور قوية لحساب آمن.</p>
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+        <form method="POST" action="{{ route('password.store') }}" class="space-y-4" novalidate>
+            @csrf
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+            {{-- Hidden token --}}
+            <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
+            {{-- Email --}}
+            <div>
+                <label for="email" class="block text-sm font-semibold text-zinc-700 mb-1.5">
+                    البريد الإلكتروني
+                </label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       value="{{ old('email', $request->email) }}"
+                       placeholder="example@email.com"
+                       class="input-field"
+                       style="direction:ltr; text-align:left;"
+                       required
+                       autocomplete="username"
+                       autofocus>
+                @error('email')
+                    <p class="text-red-500 text-xs mt-1" role="alert">{{ $message }}</p>
+                @enderror
+            </div>
 
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
+            {{-- New password --}}
+            <div>
+                <label for="password" class="block text-sm font-semibold text-zinc-700 mb-1.5">
+                    كلمة المرور الجديدة
+                </label>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       placeholder="••••••••"
+                       class="input-field"
+                       required
+                       autocomplete="new-password">
+                @error('password')
+                    <p class="text-red-500 text-xs mt-1" role="alert">{{ $message }}</p>
+                @enderror
+            </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
-    </form>
+            {{-- Confirm password --}}
+            <div>
+                <label for="password_confirmation" class="block text-sm font-semibold text-zinc-700 mb-1.5">
+                    تأكيد كلمة المرور
+                </label>
+                <input type="password"
+                       id="password_confirmation"
+                       name="password_confirmation"
+                       placeholder="••••••••"
+                       class="input-field"
+                       required
+                       autocomplete="new-password">
+                @error('password_confirmation')
+                    <p class="text-red-500 text-xs mt-1" role="alert">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <button type="submit" class="btn-primary">
+                تعيين كلمة المرور
+            </button>
+        </form>
+
+    </div>
 </x-guest-layout>

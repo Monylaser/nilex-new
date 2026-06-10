@@ -3,80 +3,235 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log; // السطر ده هينور دلوقتي لأننا استخدمناه تحت
+use Illuminate\Support\Facades\Log;
 
 class GeminiService
 {
     protected string $apiKey;
 
-    // استخدمنا v1beta/gemini-pro لأنه "الجوكر" المضمون في منطقتنا حالياً
-    protected string $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+    protected string $model = 'gemini-1.5-flash';
+
+    protected string $baseEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models';
 
     public function __construct()
     {
-        /**
-         * ⚠️ تنبيه سنيور:
-         * أنا سحبت المفتاح هنا بطريقة مباشرة جداً.
-         * تأكد إن GEMINI_API_KEY موجود في الـ .env وقيمته هي اللي بتبدأ بـ AIza وآخره z2kl
-         */
-        $this->apiKey = env('GEMINI_API_KEY') ?? '';
+        $this->apiKey = config('services.gemini.key', '');
     }
 
-    public function generateListingDescription($title, $category, $price, $location)
+    // ── Internal Helpers ──────────────────────────────────────────────────────
+
+    protected function endpoint(): string
     {
-        // لو لارفيل مش شايف المفتاح من الـ .env، هنستخدم المفتاح اللي آخره z2kl يدويًا هنا كخطة بديلة
-        $finalKey = !empty($this->apiKey) ? $this->apiKey : 'AIzaSyAU57Twvzk_qEz4p5h71QDhSMfCpzFz2kI';
+        return "{$this->baseEndpoint}/{$this->model}:generateContent";
+    }
 
-        if (empty($finalKey)) {
-            return "❌ خطأ: مفتاح الـ API غير موجود. تأكد من ملف .env";
+    /**
+     * Send a prompt to Gemini and return the raw text response.
+     * Returns null on any failure (error logged with full details).
+     */
+    protected function callGemini(string $prompt): ?string
+    {
+        if (empty($this->apiKey)) {
+            Log::error('GeminiService: GEMINI_API_KEY is missing.', [
+                'hint' => 'Set GEMINI_API_KEY in your .env file and in config/services.php.',
+            ]);
+            return null;
         }
-
-        // تحسين البرومبت ليعطي أفضل نتيجة في Nilex Platform
-        $prompt = "أنت مساعد ذكي لمنصة إعلانات مبوبة اسمها (Nilex Platform).
-        اكتب وصفاً إعلانياً احترافياً وجذاباً جداً للإعلان التالي:
-        العنوان: {$title}
-        القسم: {$category}
-        السعر: {$price}
-        الموقع: {$location}
-
-        متطلبات الوصف:
-        - ابدأ بجملة تخطف الأنظار.
-        - استخدم نقاط HTML (<ul><li>) للمميزات.
-        - أضف لمسة تسويقية مصرية جذابة.";
 
         try {
-            // إرسال الطلب
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post("{$this->endpoint}?key={$finalKey}", [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $prompt]
-                        ]
-                    ]
+            $response = Http::timeout(30)->post(
+                $this->endpoint() . '?key=' . $this->apiKey,
+                [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'temperature'     => 0.7,
+                        'maxOutputTokens' => 1024,
+                    ],
                 ]
-            ]);
+            );
 
-            // لو النجاح حليفنا
             if ($response->successful()) {
-                $result = $response->json('candidates.0.content.parts.0.text');
-                if ($result) {
-                    Log::info("Gemini Success: Description generated for {$title}");
-                    return $result;
+                $text = $response->json('candidates.0.content.parts.0.text');
+
+                if ($text) {
+                    Log::info('GeminiService: Prompt succeeded.', [
+                        'prompt_preview' => mb_substr($prompt, 0, 80),
+                    ]);
+                    return $text;
                 }
+
+                Log::error('GeminiService: Successful HTTP status but empty response text.', [
+                    'response_body' => $response->body(),
+                ]);
+                return null;
             }
 
-            // هنا الـ Log اللي كان باهت هينور وهيسجل الكارثة بالظبط
-            Log::error("Gemini API Error Detail: " . $response->body());
+            Log::error('GeminiService: API request failed.', [
+                'http_status'   => $response->status(),
+                'error_message' => $response->json('error.message'),
+                'error_code'    => $response->json('error.code'),
+                'error_status'  => $response->json('error.status'),
+                'response_body' => $response->body(),
+            ]);
+            return null;
 
-            // استخراج رسالة الخطأ من جوجل بشكل احترافي
-            $googleError = $response->json('error.message') ?? 'Internal Server Error';
-            return "❌ جوجل رد بـ: " . $googleError . " (تأكد من صلاحية المفتاح والموديل)";
-
-        } catch (\Exception $e) {
-            Log::error("Gemini Critical Exception: " . $e->getMessage());
-            return "❌ خطأ تقني في الاتصال: " . $e->getMessage();
+        } catch (\Throwable $e) {
+            Log::error('GeminiService: Exception during API call.', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+            return null;
         }
+    }
+
+    // ── Public Methods ────────────────────────────────────────────────────────
+
+    /**
+     * Generate a professional Arabic listing description.
+     */
+    public function generateDescription(
+        string $title,
+        string $category,
+        string $price,
+        string $location
+    ): string {
+        $prompt = <<<PROMPT
+أنت مساعد ذكي لمنصة إعلانات مبوبة مصرية اسمها (Nilex).
+اكتب وصفاً إعلانياً احترافياً وجذاباً للإعلان التالي:
+العنوان: {$title}
+القسم: {$category}
+السعر: {$price} جنيه مصري
+الموقع: {$location}
+
+متطلبات الوصف:
+- ابدأ بجملة تخطف الأنظار.
+- استخدم نقاط HTML (<ul><li>) لعرض المميزات.
+- أضف لمسة تسويقية مصرية جذابة.
+- الطول: 100-200 كلمة.
+PROMPT;
+
+        return $this->callGemini($prompt)
+            ?? 'تعذّر توليد الوصف. يرجى المحاولة مرة أخرى.';
+    }
+
+    /**
+     * Suggest a fair Egyptian market price for a listing (returns integer EGP).
+     */
+    public function suggestPrice(
+        string $title,
+        string $category,
+        string $condition = 'مستعمل'
+    ): int {
+        $prompt = <<<PROMPT
+أنت خبير تسعير في السوق المصري.
+بناءً على المعلومات التالية، اقترح سعراً عادلاً بالجنيه المصري:
+المنتج: {$title}
+القسم: {$category}
+الحالة: {$condition}
+
+أجب برقم فقط (بدون أي نص إضافي أو رموز). مثال: 15000
+PROMPT;
+
+        $result = $this->callGemini($prompt);
+
+        if ($result === null) {
+            return 0;
+        }
+
+        $cleaned = preg_replace('/[^0-9]/', '', trim($result));
+
+        return (int) $cleaned ?: 0;
+    }
+
+    /**
+     * Auto-categorize a listing description into one of Nilex's categories.
+     */
+    public function autoCategorize(string $description): string
+    {
+        $prompt = <<<PROMPT
+أنت نظام تصنيف ذكي لمنصة إعلانات مبوبة مصرية.
+بناءً على الوصف التالي، حدد القسم الأنسب من القائمة:
+[عقارات، سيارات، إلكترونيات، موبايلات، أثاث، ملابس، خدمات، حيوانات، رياضة، أخرى]
+
+الوصف: {$description}
+
+أجب باسم القسم فقط (كلمة أو اثنتان كحد أقصى). مثال: إلكترونيات
+PROMPT;
+
+        return trim($this->callGemini($prompt) ?? 'أخرى');
+    }
+
+    /**
+     * Generate full ad data from a short Arabic user input.
+     *
+     * Returns an array with keys: title, description, suggested_price, category.
+     */
+    public function generateFromInput(string $shortDescription): array
+    {
+        $empty = [
+            'title'           => '',
+            'description'     => '',
+            'suggested_price' => 0,
+            'category'        => 'أخرى',
+        ];
+
+        $prompt = <<<PROMPT
+أنت مساعد ذكي لمنصة إعلانات مبوبة مصرية اسمها (Nilex).
+المستخدم كتب وصفاً مختصراً: "{$shortDescription}"
+
+أرجع JSON فقط (بدون أي نص خارجه) بالمفاتيح التالية:
+{
+    "title": "عنوان إعلان جذاب (حد أقصى 80 حرف)",
+    "description": "وصف احترافي باللغة العربية (100-200 كلمة)",
+    "suggested_price": "السعر المقترح بالجنيه المصري كرقم فقط",
+    "category": "القسم الأنسب: عقارات، سيارات، إلكترونيات، موبايلات، أثاث، ملابس، خدمات، أخرى"
+}
+PROMPT;
+
+        $result = $this->callGemini($prompt);
+
+        if ($result === null) {
+            return $empty;
+        }
+
+        // Extract JSON block even if the model wraps it in markdown
+        if (preg_match('/\{[\s\S]*\}/u', $result, $matches)) {
+            $data = json_decode($matches[0], true);
+
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return [
+                    'title'           => mb_substr(strip_tags(trim($data['title'] ?? '')), 0, 80),
+                    'description'     => trim($data['description'] ?? ''),
+                    'suggested_price' => (int) preg_replace('/[^0-9]/', '', (string) ($data['suggested_price'] ?? '0')),
+                    'category'        => trim($data['category'] ?? 'أخرى'),
+                ];
+            }
+        }
+
+        Log::error('GeminiService: Failed to parse JSON from generateFromInput response.', [
+            'raw_response' => $result,
+        ]);
+
+        return $empty;
+    }
+
+    /**
+     * Legacy alias kept for backward compatibility with SmartAdCreator.
+     */
+    public function generateListingDescription(
+        string $title,
+        string $category,
+        string $price,
+        string $location
+    ): string {
+        return $this->generateDescription($title, $category, $price, $location);
     }
 }

@@ -2,30 +2,37 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_screen_can_be_rendered(): void
+    #[Test]
+    public function registration_screen_can_be_rendered(): void
     {
-        $response = $this->get('/register');
-
-        $response->assertStatus(200);
+        $this->get('/register')->assertOk();
     }
 
-    public function test_new_users_can_register(): void
+    #[Test]
+    public function new_users_register_with_email_and_redirect_to_otp(): void
     {
+        Queue::fake();
+
         $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'name'                  => 'Test User',
+            'contact'               => 'test@example.com',
+            'password'              => 'Password123!',
+            'password_confirmation' => 'Password123!',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('otp.notice'));
+
+        $this->assertFalse(User::where('email', 'test@example.com')->first()->is_phone_verified);
     }
 }

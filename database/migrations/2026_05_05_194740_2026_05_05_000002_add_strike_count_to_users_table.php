@@ -8,8 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('users', 'strike_count')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
-            // is_banned موجود بالفعل في الجدول الأصلي
             $table->unsignedTinyInteger('strike_count')->default(0)->after('is_banned');
         });
     }

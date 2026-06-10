@@ -19,7 +19,12 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Livewire\SmartAdCreator;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use App\Filament\Admin\Widgets\BestSellingPlansChart;
+use App\Filament\Admin\Widgets\CategoriesChartWidget;
+use App\Filament\Admin\Widgets\GovernoratesChartWidget;
+use App\Filament\Admin\Widgets\RevenueAlertWidget;
 use App\Filament\Admin\Widgets\StatsOverviewWidget;
+use JeffersonGoncalves\FilamentTranslatable\FilamentTranslatablePlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -35,6 +40,9 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Violet,
             ])
             ->brandName('Nilex Admin')
+            ->brandLogo(asset('images/logo/download.png'))
+            ->brandLogoHeight('40px')
+            ->favicon(asset('images/logo/download.png'))
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             ->pages([
@@ -43,18 +51,18 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->widgets([
                 StatsOverviewWidget::class,
+                RevenueAlertWidget::class,
                 Widgets\AccountWidget::class,
                 \App\Filament\Admin\Widgets\ListingsChart::class,
+                GovernoratesChartWidget::class,
+                CategoriesChartWidget::class,
+                BestSellingPlansChart::class,
             ])
-            // ✅ الحل: NavigationGroup بدون icon
-            // لأن Filament v5 لا يسمح بـ icon على الـ Group والـ Items في نفس الوقت
             ->navigationGroups([
                 NavigationGroup::make('الإشراف')
                     ->collapsed(false),
-
                 NavigationGroup::make('المحتوى')
                     ->collapsed(false),
-
                 NavigationGroup::make('الإدارة')
                     ->collapsed(true),
             ])
@@ -63,6 +71,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),
+                FilamentTranslatablePlugin::make()->defaultLocales(['ar', 'en']),
             ])
             ->middleware([
                 EncryptCookies::class,

@@ -129,26 +129,34 @@ class LocationSeeder extends Seeder
         ];
 
         foreach ($data as $sortOrder => $govData) {
-            $gov = Location::create([
-                'name_ar'    => $govData['name_ar'],
-                'name_en'    => $govData['name_en'],
-                'slug'       => Str::slug($govData['name_en']),
-                'level'      => Location::LEVEL_GOVERNORATE,
-                'parent_id'  => null,
-                'is_active'  => true,
-                'sort_order' => $sortOrder + 1,
-            ]);
+            $govSlug = Str::slug($govData['name_en']);
+
+            $gov = Location::updateOrCreate(
+                ['slug' => $govSlug],
+                [
+                    'name_ar'    => $govData['name_ar'],
+                    'name_en'    => $govData['name_en'],
+                    'level'      => Location::LEVEL_GOVERNORATE,
+                    'parent_id'  => null,
+                    'is_active'  => true,
+                    'sort_order' => $sortOrder + 1,
+                ]
+            );
 
             foreach ($govData['cities'] as $cityOrder => $cityName) {
-                Location::create([
-                    'name_ar'    => $cityName,
-                    'name_en'    => $cityName,
-                    'slug'       => Str::slug($govData['name_en'] . '-' . $cityName) . '-' . $sortOrder . '-' . $cityOrder,
-                    'level'      => Location::LEVEL_CITY,
-                    'parent_id'  => $gov->id,
-                    'is_active'  => true,
-                    'sort_order' => $cityOrder + 1,
-                ]);
+                $citySlug = Str::slug($govData['name_en'].'-'.$cityName).'-'.$sortOrder.'-'.$cityOrder;
+
+                Location::updateOrCreate(
+                    ['slug' => $citySlug],
+                    [
+                        'name_ar'    => $cityName,
+                        'name_en'    => $cityName,
+                        'level'      => Location::LEVEL_CITY,
+                        'parent_id'  => $gov->id,
+                        'is_active'  => true,
+                        'sort_order' => $cityOrder + 1,
+                    ]
+                );
             }
         }
     }

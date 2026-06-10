@@ -1,250 +1,362 @@
-<div class="py-12 bg-gray-50 min-h-screen">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {{-- ── الترحيب والإحصائيات العلوية ────────────────────────────────────────── --}}
-        <div class="mb-8 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-            <div class="flex items-center gap-4 mb-4 md:mb-0">
-                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl font-black">
+{{-- resources/views/livewire/frontend/user-dashboard.blade.php --}}
+<div class="bg-zinc-50 min-h-screen pb-10" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        {{-- ── WELCOME + CTA ───────────────────────────────────────────────── --}}
+        <div class="bg-white rounded-2xl border border-zinc-100 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+             style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-nilex/10 rounded-2xl flex items-center justify-center font-black text-nilex text-2xl shrink-0">
                     {{ mb_substr($user->name, 0, 1) }}
                 </div>
                 <div>
-                    <h2 class="text-2xl font-black text-gray-900">أهلاً بك، {{ explode(' ', $user->name)[0] }}! 👋</h2>
-                    <p class="text-gray-500 font-medium">رصيد نقاطك الحالي: <span class="text-yellow-500 font-bold text-lg">{{ $user->points ?? 0 }} 🪙</span></p>
+                    <h2 class="text-xl font-black text-zinc-900 leading-tight">
+                        أهلاً، {{ explode(' ', $user->name)[0] }}
+                    </h2>
+                    <div class="flex items-center gap-3 mt-1 flex-wrap">
+                        <span class="flex items-center gap-1.5 text-sm font-semibold text-zinc-500">
+                            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 14a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"/></svg>
+                            {{ number_format($user->points ?? 0) }} نقطة
+                        </span>
+                        @if($user->is_phone_verified ?? false)
+                            <span class="flex items-center gap-1 text-xs font-bold text-nilex bg-nilex/8 px-2 py-0.5 rounded-full">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                موثق
+                            </span>
+                        @endif
+                        <span class="text-xs text-zinc-400 font-medium">عضو منذ {{ $user->created_at->diffForHumans() }}</span>
+                    </div>
                 </div>
             </div>
-            <a href="{{ route('listings.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-sm">
-                + أضف إعلان جديد
+            <a href="{{ route('listings.create') }}"
+               class="flex items-center justify-center gap-2 bg-nilex hover:bg-nilex-dark text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shrink-0 text-sm"
+               style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                أضف إعلان جديد
             </a>
         </div>
 
-        {{-- ── كروت الإحصائيات الشاملة والتحليلات ─────────────────────────────── --}}
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
-                <div class="text-3xl mb-2">📦</div>
-                <div class="text-gray-500 text-sm font-bold">كل الإعلانات</div>
-                <div class="text-2xl font-black text-gray-900">{{ $stats['total'] }}</div>
+        {{-- ── STATS CARDS ─────────────────────────────────────────────────── --}}
+        <div class="grid grid-cols-3 lg:grid-cols-6 gap-3">
+            {{-- Total --}}
+            <div class="bg-white rounded-2xl border border-zinc-100 p-4 text-center" style="box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+                <p class="text-xs text-zinc-400 font-semibold mb-1">الكل</p>
+                <p class="text-2xl font-black text-zinc-900">{{ $stats['total'] }}</p>
             </div>
-            <div class="bg-emerald-50 p-6 rounded-2xl shadow-sm border border-emerald-100 text-center">
-                <div class="text-3xl mb-2">✅</div>
-                <div class="text-emerald-600 text-sm font-bold">نشط ومنشور</div>
-                <div class="text-2xl font-black text-emerald-700">{{ $stats['active'] }}</div>
+            {{-- Active --}}
+            <div class="bg-nilex/5 rounded-2xl border border-nilex/15 p-4 text-center">
+                <p class="text-xs text-nilex font-semibold mb-1">نشط</p>
+                <p class="text-2xl font-black text-nilex">{{ $stats['active'] }}</p>
             </div>
-            <div class="bg-amber-50 p-6 rounded-2xl shadow-sm border border-amber-100 text-center">
-                <div class="text-3xl mb-2">⏳</div>
-                <div class="text-amber-600 text-sm font-bold">قيد المراجعة</div>
-                <div class="text-2xl font-black text-amber-700">{{ $stats['pending'] }}</div>
+            {{-- Pending --}}
+            <div class="bg-amber-50 rounded-2xl border border-amber-100 p-4 text-center">
+                <p class="text-xs text-amber-600 font-semibold mb-1">مراجعة</p>
+                <p class="text-2xl font-black text-amber-700">{{ $stats['pending'] }}</p>
             </div>
-            <div class="bg-red-50 p-6 rounded-2xl shadow-sm border border-red-100 text-center">
-                <div class="text-3xl mb-2">⛔</div>
-                <div class="text-red-600 text-sm font-bold">مرفوض</div>
-                <div class="text-2xl font-black text-red-700">{{ $stats['rejected'] }}</div>
+            {{-- Rejected --}}
+            <div class="bg-red-50 rounded-2xl border border-red-100 p-4 text-center">
+                <p class="text-xs text-red-500 font-semibold mb-1">مرفوض</p>
+                <p class="text-2xl font-black text-red-600">{{ $stats['rejected'] }}</p>
             </div>
-            <div class="bg-indigo-50 p-6 rounded-2xl shadow-sm border border-indigo-100 text-center">
-                <div class="text-3xl mb-2">👁️</div>
-                <div class="text-indigo-600 text-sm font-bold">إجمالي المشاهدات</div>
-                <div class="text-2xl font-black text-indigo-700">{{ number_format($stats['views']) }}</div>
+            {{-- Views --}}
+            <div class="bg-zinc-50 rounded-2xl border border-zinc-200 p-4 text-center">
+                <p class="text-xs text-zinc-500 font-semibold mb-1">مشاهدات</p>
+                <p class="text-2xl font-black text-zinc-800">{{ number_format($stats['views']) }}</p>
             </div>
-            <div class="bg-[#25D366]/10 p-6 rounded-2xl shadow-sm border border-[#25D366]/20 text-center">
-                <div class="text-3xl mb-2">💬</div>
-                <div class="text-[#25D366] text-sm font-bold">نقرات الواتساب</div>
-                <div class="text-2xl font-black text-[#1da851]">{{ number_format($stats['clicks']) }}</div>
+            {{-- WhatsApp clicks --}}
+            <div class="rounded-2xl border p-4 text-center" style="background:rgba(37,211,102,0.06); border-color:rgba(37,211,102,0.2);">
+                <p class="text-xs font-semibold mb-1" style="color:#1da851;">واتساب</p>
+                <p class="text-2xl font-black" style="color:#1da851;">{{ number_format($stats['clicks']) }}</p>
             </div>
         </div>
 
-        {{-- 📊 الرسم البياني --}}
-        <div class="mb-8 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-            <h3 class="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                <span>أداء الإعلانات الأخيرة</span>
-                <span class="text-xs font-medium text-gray-400">(آخر 7 إعلانات)</span>
-            </h3>
-            
-            {{-- 💡 تخزين البيانات في Data Attributes لمنع أخطاء الـ Editor --}}
-            <div id="chartDataContainer" 
-                 data-labels="{{ json_encode(collect($listings->items())->take(7)->pluck('title')->map(fn($t) => mb_substr($t, 0, 15) . '...')->reverse()->values()) }}"
+        {{-- ── CHART ───────────────────────────────────────────────────────── --}}
+        <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-black text-zinc-900">أداء الإعلانات</h3>
+                <span class="text-xs text-zinc-400 font-medium">آخر 7 إعلانات</span>
+            </div>
+            <div wire:ignore
+                 id="chartDataContainer"
+                 data-labels="{{ json_encode(collect($listings->items())->take(7)->pluck('title')->map(fn($t) => mb_substr($t, 0, 12) . '...')->reverse()->values()) }}"
                  data-views="{{ json_encode(collect($listings->items())->take(7)->pluck('views_count')->reverse()->values()) }}"
                  data-clicks="{{ json_encode(collect($listings->items())->take(7)->pluck('whatsapp_clicks')->reverse()->values()) }}"
-                 class="relative h-[300px] w-full">
+                 class="relative h-56 w-full">
                 <canvas id="userAnalyticsChart"></canvas>
             </div>
         </div>
-        {{-- ── قسم العروض المستلمة الجديد 🤝 ────────────────────────────────── --}}
+
+        {{-- ── INCOMING OFFERS ─────────────────────────────────────────────── --}}
         @if($incomingOffers->count() > 0)
-        <div class="mb-8">
-            <h3 class="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                <span>عروض سعر جديدة</span>
-                <span class="bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">{{ $incomingOffers->count() }}</span>
-            </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                @foreach($incomingOffers as $offer)
-                <div class="bg-white p-5 rounded-3xl shadow-sm border-2 border-indigo-50 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">عرض سعر</span>
-                            <span class="text-sm font-black text-gray-900">{{ number_format($offer->amount) }} ج.م</span>
-                        </div>
-                        <h4 class="font-bold text-gray-800 text-sm mb-1 line-clamp-1">على: {{ $offer->listing->title }}</h4>
-                        <p class="text-xs text-gray-500 mb-3">من: {{ $offer->sender->name }}</p>
-                        
-                        @if($offer->message)
-                        <div class="bg-gray-50 p-3 rounded-xl text-xs text-gray-600 italic mb-4">
-                            "{{ $offer->message }}"
-                        </div>
-                        @endif
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button wire:click="acceptOffer({{ $offer->id }})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-lg transition">
-                            قبول
-                        </button>
-                        <button wire:click="rejectOffer({{ $offer->id }})" class="flex-1 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold py-2 rounded-lg transition">
-                            رفض
-                        </button>
-                    </div>
+            <div>
+                <div class="flex items-center gap-2 mb-3">
+                    <h3 class="text-base font-black text-zinc-900">عروض سعر مستلمة</h3>
+                    <span class="bg-nilex text-white text-xs px-2.5 py-0.5 rounded-full font-bold">{{ $incomingOffers->count() }}</span>
                 </div>
-                @endforeach
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach($incomingOffers as $offer)
+                        <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+                            <div class="flex items-start justify-between mb-3">
+                                <span class="text-xs font-bold text-nilex bg-nilex/8 px-2.5 py-1 rounded-full">عرض سعر</span>
+                                <span class="text-lg font-black text-zinc-900">{{ number_format($offer->amount) }} <span class="text-sm font-bold text-zinc-400">ج.م</span></span>
+                            </div>
+                            <p class="font-bold text-zinc-800 text-sm leading-snug mb-1 line-clamp-1">{{ $offer->listing->title }}</p>
+                            <p class="text-xs text-zinc-500 mb-3">من: <span class="font-semibold text-zinc-700">{{ $offer->sender->name }}</span></p>
+                            @if($offer->message)
+                                <p class="text-xs text-zinc-500 bg-zinc-50 px-3 py-2 rounded-xl mb-4 italic leading-relaxed">"{{ $offer->message }}"</p>
+                            @endif
+                            <div class="flex gap-2">
+                                <button wire:click="acceptOffer({{ $offer->id }})"
+                                        class="flex-1 bg-nilex hover:bg-nilex-dark text-white text-xs font-bold py-2.5 rounded-xl transition-all active:scale-95">
+                                    قبول
+                                </button>
+                                <button wire:click="rejectOffer({{ $offer->id }})"
+                                        class="flex-1 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold py-2.5 rounded-xl transition-all">
+                                    رفض
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
-        </div>
         @endif
 
-        {{-- ── رسائل التنبيه ────────────────────────────────────────────────── --}}
-        @if (session()->has('success'))
-            <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl font-bold">
-                {{ session('success') }}
-            </div>
+        {{-- ── FLASH MESSAGES ──────────────────────────────────────────────── --}}
+        @if(session()->has('success'))
+            <div class="alert-success text-sm">{{ session('success') }}</div>
         @endif
-        @if (session()->has('error'))
-            <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl font-bold">
-                {{ session('error') }}
-            </div>
+        @if(session()->has('error'))
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl font-bold text-sm">{{ session('error') }}</div>
         @endif
 
-        {{-- ── قائمة الإعلانات ────────────────────────────────────────────────── --}}
-        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-6 border-b border-gray-100">
-                <h3 class="text-xl font-black text-gray-900">إعلاناتي 📋</h3>
+        {{-- ── LISTINGS SECTION ────────────────────────────────────────────── --}}
+        <div class="bg-white rounded-2xl border border-zinc-100 overflow-hidden" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+            <div class="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+                <h3 class="text-base font-black text-zinc-900">إعلاناتي</h3>
+                <span class="text-sm font-bold text-zinc-500">{{ $listings->total() }} إعلان</span>
             </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-right">
-                    <thead class="bg-gray-50 text-gray-500 text-sm font-bold">
-                        <tr>
-                            <th class="px-6 py-4">الإعلان</th>
-                            <th class="px-6 py-4">القسم</th>
-                            <th class="px-6 py-4">السعر</th>
-                            <th class="px-6 py-4">الحالة</th>
-                            <th class="px-6 py-4 text-center">الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($listings as $listing)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-12 h-12 rounded-lg bg-gray-200 overflow-hidden shrink-0">
-                                            @if($listing->getFirstMediaUrl('images', 'thumb'))
-                                                <img src="{{ $listing->getFirstMediaUrl('images', 'thumb') }}" class="w-full h-full object-cover">
-                                            @else
-                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">بدون صورة</div>
-                                            @endif
-                                        </div>
-                                        <div>
-                                            <a href="{{ route('listings.show', $listing) }}" class="font-bold text-gray-900 hover:text-blue-600 transition-colors block max-w-xs truncate">
-                                                {{ $listing->title }}
-                                            </a>
-                                            <div class="text-xs text-gray-500 mt-1">{{ $listing->created_at->diffForHumans() }}</div>
-                                            <div class="flex gap-2 mt-2">
-                                                <span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-md text-[10px] font-bold text-gray-600">
-                                                    👁️ {{ $listing->views_count ?? 0 }}
-                                                </span>
-                                                <span class="inline-flex items-center gap-1 bg-[#25D366]/10 px-2 py-1 rounded-md text-[10px] font-bold text-[#25D366]">
-                                                    💬 {{ $listing->whatsapp_clicks ?? 0 }}
-                                                </span>
+
+            @if($listings->count() > 0)
+
+                {{-- ── MOBILE CARDS (shown on < md) ─────────────────────────── --}}
+                <div class="md:hidden divide-y divide-zinc-50">
+                    @foreach($listings as $listing)
+                        <div class="p-4 flex gap-3">
+                            {{-- Thumbnail --}}
+                            <div class="w-16 h-16 rounded-xl bg-zinc-100 overflow-hidden shrink-0">
+                                @if($listing->getFirstMediaUrl('images', 'thumb'))
+                                    <img src="{{ $listing->getFirstMediaUrl('images', 'thumb') }}" class="w-full h-full object-cover">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </div>
+                                @endif
+                            </div>
+                            {{-- Info --}}
+                            <div class="flex-1 min-w-0">
+                                <a href="{{ route('listings.show', $listing) }}"
+                                   class="font-bold text-zinc-900 hover:text-nilex transition-colors text-sm leading-snug block truncate">
+                                    {{ $listing->title }}
+                                </a>
+                                <div class="flex items-center gap-2 mt-1 flex-wrap">
+                                    <span class="text-sm font-black text-nilex">{{ number_format($listing->price) }} ج.م</span>
+                                    @if($listing->status === 'published')
+                                        <span class="text-xs font-bold bg-nilex/8 text-nilex px-2 py-0.5 rounded-full">نشط</span>
+                                    @elseif($listing->status === 'pending')
+                                        <span class="text-xs font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">مراجعة</span>
+                                    @elseif($listing->status === 'rejected')
+                                        <span class="text-xs font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-full">مرفوض</span>
+                                    @endif
+                                </div>
+                                <div class="flex items-center gap-3 mt-1.5 text-xs text-zinc-400">
+                                    <span>👁 {{ $listing->views_count ?? 0 }}</span>
+                                    <span>💬 {{ $listing->whatsapp_clicks ?? 0 }}</span>
+                                    <span>{{ $listing->created_at->diffForHumans() }}</span>
+                                </div>
+                            </div>
+                            {{-- Actions --}}
+                            <div class="flex flex-col gap-2 shrink-0 justify-center">
+                                @if(!$listing->is_featured && $listing->status === 'published')
+                                    <button wire:click="featureListing({{ $listing->id }})"
+                                            wire:confirm="هل تريد خصم النقاط لتمييز الإعلان؟"
+                                            title="تمييز الإعلان"
+                                            class="text-zinc-400 hover:text-amber-500 transition-colors p-1.5 rounded-lg hover:bg-amber-50">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                    </button>
+                                @elseif($listing->is_featured)
+                                    <span class="text-amber-400 p-1.5" title="مميز">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    </span>
+                                @endif
+                                <button wire:click="deleteListing({{ $listing->id }})"
+                                        wire:confirm="هل أنت متأكد من الحذف؟"
+                                        class="text-zinc-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- ── DESKTOP TABLE (shown on md+) ─────────────────────────── --}}
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-zinc-50 border-b border-zinc-100 text-zinc-400 text-xs font-bold uppercase tracking-wider">
+                            <tr>
+                                <th class="px-5 py-3 font-semibold">الإعلان</th>
+                                <th class="px-5 py-3 font-semibold">القسم</th>
+                                <th class="px-5 py-3 font-semibold">السعر</th>
+                                <th class="px-5 py-3 font-semibold">الحالة</th>
+                                <th class="px-5 py-3 font-semibold text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-50">
+                            @foreach($listings as $listing)
+                                <tr class="hover:bg-zinc-50/60 transition-colors">
+                                    {{-- Listing info --}}
+                                    <td class="px-5 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-12 h-12 rounded-xl bg-zinc-100 overflow-hidden shrink-0">
+                                                @if($listing->getFirstMediaUrl('images', 'thumb'))
+                                                    <img src="{{ $listing->getFirstMediaUrl('images', 'thumb') }}" class="w-full h-full object-cover">
+                                                @else
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            <div class="min-w-0">
+                                                <a href="{{ route('listings.show', $listing) }}"
+                                                   class="font-bold text-zinc-900 hover:text-nilex transition-colors block max-w-[200px] truncate">
+                                                    {{ $listing->title }}
+                                                </a>
+                                                <div class="flex items-center gap-2 mt-1 text-xs text-zinc-400">
+                                                    <span>{{ $listing->created_at->diffForHumans() }}</span>
+                                                    <span class="text-zinc-300">·</span>
+                                                    <span>👁 {{ $listing->views_count ?? 0 }}</span>
+                                                    <span>💬 {{ $listing->whatsapp_clicks ?? 0 }}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800">
-                                        {{ $listing->category->name_ar ?? 'بدون قسم' }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-gray-900">
-                                    {{ number_format($listing->price) }} ج.م
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if($listing->status === 'published')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">نشط</span>
-                                    @elseif($listing->status === 'pending')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">مراجعة</span>
-                                    @elseif($listing->status === 'rejected')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800" title="{{ $listing->rejection_reason }}">مرفوض ⚠️</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <div class="flex justify-center items-center gap-3">
-                                        @if(!$listing->is_featured && $listing->status === 'published')
-                                            <button wire:click="featureListing({{ $listing->id }})" wire:confirm="هل تريد خصم 50 نقطة لتمييز الإعلان؟" class="text-gray-400 hover:text-yellow-500 transition-colors">
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
-                                            </button>
-                                        @elseif($listing->is_featured)
-                                            <span class="text-yellow-500" title="إعلان مميز">⭐</span>
+                                    </td>
+                                    {{-- Category --}}
+                                    <td class="px-5 py-4">
+                                        <span class="text-xs font-semibold bg-zinc-100 text-zinc-600 px-2.5 py-1 rounded-lg">
+                                            {{ $listing->category->name_ar ?? 'بدون قسم' }}
+                                        </span>
+                                    </td>
+                                    {{-- Price --}}
+                                    <td class="px-5 py-4">
+                                        <span class="font-black text-zinc-900">{{ number_format($listing->price) }}</span>
+                                        <span class="text-xs text-zinc-400 font-medium"> ج.م</span>
+                                    </td>
+                                    {{-- Status --}}
+                                    <td class="px-5 py-4">
+                                        @if($listing->status === 'published')
+                                            <span class="text-xs font-bold bg-nilex/8 text-nilex px-2.5 py-1 rounded-full">
+                                                @if($listing->is_featured)⭐ @endif
+                                                نشط
+                                            </span>
+                                        @elseif($listing->status === 'pending')
+                                            <span class="text-xs font-bold bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">مراجعة</span>
+                                        @elseif($listing->status === 'rejected')
+                                            <span class="text-xs font-bold bg-red-50 text-red-600 px-2.5 py-1 rounded-full" title="{{ $listing->rejection_reason }}">مرفوض</span>
                                         @endif
-                                        <button wire:click="deleteListing({{ $listing->id }})" wire:confirm="هل أنت متأكد من الحذف؟" class="text-red-400 hover:text-red-600 transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500 font-bold">لا يوجد إعلانات حالياً.. ابدأ بنشر أول إعلان لك الآن! 🚀</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-6 border-t border-gray-100">
-                {{ $listings->links() }}
-            </div>
+                                    </td>
+                                    {{-- Actions --}}
+                                    <td class="px-5 py-4">
+                                        <div class="flex items-center justify-center gap-2">
+                                            @if(!$listing->is_featured && $listing->status === 'published')
+                                                <button wire:click="featureListing({{ $listing->id }})"
+                                                        wire:confirm="هل تريد خصم النقاط لتمييز الإعلان؟"
+                                                        title="تمييز الإعلان"
+                                                        class="text-zinc-400 hover:text-amber-500 transition-colors p-2 rounded-xl hover:bg-amber-50">
+                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                                </button>
+                                            @endif
+                                            <button wire:click="deleteListing({{ $listing->id }})"
+                                                    wire:confirm="هل أنت متأكد من حذف هذا الإعلان؟"
+                                                    title="حذف الإعلان"
+                                                    class="text-zinc-400 hover:text-red-500 transition-colors p-2 rounded-xl hover:bg-red-50">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+            @else
+                {{-- Empty state --}}
+                <div class="text-center py-16 px-4">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-nilex/5 rounded-2xl mb-4">
+                        <svg class="w-8 h-8 text-nilex/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <h3 class="text-base font-black text-zinc-800 mb-2">لا توجد إعلانات بعد</h3>
+                    <p class="text-zinc-500 text-sm mb-5">ابدأ بنشر أول إعلان لك الآن</p>
+                    <a href="{{ route('listings.create') }}"
+                       class="inline-flex items-center gap-2 bg-nilex hover:bg-nilex-dark text-white px-6 py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
+                       style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        أضف إعلانك مجاناً
+                    </a>
+                </div>
+            @endif
+
+            {{-- Pagination --}}
+            @if($listings->hasPages())
+                <div class="px-5 py-4 border-t border-zinc-50">
+                    {{ $listings->links() }}
+                </div>
+            @endif
         </div>
+
     </div>
 </div>
 
 @section('footer-scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
-    // استخدام دالة بسيطة لضمان تحميل الرسم البياني مع Livewire
-    function initMyChart() {
-        const container = document.getElementById('chartDataContainer');
-        const canvas = document.getElementById('userAnalyticsChart');
-        
-        if (container && canvas) {
-            // سحب البيانات من الـ Attributes (طريقة نظيفة 100% لا تسبب أخطاء)
-            const labels = JSON.parse(container.getAttribute('data-labels'));
-            const views = JSON.parse(container.getAttribute('data-views'));
-            const clicks = JSON.parse(container.getAttribute('data-clicks'));
+    (function () {
+        let chartInstance = null;
 
-            new Chart(canvas, {
+        function initDashboardChart() {
+            const container = document.getElementById('chartDataContainer');
+            const canvas    = document.getElementById('userAnalyticsChart');
+            if (!container || !canvas) return;
+
+            // Destroy previous instance to prevent memory leaks
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+
+            const labels = JSON.parse(container.getAttribute('data-labels') || '[]');
+            const views  = JSON.parse(container.getAttribute('data-views')  || '[]');
+            const clicks = JSON.parse(container.getAttribute('data-clicks') || '[]');
+
+            chartInstance = new Chart(canvas, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels,
                     datasets: [
                         {
                             label: 'المشاهدات',
                             data: views,
-                            backgroundColor: 'rgba(37, 99, 235, 0.5)',
-                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(29,158,117,0.15)',
+                            borderColor: '#1D9E75',
                             borderWidth: 2,
-                            borderRadius: 8,
+                            borderRadius: 6,
                         },
                         {
                             label: 'نقرات الواتساب',
                             data: clicks,
-                            backgroundColor: 'rgba(37, 211, 102, 0.5)',
-                            borderColor: '#1da851',
+                            backgroundColor: 'rgba(37,211,102,0.15)',
+                            borderColor: '#25D366',
                             borderWidth: 2,
-                            borderRadius: 8,
+                            borderRadius: 6,
                         }
                     ]
                 },
@@ -253,23 +365,22 @@
                     maintainAspectRatio: false,
                     rtl: true,
                     scales: {
-                        y: { beginAtZero: true, grid: { display: false } },
-                        x: { grid: { display: false } }
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#a1a1aa' } },
+                        x: { grid: { display: false }, ticks: { color: '#a1a1aa' } }
                     },
                     plugins: {
                         legend: {
                             position: 'top',
                             align: 'end',
-                            labels: { font: { family: 'Cairo', size: 12, weight: 'bold' } }
+                            labels: { font: { family: 'Cairo', size: 11 }, color: '#71717a', boxWidth: 12, padding: 16 }
                         }
                     }
                 }
             });
         }
-    }
 
-    // التشغيل عند أول تحميل وعند التنقل في Livewire
-    document.addEventListener('DOMContentLoaded', initMyChart);
-    document.addEventListener('livewire:navigated', initMyChart);
+        document.addEventListener('DOMContentLoaded', initDashboardChart);
+        document.addEventListener('livewire:navigated', initDashboardChart);
+    })();
 </script>
 @endsection

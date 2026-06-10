@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Auth\Services\DeviceFingerprintService;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -11,17 +12,11 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * تحديد إذا كان المستخدم مخولاً لإجراء هذا الطلب.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * قواعد التحقق من البيانات.
-     */
     public function rules(): array
     {
         return [
@@ -30,9 +25,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * محاولة مصادقة بيانات الاعتماد وتحديث بيانات الجهاز.
-     */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
@@ -45,22 +37,21 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        // 🟢 التعديل الأمني (بصمة الجهاز والـ IP)
-        // يتم تحديث البيانات فور نجاح الدخول لربط الحساب بالجهاز الفعلي
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        
+
+        $fingerprints = app(DeviceFingerprintService::class);
+        $device = $fingerprints->resolveDeviceCookie($this);
+
         $user->update([
             'ip_address' => $this->ip(),
-            'device_id'  => $this->header('User-Agent'), // تسجيل بصمة المتصفح/الجهاز
+            'device_id' => $device['id'],
+            'fingerprint_hash' => $fingerprints->compute($this),
         ]);
 
         RateLimiter::clear($this->throttleKey());
     }
 
-    /**
-     * التأكد من أن طلب تسجيل الدخول ليس مقيداً (Rate Limited).
-     */
     public function ensureIsNotRateLimited(): void
     {
         if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
@@ -79,9 +70,6 @@ class LoginRequest extends FormRequest
         ]);
     }
 
-    /**
-     * مفتاح تقييد المحاولات (Throttle Key).
-     */
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());

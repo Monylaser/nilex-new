@@ -13,7 +13,9 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Illuminate\Support\Facades\Auth;
 
 class ListingTable
@@ -79,6 +81,16 @@ class ListingTable
                         default     => $state,
                     }),
 
+                IconColumn::make('is_flagged')
+                    ->label('مُبلَّغ تلقائياً')
+                    ->boolean()
+                    ->trueIcon('heroicon-m-exclamation-triangle')
+                    ->falseIcon('heroicon-m-minus')
+                    ->trueColor('danger')
+                    ->falseColor('gray')
+                    ->tooltip(fn ($record) => $record->is_flagged ? ($record->flag_reason ?? 'مُبلَّغ عنه') : null)
+                    ->toggleable(isToggledHiddenByDefault: false),
+
                 // ✅ عمود التمييز
                 TextColumn::make('featured_until')
                     ->label('مميز حتى')
@@ -105,6 +117,12 @@ class ListingTable
                 SelectFilter::make('category_id')
                     ->label('القسم')
                     ->relationship('category', 'name_ar'),
+
+                TernaryFilter::make('is_flagged')
+                    ->label('الإعلانات المُبلَّغ عنها تلقائياً')
+                    ->placeholder('الكل')
+                    ->trueLabel('مُبلَّغ عنها فقط')
+                    ->falseLabel('غير مُبلَّغ عنها'),
             ])
             ->recordActions([
                 ActionGroup::make([

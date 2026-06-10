@@ -28,13 +28,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // 🎖️ التعديل هنا: فحص حالة المستخدم بعد تسجيل الدخول
-        // لو الإيميل هو إيميل الأدمن، وديه للوحة تحكم فيلامينت فوراً
         if ($request->user()->email === 'admin@gmail.com') {
             return redirect()->intended('/admin');
         }
 
-        // لو مستخدم عادي، وديه للداش بورد الافتراضية
+        if (! $request->user()->is_phone_verified) {
+            return redirect()->intended(route('otp.notice', absolute: false));
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

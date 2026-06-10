@@ -35,7 +35,7 @@ class ListingForm
                             ->label('ولّد الإعلان بالـ AI ✨')
                             ->icon('heroicon-m-sparkles')
                             ->color('success')
-                            ->action(fn () => null),
+                            ->action(fn ($livewire) => $livewire->generateWithAI()),
                     ])->alignCenter(),
                 ])->columnSpanFull()->collapsible(),
 

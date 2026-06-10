@@ -19,14 +19,15 @@ class PaymobService
     }
 
     // 2. تسجيل الطلب في Paymob
-    public function createOrder($token, $amount, $currency = 'EGP')
+    public function createOrder($token, $amount, $currency = 'EGP', ?string $merchantOrderId = null)
     {
         $response = Http::post("{$this->baseUrl}/ecommerce/orders", [
-            'auth_token' => $token,
-            'delivery_needed' => 'false',
-            'amount_cents' => $amount * 100, // تحويل القرش لجنيه
-            'currency' => $currency,
-            'items' => [],
+            'auth_token'         => $token,
+            'delivery_needed'    => 'false',
+            'amount_cents'       => $amount * 100,
+            'currency'           => $currency,
+            'merchant_order_id'  => $merchantOrderId,
+            'items'              => [],
         ]);
 
         return $response->json('id');

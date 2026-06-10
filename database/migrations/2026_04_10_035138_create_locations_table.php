@@ -12,10 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // سطر طوارئ: فك قيود الـ Foreign Keys ومسح الجدول يدوياً لو اتحشر
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
         Schema::dropIfExists('locations');
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
         Schema::create('locations', function (Blueprint $table) {
             $table->id();

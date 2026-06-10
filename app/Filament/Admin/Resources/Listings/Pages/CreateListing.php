@@ -56,11 +56,14 @@ class CreateListing extends CreateRecord
     public function generateWithAI(): void
     {
         try {
-            // فحص أمان (Defensive Programming)
-            $apiKey = env('GEMINI_API_KEY');
+            Log::info('AI generateWithAI: started');
+
+            $apiKey = config('services.gemini.key');
             if (empty($apiKey)) {
-                throw new \Exception('مفتاح Gemini API غير موجود في ملف .env');
+                throw new \Exception('مفتاح Gemini API غير موجود — يرجى إضافة GEMINI_API_KEY في ملف .env');
             }
+
+            Log::info('AI generateWithAI: API key present, proceeding');
 
             // ── جلب state الفورم الحالي ──────────────────────────────────
             $formState   = $this->form->getState();
@@ -124,8 +127,10 @@ class CreateListing extends CreateRecord
 
             $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}";
 
+            Log::info('AI generateWithAI: sending request to Gemini', ['parts_count' => count($parts)]);
+
             $response = Http::timeout(120)
-                ->retry(2, 2000)
+                ->retry(2, 2000, fn (\Throwable $e) => ! ($e instanceof \Illuminate\Http\Client\RequestException && $e->response?->status() === 429))
                 ->post($url, [
                     'contents' => [['parts' => $parts]],
                     'generationConfig' => [
@@ -134,9 +139,15 @@ class CreateListing extends CreateRecord
                     ],
                 ]);
 
-            if (! $response->successful()) {
-                throw new \Exception('خطأ من Gemini: ' . ($response->json('error.message') ?? $response->status()));
+            if ($response->status() === 429) {
+                throw new \Exception('تجاوزت الحد المسموح من Gemini API. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى، أو ترقية خطتك على Google AI Studio.');
             }
+
+            if (! $response->successful()) {
+                throw new \Exception('خطأ من Gemini (' . $response->status() . '): ' . ($response->json('error.message') ?? 'خطأ غير معروف'));
+            }
+
+            Log::info('AI generateWithAI: Gemini responded successfully', ['status' => $response->status()]);
 
             $responseText = $response->json('candidates.0.content.parts.0.text');
 
@@ -188,13 +199,32 @@ class CreateListing extends CreateRecord
                 ->success()
                 ->send();
 
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            $status  = $e->response?->status();
+            Log::error('AI HTTP Error in CreateListing', ['status' => $status, 'body' => $e->response?->body()]);
+
+            $message = match (true) {
+                $status === 429 => 'تجاوزت الحد المسموح من Gemini API. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى، أو ترقية خطتك على Google AI Studio.',
+                $status === 401 => 'مفتاح Gemini API غير صالح. يرجى مراجعة إعدادات الـ .env',
+                $status === 503 => 'خدمة Gemini غير متاحة حالياً. يرجى المحاولة لاحقاً.',
+                default         => 'فشل الاتصال بـ Gemini API (كود: ' . $status . ')',
+            };
+
+            Notification::make()
+                ->title('تعذّر توليد الإعلان')
+                ->body($message)
+                ->danger()
+                ->duration(8000)
+                ->send();
+
         } catch (\Exception $e) {
             Log::error('AI Error in CreateListing: ' . $e->getMessage());
 
             Notification::make()
-                ->title('خطأ في الـ AI')
+                ->title('تعذّر توليد الإعلان')
                 ->body($e->getMessage())
                 ->danger()
+                ->duration(8000)
                 ->send();
         }
     }

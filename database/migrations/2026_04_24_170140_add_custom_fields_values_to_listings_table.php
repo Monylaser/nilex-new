@@ -6,24 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        if (Schema::hasColumn('listings', 'custom_fields_values')) {
+            return;
+        }
+
         Schema::table('listings', function (Blueprint $table) {
-        // حقل JSON لتخزين قيم الحقول الديناميكية
-        $table->json('custom_fields_values')->nullable()->after('category_id');
+            $table->json('custom_fields_values')->nullable()->after('category_id');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (! Schema::hasColumn('listings', 'custom_fields_values')) {
+            return;
+        }
+
         Schema::table('listings', function (Blueprint $table) {
-            //
+            $table->dropColumn('custom_fields_values');
         });
     }
 };

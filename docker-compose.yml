@@ -1,0 +1,100 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${APP_PORT:-80}:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+    networks:
+      - nilex
+
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      - ./:/var/www/html
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - nilex
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-nilex}
+      MYSQL_USER: ${DB_USERNAME:-nilex}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - nilex
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - nilex
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: php artisan queue:work redis --queue=sms-high,email-high,auth-critical,notifications,default --sleep=1 --tries=3 --max-time=3600
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - php
+      - redis
+      - mysql
+    restart: unless-stopped
+    networks:
+      - nilex
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - php
+    restart: unless-stopped
+    networks:
+      - nilex
+
+  horizon:
+    profiles: ["horizon"]
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: php artisan horizon
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - redis
+      - mysql
+    networks:
+      - nilex
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  nilex:
+    driver: bridge

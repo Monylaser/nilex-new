@@ -5,15 +5,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Image\Enums\AlignPosition;
 use Spatie\Image\Enums\Fit;
-use Spatie\Image\Enums\AlignPosition; // 🟢 استدعاء مهم لتحديد مكان العلامة المائية
+use Spatie\Image\Enums\Unit;
 use Laravel\Scout\Searchable;
+
 class Listing extends Model implements HasMedia
 {
-    use InteractsWithMedia, Searchable; 
+    use InteractsWithMedia, Searchable, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'status', 'price', 'rejection_reason', 'is_featured'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $event) => "Listing {$event}");
+    }
 
     protected $guarded = [];
 
@@ -77,6 +90,7 @@ class Listing extends Model implements HasMedia
             'moderated_at'         => 'datetime',
             'featured_until'       => 'datetime',
             'is_featured'          => 'boolean',
+            'is_flagged'           => 'boolean',
             'created_at'           => 'datetime',
             'updated_at'           => 'datetime',
         ];
@@ -92,14 +106,22 @@ class Listing extends Model implements HasMedia
             ->format('webp')
             ->nonQueued();
 
-        // 2. 🟢 الصورة الكاملة (مع إضافة العلامة المائية)
+        // 2. الصورة الكاملة (مع إضافة العلامة المائية)
         $this->addMediaConversion('full_hd')
             ->fit(Fit::Max, 1920, 1080)
-            ->watermark(public_path('images/watermark.png')) // مسار اللوجو بتاعك
-            ->watermarkPosition(AlignPosition::BottomRight)  // مكان العلامة المائية
-            ->watermarkOpacity(40)                           // الشفافية 40% عشان متبوظش الصورة
-            ->watermarkPadding(20, 20)                       // المسافة من الحواف
-            ->watermarkWidth(150)                            // عرض اللوجو
+            ->watermark(
+                public_path('images/watermark.png'),
+                AlignPosition::BottomRight,
+                20,          // paddingX
+                20,          // paddingY
+                Unit::Pixel,
+                150,         // width
+                Unit::Pixel,
+                0,           // height (auto)
+                Unit::Pixel,
+                Fit::Contain,
+                40,          // alpha / opacity (0–100)
+            )
             ->format('webp')
             ->quality(80)
             ->nonQueued();
@@ -219,6 +241,7 @@ class Listing extends Model implements HasMedia
     public function featureWithPoints(int $days): void
     {
         $cost = self::featureCost($days);
+        $this->loadMissing('user');
         $user = $this->user;
 
         // ✅ تأكد من كفاية النقاط
@@ -275,6 +298,8 @@ class Listing extends Model implements HasMedia
     }
 public function toSearchableArray(): array
     {
+        $this->loadMissing(['category', 'province', 'location']);
+
         return [
             'id'           => $this->id,
             'title'        => $this->title,
@@ -283,14 +308,12 @@ public function toSearchableArray(): array
             'category_id'  => $this->category_id,
             'car_brand_id' => $this->car_brand_id,
             'created_at'   => $this->created_at->timestamp,
-            
-            // إضافة أسماء الأقسام والمحافظات عشان لو اليوزر بحث بكلمة "سيارات القاهرة" يلقطها
-            'category_name' => $this->category ? $this->category->name_ar : null,
-            'province_name' => $this->province ? $this->province->name_ar : null,
-            'location_name' => $this->location ? $this->location->name_ar : null,
 
-            // 🟢 الأهم: تجهيز الإحداثيات الجغرافية (_geo) لـ Meilisearch
-            '_geo' => ($this->location && $this->location->latitude && $this->location->longitude) ? [
+            'category_name' => $this->category?->name_ar,
+            'province_name' => $this->province?->name_ar,
+            'location_name' => $this->location?->name_ar,
+
+            '_geo' => ($this->location?->latitude && $this->location?->longitude) ? [
                 'lat' => (float) $this->location->latitude,
                 'lng' => (float) $this->location->longitude,
             ] : null,

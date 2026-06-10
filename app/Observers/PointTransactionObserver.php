@@ -13,29 +13,31 @@ class PointTransactionObserver
      */
     public function creating(PointTransaction $transaction): void
     {
-        // جلب آخر رصيد حالي للمستخدم من جدول الـ users
-        $currentPoints = $transaction->user->points ?? 0;
-
-        // حساب الرصيد الجديد بعد العملية وتخزينه في الحقل المطلوب
-        $transaction->current_balance = $currentPoints + $transaction->amount;
+        // If current_balance was already set by the caller (e.g. PointService which
+        // increments the user row first and then passes the post-transaction balance),
+        // trust it. Otherwise fall back to the user's current balance as-is — this
+        // covers callers like featureWithPoints that decrement the user row BEFORE
+        // creating the transaction record.
+        if (! isset($transaction->current_balance)) {
+            $transaction->loadMissing('user');
+            $transaction->current_balance = (int) ($transaction->user?->points ?? 0);
+        }
     }
 
     /**
      * يتم تنفيذها بعد حفظ العملية بنجاح
-     * وظيفته: تحديث جدول المستخدمين وإرسال إشعار للمتصفح
+     * وظيفته: إرسال إشعار Flash للمتصفح
+     *
+     * NOTE: We do NOT touch user.points here.  The caller (PointService or direct
+     * decrement code) is responsible for updating the balance.  Adding another
+     * increment/decrement here would cause every operation to be applied twice.
      */
     public function created(PointTransaction $transaction): void
     {
-        // 1. تحديث إجمالي نقاط المستخدم في جدول users
-        $user = $transaction->user;
-        $user->increment('points', $transaction->amount);
-
-        // 2. تجهيز رسالة الإشعار بناءً على نوع العملية (إضافة أو خصم)
         $message = $transaction->amount > 0
             ? "🏆 مبروك! حصلت على {$transaction->amount} نقطة جديدة."
             : "💸 تم خصم " . abs($transaction->amount) . " نقطة من رصيدك.";
 
-        // 3. إرسال الإشعار لمرة واحدة (Flash Session)
         Session::flash('points_added', $message);
     }
 }

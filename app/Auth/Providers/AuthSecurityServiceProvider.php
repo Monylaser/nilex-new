@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Auth\Providers;
+
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
+
+class AuthSecurityServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->app->singleton(\App\Auth\Services\OtpService::class);
+        $this->app->singleton(\App\Auth\Services\DeviceFingerprintService::class);
+        $this->app->singleton(\App\Auth\Services\DeviceLimitService::class);
+    }
+
+    public function boot(): void
+    {
+        RateLimiter::for('otp-resend', function (Request $request) {
+            $user = $request->user();
+            $identity = $user?->email ?? $user?->phone ?? 'guest';
+
+            return [
+                Limit::perMinute(3)->by($request->ip().'|'.$identity),
+            ];
+        });
+
+        RateLimiter::for('otp-verify', function (Request $request) {
+            $key = $request->user()?->id ?? $request->ip();
+
+            return [
+                Limit::perMinute(10)->by('otp-verify|'.$key),
+            ];
+        });
+
+        RateLimiter::for('registration', function (Request $request) {
+            return [
+                Limit::perHour(10)->by($request->ip()),
+            ];
+        });
+    }
+}

@@ -8,16 +8,22 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('users', 'points')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
-            // إضافة حقل النقاط بعد الإيميل مثلاً وبقيمة افتراضية 0
             $table->integer('points')->default(0)->after('email');
         });
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        if (! Schema::hasColumn('users', 'points')) {
+            return;
+        }
 
+        Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('points');
         });
     }

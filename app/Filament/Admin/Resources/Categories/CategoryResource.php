@@ -3,22 +3,27 @@
 namespace App\Filament\Admin\Resources\Categories;
 
 use App\Filament\Admin\Resources\Categories\Pages;
+use App\Filament\Admin\Resources\Categories\RelationManagers\ChildrenRelationManager;
 use App\Filament\Admin\Resources\Categories\Schemas\CategoryForm;
 use App\Filament\Admin\Resources\Categories\Tables\CategoriesTable;
 use App\Models\Category;
+use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
-use BackedEnum; // ضروري جداً
+use UnitEnum;
 
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    // السطر اللي كان عامل المشكلة صلحناه هنا:
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationLabel = 'الأقسام';
+
+    protected static string|UnitEnum|null $navigationGroup = 'المحتوى';
+
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $modelLabel = 'قسم';
 
@@ -33,17 +38,27 @@ class CategoryResource extends Resource
     {
         return CategoriesTable::configure($table);
     }
+
+    // عرض الأقسام الرئيسية فقط في القائمة — الفرعيات تُدار من داخل القسم
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-    // هذا السطر يضمن ظهور الأقسام الرئيسية فقط (التي ليس لها أب) في القائمة
-    return parent::getEloquentQuery()->whereNull('parent_id');
+        return parent::getEloquentQuery()->whereNull('parent_id');
     }
+
+    // تسجيل مدير العلاقات للأقسام الفرعية
+    public static function getRelations(): array
+    {
+        return [
+            ChildrenRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCategories::route('/'),
+            'index'  => Pages\ListCategories::route('/'),
             'create' => Pages\CreateCategory::route('/create'),
-            'edit' => Pages\EditCategory::route('/{record}/edit'),
+            'edit'   => Pages\EditCategory::route('/{record}/edit'),
         ];
     }
 }

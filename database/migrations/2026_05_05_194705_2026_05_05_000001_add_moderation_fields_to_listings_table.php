@@ -9,12 +9,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('listings', function (Blueprint $table) {
-            // status موجود بالفعل — بس نأكد القيم الصح
-            // rejection_reason و moderated_by جدد
-            $table->text('rejection_reason')->nullable()->after('status');
-            $table->foreignId('moderated_by')->nullable()->constrained('users')->nullOnDelete()->after('rejection_reason');
-            $table->timestamp('moderated_at')->nullable()->after('moderated_by');
-            $table->enum('flag_reason', ['ethical', 'security', 'fraud', 'spam', 'other'])->nullable()->after('moderated_at');
+            // rejection_reason may already exist from the base create migration (string type).
+            // Skip adding it to avoid duplicate column errors on SQLite / fresh installs.
+            if (! Schema::hasColumn('listings', 'rejection_reason')) {
+                $table->text('rejection_reason')->nullable()->after('status');
+            }
+            if (! Schema::hasColumn('listings', 'moderated_by')) {
+                $table->foreignId('moderated_by')->nullable()->constrained('users')->nullOnDelete()->after('rejection_reason');
+            }
+            if (! Schema::hasColumn('listings', 'moderated_at')) {
+                $table->timestamp('moderated_at')->nullable()->after('moderated_by');
+            }
+            if (! Schema::hasColumn('listings', 'flag_reason')) {
+                $table->enum('flag_reason', ['ethical', 'security', 'fraud', 'spam', 'other'])->nullable()->after('moderated_at');
+            }
         });
     }
 

@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('listings', function (Blueprint $table) {
-            // إضافة عمود التمييز، والقيمة الافتراضية false (يعني الإعلان بينزل عادي مش مميز)
-            $table->boolean('is_featured')->default(false)->after('status');
-
-            // إضافة تاريخ انتهاء التميز (ضروري جداً حسب المخطط)
-        $table->timestamp('featured_until')->nullable()->after('is_featured');
-    
+            if (! Schema::hasColumn('listings', 'is_featured')) {
+                $table->boolean('is_featured')->default(false)->after('status');
+            }
+            if (! Schema::hasColumn('listings', 'featured_until')) {
+                $table->timestamp('featured_until')->nullable()->after('is_featured');
+            }
         });
     }
 

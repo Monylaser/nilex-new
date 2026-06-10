@@ -1,0 +1,134 @@
+name: Nilex CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  APP_ENV: testing
+  APP_DEBUG: false
+  APP_KEY: base64:2fl+KtvkdphvQYwB8KpKxYqJmZvN8xH0qJmZvN8xH0q=
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, redis, intl, gd
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Run Pint (dry run)
+        run: vendor/bin/pint --test
+
+      - name: Security checker
+        run: vendor/bin/security-checker security:check composer.lock || true
+
+  pest:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, redis, intl
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Run Pest tests
+        run: ./vendor/bin/pest --parallel
+
+  cypress:
+    runs-on: ubuntu-latest
+    needs: pest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          composer install --prefer-dist --no-interaction
+          npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Start application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          php artisan migrate --force
+          php artisan serve --host=127.0.0.1 --port=8000 &
+          npx wait-on http://127.0.0.1:8000
+
+      - name: Run Cypress
+        run: npm run cy:run
+        env:
+          CYPRESS_BASE_URL: http://127.0.0.1:8000
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [pest]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build production image
+        run: docker build -f docker/php/Dockerfile -t nilex-platform:${{ github.sha }} .
+
+      - name: Log in to registry
+        if: ${{ secrets.DOCKER_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push image
+        if: ${{ secrets.DOCKER_REGISTRY != '' }}
+        run: |
+          docker tag nilex-platform:${{ github.sha }} ${{ secrets.DOCKER_REGISTRY }}/nilex-platform:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_REGISTRY }}/nilex-platform:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [docker, cypress]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Deploy placeholder
+        run: echo "Configure deploy webhook or SSH action for production"

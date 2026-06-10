@@ -1,132 +1,206 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
+
+    {{-- ── رأس الصفحة ── --}}
+    <div class="mb-8 text-right">
+        <h1 class="text-2xl font-black text-gray-900">إنضم لـ Nilex 🚀</h1>
+        <p class="text-gray-500 text-sm mt-1">أنشئ حسابك مجاناً وابدأ نشر إعلاناتك</p>
+    </div>
+
+    {{-- ── الفورم ── --}}
+    <form method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
 
-        <!-- Name -->
+        {{-- الاسم الكامل --}}
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                الاسم الكامل
+            </label>
+            <input
+                type="text"
+                name="name"
+                value="{{ old('name') }}"
+                placeholder="اكتب اسمك كامل"
+                class="input-field"
+                required
+            >
+            @error('name')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        {{-- البريد الإلكتروني أو رقم الموبايل --}}
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                البريد الإلكتروني أو رقم الموبايل
+            </label>
+            <input
+                type="text"
+                name="contact"
+                value="{{ old('contact') }}"
+                placeholder="example@email.com أو 01XXXXXXXXX"
+                class="input-field text-left"
+                dir="ltr"
+                required
+            >
+            @error('contact')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
-    </form>
-<x-guest-layout>
-    {{-- ── الخلفية المتحركة (تقدر تغير الصورة من مجلد images) ── --}}
-    <div class="fixed inset-0 z-0">
-        <img src="{{ asset('images/auth-bg.jpg') }}" alt="Background" class="w-full h-full object-cover filter brightness-50">
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-900/60 to-black/80"></div>
-    </div>
-
-    <div class="min-h-screen flex items-center justify-center relative z-10 p-4">
-        {{-- ── كارت التسجيل الزجاجي (Glassmorphism) ── --}}
-        <div class="w-full max-w-lg bg-white/10 backdrop-blur-xl border border-white/20 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl">
-            
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-black text-white tracking-tight">ابدأ رحلتك الآن 🚀</h2>
-                <p class="text-gray-300 mt-2 text-sm font-medium">سجل حسابك بالموبايل، الإيميل أو السوشيال ميديا</p>
-            </div>
-
-            {{-- ── أزرار السوشيال ميديا ── --}}
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <a href="{{ url('/auth/google') }}" class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-white py-3 rounded-2xl transition font-bold border border-white/10 shadow-inner">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google"> جوجل
-                </a>
-                <a href="{{ url('/auth/tiktok') }}" class="flex items-center justify-center gap-2 bg-black/60 hover:bg-black/80 text-white py-3 rounded-2xl transition font-bold border border-white/10 shadow-inner">
-                    <img src="https://www.svgrepo.com/show/513020/tiktok-logo.svg" class="w-5 h-5 filter invert" alt="TikTok"> تيك توك
-                </a>
-                <a href="{{ url('/auth/apple') }}" class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-white py-3 rounded-2xl transition font-bold border border-white/10 shadow-inner col-span-2">
-                    <img src="https://www.svgrepo.com/show/448270/instagram.svg" class="w-5 h-5 filter invert" alt="Insta"> التسجيل بواسطة إنستجرام
-                </a>
-            </div>
-
-            <div class="flex items-center my-6">
-                <div class="flex-grow border-t border-white/20"></div>
-                <span class="px-3 text-white/60 text-sm font-bold">أو أدخل بياناتك</span>
-                <div class="flex-grow border-t border-white/20"></div>
-            </div>
-
-            {{-- ── فورم التسجيل (موبايل أو إيميل) ── --}}
-            <form method="POST" action="{{ route('register') }}" class="space-y-5">
-                @csrf
-                
-                <div>
-                    <input type="text" name="name" required placeholder="الاسم بالكامل" class="w-full bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-400 focus:bg-white/20 outline-none font-bold transition">
-                </div>
-
-                <div>
-                    <input type="text" name="contact" required placeholder="رقم الموبايل أو البريد الإلكتروني" class="w-full bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-400 focus:bg-white/20 outline-none font-bold transition">
-                </div>
-
-                {{-- حقل الباسورد مع علامة العين --}}
-                <div class="relative">
-                    <input type="password" id="passwordField" name="password" required placeholder="كلمة المرور" class="w-full bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-400 focus:bg-white/20 outline-none font-bold transition pr-12">
-                    <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition">
-                        <svg id="eyeIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                    </button>
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg py-4 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:scale-[1.02] mt-4">
-                    إنشاء حساب وإرسال OTP
+        {{-- كلمة المرور --}}
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">كلمة المرور</label>
+            <div class="relative">
+                <input
+                    type="password"
+                    name="password"
+                    id="reg-password"
+                    placeholder="••••••••"
+                    class="input-field pl-12"
+                    oninput="checkStrength(this.value)"
+                    required autocomplete="new-password"
+                >
+                <button type="button" onclick="toggleRegPassword()"
+                    class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-nilex transition-colors p-1"
+                    aria-label="إظهار/إخفاء كلمة المرور">
+                    <svg id="reg-eye-open" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <svg id="reg-eye-closed" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.477 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                    </svg>
                 </button>
-            </form>
+            </div>
 
-            <p class="text-center text-white/70 mt-6 font-medium">
-                لديك حساب؟ <a href="{{ route('login') }}" class="text-blue-400 font-bold hover:underline">تسجيل الدخول</a>
-            </p>
+            {{-- شريط قوة الباسوورد --}}
+            <div class="mt-2 space-y-1">
+                <div class="flex gap-1">
+                    <div class="strength-bar flex-1 bg-gray-200" id="str-1"></div>
+                    <div class="strength-bar flex-1 bg-gray-200" id="str-2"></div>
+                    <div class="strength-bar flex-1 bg-gray-200" id="str-3"></div>
+                    <div class="strength-bar flex-1 bg-gray-200" id="str-4"></div>
+                </div>
+                <p class="text-xs text-gray-400" id="str-label"></p>
+            </div>
+
+            @error('password')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
         </div>
+
+        {{-- تأكيد كلمة المرور --}}
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">تأكيد كلمة المرور</label>
+            <input
+                type="password"
+                name="password_confirmation"
+                placeholder="••••••••"
+                class="input-field"
+                required autocomplete="new-password"
+            >
+            @error('password_confirmation')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
+        {{-- زر التسجيل --}}
+        <button type="submit" class="btn-primary mt-2">
+            إنشاء الحساب مجاناً 🎉
+        </button>
+
+    </form>
+
+    {{-- ── فاصل ── --}}
+    <div class="divider my-6">أو سجّل بـ</div>
+
+    {{-- ── أزرار السوشيال ── --}}
+    <div class="grid grid-cols-2 gap-3">
+
+        <a href="{{ route('auth.social.redirect', 'google') }}" class="btn-social">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Google
+        </a>
+
+        <a href="{{ route('auth.social.redirect', 'facebook') }}" class="btn-social">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="#1877F2">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            Facebook
+        </a>
+
+        <a href="{{ route('auth.social.redirect', 'tiktok') }}" class="btn-social">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.52V6.75a4.85 4.85 0 01-1.02-.06z"/>
+            </svg>
+            TikTok
+        </a>
+
+        <a href="{{ route('auth.social.redirect', 'instagram') }}" class="btn-social">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                <defs>
+                    <linearGradient id="ig2" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#f09433"/>
+                        <stop offset="50%" stop-color="#dc2743"/>
+                        <stop offset="100%" stop-color="#bc1888"/>
+                    </linearGradient>
+                </defs>
+                <path fill="url(#ig2)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+            </svg>
+            Instagram
+        </a>
+
     </div>
 
-    {{-- كود علامة العين السحري --}}
-    <script>
-        function togglePassword() {
-            const input = document.getElementById('passwordField');
-            const icon = document.getElementById('eyeIcon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>';
-            } else {
-                input.type = 'password';
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
-            }
-        }
-    </script>
+    {{-- رابط الدخول --}}
+    <p class="text-center text-sm text-gray-500 mt-6">
+        عندك حساب بالفعل؟
+        <a href="{{ route('login') }}" class="text-nilex font-bold hover:text-nilex-dark transition-colors">
+            سجّل دخولك
+        </a>
+    </p>
+
 </x-guest-layout>
+
+@push('scripts')
+<script>
+    function toggleRegPassword() {
+        const input  = document.getElementById('reg-password');
+        const open   = document.getElementById('reg-eye-open');
+        const closed = document.getElementById('reg-eye-closed');
+        if (input.type === 'password') {
+            input.type = 'text';
+            open.classList.add('hidden');
+            closed.classList.remove('hidden');
+        } else {
+            input.type = 'password';
+            closed.classList.add('hidden');
+            open.classList.remove('hidden');
+        }
+    }
+
+    function checkStrength(val) {
+        let score = 0;
+        if (val.length >= 8)           score++;
+        if (/[A-Z]/.test(val))         score++;
+        if (/[0-9]/.test(val))         score++;
+        if (/[^A-Za-z0-9]/.test(val))  score++;
+
+        const colors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'];
+        const labels = ['', 'ضعيفة جداً', 'ضعيفة', 'متوسطة', 'قوية 💪'];
+
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById('str-' + i).style.background =
+                i <= score ? colors[score] : '#e5e7eb';
+        }
+        const lbl = document.getElementById('str-label');
+        lbl.textContent  = val.length ? labels[score] : '';
+        lbl.style.color  = colors[score];
+    }
+</script>
+@endpush

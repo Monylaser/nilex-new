@@ -28,7 +28,7 @@ class ListingController extends Controller
             'location'
         ]);
 
-        return view('listings.show', [
+        return view('frontend.listings.show', [
             'listing' => $listing
         ]);
     }

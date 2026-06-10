@@ -9,7 +9,13 @@ use Illuminate\Support\Carbon;
 class ListingsChart extends ChartWidget
 {
     protected ?string $heading = 'معدل نشر الإعلانات (آخر 7 أيام)';
-    protected static ?int $sort = 2; // هيظهر تحت كروت الإحصائيات
+
+    protected static ?int $sort = 2;
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasRole('super_admin') ?? false;
+    }
 
     protected function getData(): array
     {

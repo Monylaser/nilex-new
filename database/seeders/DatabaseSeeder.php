@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LocationSeeder::class,
             CategorySeeder::class,
+            LegalPageSeeder::class,
+            SeoGovernoratesSeeder::class,
         ]);
 
         // 2. إنشاء الأقسام (نفس كودك بالظبط)

@@ -30,6 +30,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'is_phone_verified' => true,
         ];
     }
 
@@ -40,6 +41,34 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    public function phoneUnverified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_phone_verified' => false,
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ]);
+    }
+
+    public function phoneVerified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_phone_verified' => true,
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ]);
+    }
+
+    public function withPendingOtp(string $plain = '1234'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_phone_verified' => false,
+            'otp_code' => \Illuminate\Support\Facades\Hash::make($plain),
+            'otp_expires_at' => now()->addMinutes(5),
+            'otp_attempts' => 0,
         ]);
     }
 }

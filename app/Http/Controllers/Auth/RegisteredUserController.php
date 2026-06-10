@@ -2,125 +2,133 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Auth\Services\DeviceFingerprintService;
+use App\Auth\Services\DeviceLimitService;
+use App\Auth\Services\OtpService;
 use App\Http\Controllers\Controller;
+use App\Models\CampaignLink;
+use App\Models\PointTransaction;
 use App\Models\User;
-use App\Services\SmsService;
 use App\Services\PointService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Mail; // 🟢 استدعاء الميل
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * عرض صفحة التسجيل
-     */
+    public function __construct(
+        private OtpService $otpService,
+        private DeviceLimitService $deviceLimit,
+        private DeviceFingerprintService $fingerprints,
+        private PointService $pointService,
+    ) {}
+
     public function create(): View
     {
         return view('auth.register');
     }
 
-    /**
-     * معالجة طلب التسجيل الجديد (إيميل أو موبايل)
-     */
     public function store(Request $request): RedirectResponse
     {
-        // 1. التحقق من البيانات
+        // ── 1. Validate ──────────────────────────────────────────────
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'contact' => ['required', 'string'], // 🟢 حقل واحد يقبل إيميل أو رقم
-            'password' => ['required', Rules\Password::defaults()], // شيلنا confirmed عشان تناسب واجهة التريند
+            'name'     => ['required', 'string', 'max:255'],
+            'contact'  => ['required', 'string', 'max:255'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // 2. تحليل حقل الـ contact 
-        $isEmail = filter_var($request->contact, FILTER_VALIDATE_EMAIL);
-        $isPhone = preg_match('/^[0-9]+$/', $request->contact);
+        // ── 2. Detect contact type ───────────────────────────────────
+        $isEmail = (bool) filter_var($request->contact, FILTER_VALIDATE_EMAIL);
+        $isPhone = (bool) preg_match('/^01[0-9]{9}$/', $request->contact);
 
-        if (!$isEmail && !$isPhone) {
+        if (! $isEmail && ! $isPhone) {
             throw ValidationException::withMessages([
-                'contact' => 'الرجاء إدخال بريد إلكتروني صحيح أو رقم هاتف صالح.',
+                'contact' => 'الرجاء إدخال بريد إلكتروني صحيح أو رقم هاتف مصري صالح (01XXXXXXXXX).',
             ]);
         }
 
-        // 3. التحقق من عدم تكرار الحساب
+        // ── 3. Uniqueness check ──────────────────────────────────────
         if ($isEmail && User::where('email', $request->contact)->exists()) {
-            throw ValidationException::withMessages(['contact' => 'هذا البريد الإلكتروني مسجل بالفعل.']);
-        }
-        if ($isPhone && User::where('phone', $request->contact)->exists()) {
-            throw ValidationException::withMessages(['contact' => 'رقم الهاتف هذا مسجل بالفعل.']);
-        }
-
-        // 4. 🛡️ نظام الحماية المتقدم (بصمة الجهاز + IP)
-        $deviceId = $request->cookie('device_id');
-        $ipAddress = $request->ip();
-
-        $accountsCount = User::where(function($query) use ($deviceId, $ipAddress) {
-            if ($deviceId) {
-                $query->where('device_id', $deviceId);
-            }
-            $query->orWhere('ip_address', $ipAddress);
-        })->count();
-
-        if ($accountsCount >= 3) {
             throw ValidationException::withMessages([
-                'contact' => 'عذراً، لقد وصلت للحد الأقصى لإنشاء الحسابات من هذا الجهاز (3 حسابات كحد أقصى).',
+                'contact' => 'هذا البريد الإلكتروني مسجل بالفعل.',
             ]);
         }
 
-        $newCookie = false;
-        if (!$deviceId) {
-            $deviceId = (string) Str::uuid();
-            $newCookie = true;
+        if ($isPhone && User::where('phone', $request->contact)->exists()) {
+            throw ValidationException::withMessages([
+                'contact' => 'رقم الهاتف هذا مسجل بالفعل.',
+            ]);
         }
 
-        // 5. إنشاء كود الـ OTP
-        $otp = (string) rand(1000, 9999);
+        // ── 4. Device limit check ────────────────────────────────────
+        $this->deviceLimit->assertCanCreateAccount($request);
 
-        // 6. إنشاء المستخدم في الداتا بيز
+        // ── 5. Resolve device fingerprint ────────────────────────────
+        $device = $this->fingerprints->resolveDeviceCookie($request);
+
+        // ── 6. Create user ───────────────────────────────────────────
         $user = User::create([
-            'name' => $request->name,
-            'email' => $isEmail ? $request->contact : null,
-            'phone' => $isPhone ? $request->contact : null,
-            'password' => Hash::make($request->password),
-            'ip_address' => $ipAddress,
-            'device_id' => $deviceId,
-            'otp_code' => $otp,
-            'otp_expires_at' => now()->addMinutes(10),
+            'name'              => $request->name,
+            'email'             => $isEmail ? $request->contact : null,
+            'phone'             => $isPhone ? $request->contact : null,
+            'password'          => Hash::make($request->password),
+            'ip_address'        => $request->ip(),
+            'device_id'         => $device['id'],
+            'fingerprint_hash'  => $this->fingerprints->compute($request),
             'is_phone_verified' => false,
         ]);
 
-        // 7. 🎁 منح اليوزر 100 نقطة هدية التسجيل فوراً
-        $pointService = new PointService();
-        $pointService->credit($user, 100, 'هدية ترحيبية بمناسبة الانضمام لمنصة نايلكس 🎁');
+        // ── 7. Issue OTP ─────────────────────────────────────────────
+        $this->otpService->issue($user, $isEmail);
 
-        // 8. 🟢 إرسال الـ OTP (باستخدام الكود القديم بتاعك للإيميل أو عبر شركة الـ SMS للموبايل)
-        if ($isEmail) {
-            Mail::raw("أهلاً بك في منصة Nilex. كود التفعيل الخاص بك هو: {$otp}", function ($message) use ($user) {
-                $message->to($user->email)->subject('كود التفعيل - Nilex 🔐');
-            });
-        } else {
-            // 🟢 إرسال الـ OTP للموبايل عبر خدمة الـ SMS
-            $smsService = new SmsService();
-            $smsService->sendOtp($user->phone, $otp);
+        // ── 8. Welcome points ────────────────────────────────────────
+        $this->pointService->credit(
+            $user,
+            100,
+            'هدية ترحيبية بمناسبة الانضمام لمنصة نايلكس 🎁'
+        );
+
+        // ── 9. Campaign referral reward ──────────────────────────────
+        $campaignCode = session('campaign_code');
+        if ($campaignCode) {
+            $campaign = CampaignLink::where('code', $campaignCode)->first();
+            if ($campaign && $campaign->isValid()) {
+                $user->increment('points_balance', $campaign->points_reward);
+                PointTransaction::create([
+                    'user_id'         => $user->id,
+                    'amount'          => $campaign->points_reward,
+                    'current_balance' => $user->fresh()->points_balance,
+                    'description'     => "مكافأة رابط الإحالة: {$campaign->code}",
+                ]);
+                $campaign->increment('used_count');
+                session()->forget('campaign_code');
+            }
         }
 
+        // ── 10. Fire event + login ───────────────────────────────────
         event(new Registered($user));
-
         Auth::login($user);
 
-        // 9. التوجيه لصفحة الـ OTP مع زرع الكوكيز
+        // ── 11. Redirect with device cookie if new ───────────────────
         $response = redirect()->route('otp.notice');
-        
-        if ($newCookie) {
-            $response->cookie('device_id', $deviceId, 2628000);
+
+        if ($device['new']) {
+            $response->cookie(
+                config('auth-security.device_limit.cookie_name', 'device_id'),
+                $device['id'],
+                config('auth-security.device_limit.cookie_minutes', 2628000),
+                '/',
+                null,
+                $request->secure(),
+                true,
+                false,
+                'lax'
+            );
         }
 
         return $response;

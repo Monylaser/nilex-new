@@ -77,7 +77,10 @@ class PointService
 
     /**
      * Return the current verified balance directly from the DB.
-     * Use this instead of $user->points when you need guaranteed accuracy.
+     * Always use this instead of $user->points for guaranteed accuracy.
+     * Both `points` and `points_balance` are kept in sync — `points` is
+     * the single source of truth; `points_balance` mirrors it so the
+     * admin panel can display it without extra queries.
      */
     public function getBalance(User $user): int
     {
@@ -109,15 +112,17 @@ class PointService
                 throw new InsufficientPointsException(abs($amount), $lockedUser->points);
             }
 
-            // 3. Update balance atomically using a DB expression (not PHP arithmetic).
+            // 3. Update balance atomically — keep both columns in sync.
+            //    `points`         = active balance used everywhere in the app
+            //    `points_balance` = mirrors `points` so admin panel reads the same value
             $lockedUser->increment('points', $amount);
-            $newBalance = $lockedUser->points + $amount; // increment() updates the model too
+            $lockedUser->update(['points_balance' => $lockedUser->points]);
 
             // 4. Log the transaction.
             $transaction = new PointTransaction([
                 'user_id'         => $lockedUser->id,
                 'amount'          => $amount,
-                'current_balance' => $lockedUser->points, // already updated by increment()
+                'current_balance' => $lockedUser->points,
                 'description'     => $description,
             ]);
 

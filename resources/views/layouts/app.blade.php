@@ -119,6 +119,67 @@
             </main>
         </div>
 
+        {{-- ══ الفوتر القانوني ══ --}}
+        <footer class="bg-gray-900 text-gray-400 mt-16" dir="rtl">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+
+                    {{-- الشعار والوصف --}}
+                    <div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-8 h-8" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="36" height="36" rx="10" fill="#6366f1"/>
+                                <path d="M10 26V13l8-4 8 4v13" stroke="white" stroke-width="2.2" stroke-linejoin="round"/>
+                                <rect x="14" y="18" width="8" height="8" rx="1" fill="white" opacity=".85"/>
+                            </svg>
+                            <span class="text-white font-black text-xl">نايلكس</span>
+                        </div>
+                        <p class="text-sm leading-relaxed">منصة الإعلانات المبوّبة الأولى في مصر — بيع واشتري بثقة.</p>
+                    </div>
+
+                    {{-- روابط سريعة --}}
+                    <div>
+                        <h3 class="text-white font-bold mb-3 text-sm uppercase tracking-wide">روابط سريعة</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="{{ route('home') }}" class="hover:text-indigo-400 transition">الرئيسية</a></li>
+                            <li><a href="{{ route('listings.search') }}" class="hover:text-indigo-400 transition">البحث</a></li>
+                            @auth
+                                <li><a href="{{ route('dashboard') }}" class="hover:text-indigo-400 transition">لوحة التحكم</a></li>
+                            @else
+                                <li><a href="{{ route('login') }}" class="hover:text-indigo-400 transition">تسجيل الدخول</a></li>
+                                <li><a href="{{ route('register') }}" class="hover:text-indigo-400 transition">إنشاء حساب</a></li>
+                            @endauth
+                        </ul>
+                    </div>
+
+                    {{-- الصفحات القانونية --}}
+                    <div>
+                        <h3 class="text-white font-bold mb-3 text-sm uppercase tracking-wide">الصفحات القانونية</h3>
+                        <ul class="space-y-2 text-sm">
+                            @foreach(\App\Models\LegalPage::orderBy('title')->get() as $legalPage)
+                                <li>
+                                    <a href="{{ '/' . ltrim($legalPage->slug, '/') }}" class="hover:text-indigo-400 transition">
+                                        {{ $legalPage->title }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <p>جميع الحقوق محفوظة &copy; {{ date('Y') }} <span class="text-indigo-400 font-semibold">نايلكس</span></p>
+                    <div class="flex items-center gap-4">
+                        <a href="/pages/privacy-policy" class="hover:text-indigo-400 transition">الخصوصية</a>
+                        <span class="text-gray-700">|</span>
+                        <a href="/pages/terms-and-conditions" class="hover:text-indigo-400 transition">الشروط</a>
+                        <span class="text-gray-700">|</span>
+                        <a href="/pages/contact-us" class="hover:text-indigo-400 transition">تواصل معنا</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
         @yield('footer-scripts')
 
         <script>

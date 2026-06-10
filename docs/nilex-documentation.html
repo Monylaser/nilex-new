@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>توثيق مشروع Nilex — الوثيقة الكاملة</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #1a1a2e;
+    background: #fff;
+    direction: rtl;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    page-break-after: always;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f3460 0%, #1D9E75 100%);
+    color: #fff;
+    text-align: center;
+    padding: 60px 40px;
+  }
+  .cover .logo-circle {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 3px solid rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; font-weight: 900;
+    margin: 0 auto 28px;
+    color: #fff;
+  }
+  .cover h1 { font-size: 42px; font-weight: 900; margin-bottom: 10px; letter-spacing: -1px; }
+  .cover h2 { font-size: 20px; font-weight: 600; opacity: 0.85; margin-bottom: 30px; }
+  .cover .divider { width: 80px; height: 3px; background: rgba(255,255,255,0.5); margin: 20px auto; border-radius: 2px; }
+  .cover .meta { font-size: 13px; opacity: 0.7; line-height: 2.2; }
+  .cover .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-top: 20px;
+  }
+
+  /* ── TOC ── */
+  .toc-page {
+    page-break-after: always;
+    padding: 50px 60px;
+  }
+  .toc-title {
+    font-size: 22px;
+    font-weight: 900;
+    color: #0f3460;
+    border-bottom: 3px solid #1D9E75;
+    padding-bottom: 10px;
+    margin-bottom: 28px;
+  }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px dotted #ddd;
+    text-decoration: none;
+    color: #333;
+    font-size: 13px;
+  }
+  .toc-item:hover { color: #1D9E75; }
+  .toc-item .num { font-weight: 700; color: #1D9E75; margin-left: 10px; }
+  .toc-item .dots { flex: 1; border-bottom: 1px dotted #ccc; margin: 0 8px; }
+  .toc-item .page-num { color: #999; font-size: 11px; }
+  .toc-section { font-weight: 700; color: #0f3460; margin-top: 12px; font-size: 14px; }
+
+  /* ── Sections ── */
+  .section {
+    padding: 40px 60px 20px;
+    page-break-inside: avoid;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e8f5f0;
+  }
+  .section-num {
+    width: 40px; height: 40px;
+    background: #1D9E75;
+    color: #fff;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 900;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 900;
+    color: #0f3460;
+  }
+  .section-subtitle {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f3460;
+    margin: 22px 0 10px;
+    padding-right: 12px;
+    border-right: 4px solid #1D9E75;
+  }
+  h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    margin: 16px 0 8px;
+  }
+
+  p { margin-bottom: 10px; color: #444; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 20px;
+    font-size: 12px;
+    page-break-inside: auto;
+  }
+  thead tr {
+    background: #0f3460;
+    color: #fff;
+  }
+  th {
+    padding: 9px 12px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #fafcfb; }
+  tr:hover td { background: #f0faf6; }
+
+  /* ── Code / Badge ── */
+  code {
+    background: #f4f4f4;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 11px;
+    color: #c0392b;
+    direction: ltr;
+    display: inline-block;
+  }
+  .code-block {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    direction: ltr;
+    text-align: left;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* ── Tags / Badges ── */
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    margin: 1px;
+  }
+  .tag-green { background: #d4edda; color: #155724; }
+  .tag-blue  { background: #cce5ff; color: #004085; }
+  .tag-red   { background: #f8d7da; color: #721c24; }
+  .tag-yellow{ background: #fff3cd; color: #856404; }
+  .tag-gray  { background: #e2e3e5; color: #383d41; }
+  .tag-teal  { background: #d0f0e8; color: #0a5c44; }
+
+  /* ── Info Boxes ── */
+  .info-box {
+    background: #e8f5f0;
+    border-right: 4px solid #1D9E75;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 12px;
+    color: #155724;
+  }
+  .warn-box {
+    background: #fff8e1;
+    border-right: 4px solid #f59e0b;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 12px;
+    color: #856404;
+  }
+  .danger-box {
+    background: #fdecea;
+    border-right: 4px solid #e53935;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 12px;
+    color: #721c24;
+  }
+
+  /* ── Lists ── */
+  ul, ol { padding-right: 22px; margin: 8px 0 14px; }
+  li { margin-bottom: 4px; color: #444; }
+
+  /* ── Columns grid ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 14px 0; }
+  .card {
+    background: #f8fffe;
+    border: 1px solid #d0ede4;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .card h4 { margin-top: 0; color: #1D9E75; border: none; padding: 0; }
+
+  /* ── Page breaks ── */
+  .page-break { page-break-after: always; }
+
+  /* ── Print styles ── */
+  @media print {
+    body { font-size: 11px; }
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .section-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h3 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .info-box, .warn-box, .danger-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .code-block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    a[href]:after { content: none !important; }
+  }
+
+  @page { margin: 15mm 15mm 18mm 15mm; }
+
+  /* ── Footer ── */
+  .doc-footer {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    font-size: 11px;
+    border-top: 1px solid #eee;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     COVER PAGE
+══════════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo-circle">N</div>
+  <h1>Nilex Platform</h1>
+  <h2>نايلكس — منصة الإعلانات المبوبة المصرية</h2>
+  <div class="divider"></div>
+  <p style="font-size:16px; opacity:0.9; margin-bottom:16px;">وثيقة التوثيق التقني الكاملة</p>
+  <div class="meta">
+    <div>Laravel 13 · Filament 5 · PHP 8.3 · Tailwind CSS · Alpine.js</div>
+    <div>SQLite / MySQL · Redis · Meilisearch · Paymob · Google Gemini</div>
+  </div>
+  <div class="badge">إصدار يونيو 2026 — للاستخدام الداخلي</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TABLE OF CONTENTS
+══════════════════════════════════════════ -->
+<div class="toc-page">
+  <div class="toc-title">📋 فهرس المحتويات</div>
+
+  <div class="toc-item"><span><span class="num">1.</span> نظرة عامة على المشروع</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">2.</span> المكدس التقني (Tech Stack)</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">3.</span> حزم Composer (Backend)</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">4.</span> حزم NPM (Frontend)</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">5.</span> هيكل المشروع — المجلدات</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">6.</span> Routes — كل المسارات</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">7.</span> قاعدة البيانات — كل الجداول والأعمدة</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">8.</span> Models — النماذج والعلاقات</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">9.</span> Controllers — وحدات التحكم</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">10.</span> لوحة الإدارة Filament Admin</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">11.</span> نظام المصادقة والأمان</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">12.</span> Services — الخدمات</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">13.</span> Jobs والطوابير</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">14.</span> Events & Listeners</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">15.</span> نظام النقاط والمدفوعات</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">16.</span> نظام الإعلانات والوسائط</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">17.</span> الذكاء الاصطناعي (Gemini)</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">18.</span> نظام SEO والحملات</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">19.</span> متغيرات البيئة (.env)</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">20.</span> الاختبارات (Tests)</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">21.</span> المشاكل والثغرات المكتشفة</span><span class="dots"></span></div>
+  <div class="toc-item"><span><span class="num">22.</span> دليل التشغيل والنشر</span><span class="dots"></span></div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 1 — OVERVIEW
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div>
+      <div class="section-title">نظرة عامة على المشروع</div>
+      <div class="section-subtitle">Project Overview</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Nilex (نايلكس)</strong> هي منصة إعلانات مبوبة مصرية تعمل باللغتين العربية والإنجليزية، تتيح للمستخدمين نشر وتصفح الإعلانات في مختلف الفئات (سيارات، عقارات، إلكترونيات، ملابس، وغيرها) مع نظام نقاط واقتصاد رقمي متكامل.
+  </div>
+
+  <h3>الهدف من المشروع</h3>
+  <ul>
+    <li>منصة بيع وشراء محلية على غرار OLX/Dubizzle مخصصة للسوق المصري</li>
+    <li>دعم كامل للعربية (RTL) مع إمكانية التبديل للإنجليزية</li>
+    <li>نظام تحقق بالـ OTP لضمان جودة المستخدمين</li>
+    <li>نظام نقاط لتحفيز النشاط وتمييز الإعلانات</li>
+    <li>لوحة إدارة متكاملة للإشراف على المحتوى</li>
+    <li>تكامل مع الذكاء الاصطناعي (Gemini) لإنشاء الإعلانات تلقائيًا</li>
+  </ul>
+
+  <h3>المستخدمون المستهدفون</h3>
+  <div class="two-col">
+    <div class="card">
+      <h4>👤 المستخدم العادي</h4>
+      <ul>
+        <li>نشر إعلانات البيع والشراء</li>
+        <li>البحث والتصفح بالموقع والفئة</li>
+        <li>التواصل عبر واتساب</li>
+        <li>إدارة إعلاناته من Dashboard</li>
+        <li>شراء نقاط لتمييز الإعلانات</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>👨‍💼 المشرف / الإداري</h4>
+      <ul>
+        <li>مراجعة الإعلانات والإشراف عليها</li>
+        <li>إدارة المستخدمين والأدوار</li>
+        <li>إرسال حملات تسويقية CRM</li>
+        <li>تكوين SEO لكل تصنيف وموقع</li>
+        <li>إنشاء إعلانات بالذكاء الاصطناعي</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>الرابط والبيئة</h3>
+  <table>
+    <thead><tr><th>البيئة</th><th>الرابط</th><th>ملاحظات</th></tr></thead>
+    <tbody>
+      <tr><td>التطوير (Dev)</td><td><code>http://127.0.0.1:8000</code></td><td>php artisan serve</td></tr>
+      <tr><td>Vite Dev Server</td><td><code>http://localhost:5173</code></td><td>npm run dev</td></tr>
+      <tr><td>لوحة الإدارة</td><td><code>http://127.0.0.1:8000/admin</code></td><td>Filament Panel</td></tr>
+      <tr><td>Laravel Telescope</td><td><code>http://127.0.0.1:8000/telescope</code></td><td>Local only</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 2 — TECH STACK
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div>
+      <div class="section-title">المكدس التقني</div>
+      <div class="section-subtitle">Tech Stack</div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>الطبقة</th><th>التقنية</th><th>الإصدار</th><th>الدور</th></tr></thead>
+    <tbody>
+      <tr><td>Backend Language</td><td>PHP</td><td>^8.3</td><td>لغة الخادم الأساسية</td></tr>
+      <tr><td>Backend Framework</td><td>Laravel</td><td>^13.0</td><td>إطار العمل الرئيسي</td></tr>
+      <tr><td>Admin Panel</td><td>Filament</td><td>5.4.*</td><td>لوحة إدارة CRUD كاملة</td></tr>
+      <tr><td>Authentication</td><td>Laravel Breeze + Sanctum</td><td>^2.4 / ^4.3</td><td>تسجيل الدخول والـ API tokens</td></tr>
+      <tr><td>Social Auth</td><td>Laravel Socialite</td><td>^5.27</td><td>Google, Facebook, TikTok, Instagram</td></tr>
+      <tr><td>RBAC</td><td>Filament Shield + Spatie Permission</td><td>^4.2</td><td>الأدوار والصلاحيات</td></tr>
+      <tr><td>Media</td><td>Spatie Media Library</td><td>^11.21</td><td>رفع الصور + WebP + Watermark</td></tr>
+      <tr><td>Search</td><td>Laravel Scout + Meilisearch</td><td>^11.1 / ^1.16</td><td>البحث الذكي بالفلاتر</td></tr>
+      <tr><td>i18n</td><td>Spatie Translatable</td><td>^6.14</td><td>ترجمة الصفحات القانونية</td></tr>
+      <tr><td>Activity Log</td><td>Spatie Activity Log</td><td>^4.12</td><td>تتبع العمليات</td></tr>
+      <tr><td>Cache / Queue</td><td>Redis (Predis)</td><td>^3.4</td><td>الكاش والطوابير</td></tr>
+      <tr><td>Payment</td><td>Paymob</td><td>—</td><td>الدفع الإلكتروني (مصر)</td></tr>
+      <tr><td>AI</td><td>Google Gemini 1.5 Flash</td><td>—</td><td>إنشاء الإعلانات تلقائيًا</td></tr>
+      <tr><td>CSS Framework</td><td>Tailwind CSS</td><td>^3.1</td><td>التصميم المرئي</td></tr>
+      <tr><td>JS Reactivity</td><td>Alpine.js</td><td>^3.15</td><td>التفاعلية في الواجهة</td></tr>
+      <tr><td>Build Tool</td><td>Vite</td><td>^8.0</td><td>بناء Assets</td></tr>
+      <tr><td>3D / Animation</td><td>Three.js + GSAP</td><td>^0.184 / ^3.15</td><td>تأثيرات بصرية</td></tr>
+      <tr><td>Testing</td><td>Pest + PHPUnit + Cypress</td><td>^4.0 / ^12.5 / ^14.3</td><td>اختبارات Unit + E2E</td></tr>
+      <tr><td>Dev Tools</td><td>Laravel Telescope + Pail + Pint</td><td>—</td><td>Debugging + Code Style</td></tr>
+      <tr><td>Containerization</td><td>Docker (Nginx + PHP)</td><td>—</td><td>بيئة الإنتاج</td></tr>
+      <tr><td>Database</td><td>SQLite (dev) / MySQL (prod)</td><td>—</td><td>قاعدة البيانات الرئيسية</td></tr>
+      <tr><td>Image Optimizer</td><td>Spatie Image Optimizer</td><td>^1.8</td><td>ضغط الصور</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 3 — COMPOSER PACKAGES
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div>
+      <div class="section-title">حزم Composer — Backend</div>
+      <div class="section-subtitle">composer.json</div>
+    </div>
+  </div>
+
+  <h3>Production Dependencies</h3>
+  <table>
+    <thead><tr><th>الحزمة</th><th>الإصدار</th><th>الغرض</th></tr></thead>
+    <tbody>
+      <tr><td><code>laravel/framework</code></td><td>^13.0</td><td>إطار العمل الأساسي</td></tr>
+      <tr><td><code>filament/filament</code></td><td>5.4.*</td><td>لوحة الإدارة</td></tr>
+      <tr><td><code>bezhansalleh/filament-shield</code></td><td>^4.2</td><td>RBAC للوحة الإدارة</td></tr>
+      <tr><td><code>filament/spatie-laravel-media-library-plugin</code></td><td>^5.4</td><td>رفع الوسائط في Filament</td></tr>
+      <tr><td><code>jeffersongoncalves/filament-translatable</code></td><td>3.0</td><td>ترجمة الحقول في Filament</td></tr>
+      <tr><td><code>laravel/sanctum</code></td><td>^4.3</td><td>API Tokens</td></tr>
+      <tr><td><code>laravel/scout</code></td><td>^11.1</td><td>البحث النصي الذكي</td></tr>
+      <tr><td><code>laravel/socialite</code></td><td>^5.27</td><td>المصادقة الاجتماعية</td></tr>
+      <tr><td><code>laravel/tinker</code></td><td>^3.0</td><td>REPL للمطورين</td></tr>
+      <tr><td><code>meilisearch/meilisearch-php</code></td><td>^1.16</td><td>عميل Meilisearch</td></tr>
+      <tr><td><code>predis/predis</code></td><td>^3.4</td><td>Redis Client</td></tr>
+      <tr><td><code>spatie/laravel-activitylog</code></td><td>^4.12</td><td>سجل النشاطات</td></tr>
+      <tr><td><code>spatie/laravel-image-optimizer</code></td><td>^1.8</td><td>ضغط الصور</td></tr>
+      <tr><td><code>spatie/laravel-medialibrary</code></td><td>^11.21</td><td>مكتبة الوسائط</td></tr>
+      <tr><td><code>spatie/laravel-translatable</code></td><td>^6.14</td><td>حقول متعددة اللغات</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Development Dependencies</h3>
+  <table>
+    <thead><tr><th>الحزمة</th><th>الإصدار</th><th>الغرض</th></tr></thead>
+    <tbody>
+      <tr><td><code>barryvdh/laravel-ide-helper</code></td><td>^3.7</td><td>دعم IDE Autocomplete</td></tr>
+      <tr><td><code>enlightn/security-checker</code></td><td>^2.0</td><td>فحص الثغرات الأمنية</td></tr>
+      <tr><td><code>laravel/breeze</code></td><td>^2.4</td><td>Authentication Scaffolding</td></tr>
+      <tr><td><code>laravel/pail</code></td><td>^1.2.5</td><td>عرض Logs في الـ Terminal</td></tr>
+      <tr><td><code>laravel/pint</code></td><td>^1.27</td><td>PHP Code Style Fixer</td></tr>
+      <tr><td><code>laravel/telescope</code></td><td>^5.20</td><td>Debugging Dashboard</td></tr>
+      <tr><td><code>pestphp/pest</code></td><td>^4.0</td><td>Testing Framework</td></tr>
+      <tr><td><code>pestphp/pest-plugin-laravel</code></td><td>^4.0</td><td>Pest + Laravel integration</td></tr>
+      <tr><td><code>phpunit/phpunit</code></td><td>^12.5.12</td><td>Testing Engine</td></tr>
+      <tr><td><code>fakerphp/faker</code></td><td>^1.23</td><td>بيانات اختبارية وهمية</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Composer Scripts</h3>
+  <table>
+    <thead><tr><th>الأمر</th><th>ما يفعله</th></tr></thead>
+    <tbody>
+      <tr><td><code>composer run dev</code></td><td>يشغّل concurrently: php artisan serve + queue:listen + npm run dev</td></tr>
+      <tr><td><code>composer test</code></td><td>يشغّل Pest</td></tr>
+      <tr><td><code>composer setup</code></td><td>install + migrate + npm build</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 4 — NPM
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div>
+      <div class="section-title">حزم NPM — Frontend</div>
+      <div class="section-subtitle">package.json</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>Dependencies (Production)</h3>
+      <table>
+        <thead><tr><th>الحزمة</th><th>الإصدار</th><th>الغرض</th></tr></thead>
+        <tbody>
+          <tr><td><code>gsap</code></td><td>^3.15.0</td><td>مكتبة الـ Animations</td></tr>
+          <tr><td><code>three</code></td><td>^0.184.0</td><td>رسومات 3D بالـ WebGL</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3>DevDependencies</h3>
+      <table>
+        <thead><tr><th>الحزمة</th><th>الإصدار</th></tr></thead>
+        <tbody>
+          <tr><td><code>vite</code></td><td>^8.0.0</td></tr>
+          <tr><td><code>laravel-vite-plugin</code></td><td>^3.0.0</td></tr>
+          <tr><td><code>tailwindcss</code></td><td>^3.1.0</td></tr>
+          <tr><td><code>@tailwindcss/forms</code></td><td>—</td></tr>
+          <tr><td><code>alpinejs</code></td><td>^3.15.12</td></tr>
+          <tr><td><code>axios</code></td><td>1.11–1.14</td></tr>
+          <tr><td><code>cypress</code></td><td>^14.3.0</td></tr>
+          <tr><td><code>concurrently</code></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 5 — FOLDER STRUCTURE
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div>
+      <div class="section-title">هيكل مجلدات المشروع</div>
+      <div class="section-subtitle">Directory Structure</div>
+    </div>
+  </div>
+
+  <div class="code-block">nilex_platform/
+├── app/
+│   ├── Auth/                    ← نظام الأمان المخصص (OTP, Device, Fingerprint)
+│   │   ├── Jobs/                ← SendOtpEmailJob, SendOtpSmsJob
+│   │   ├── Middleware/          ← EnsureUserIsNotBanned, SecurityHeaders
+│   │   ├── Providers/           ← AuthSecurityServiceProvider
+│   │   ├── Services/            ← OtpService, DeviceLimitService, DeviceFingerprintService
+│   │   └── ValueObjects/        ← OtpCode
+│   ├── Console/Commands/        ← GenerateSeoImages
+│   ├── Events/                  ← NewMessage (Broadcast)
+│   ├── Filament/Admin/          ← لوحة الإدارة الكاملة
+│   │   ├── Resources/           ← كل الـ Resources (14 resource)
+│   │   └── Widgets/             ← StatsOverview, Charts
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Auth/            ← Login, Register, OTP, Socialite
+│   │   │   └── Frontend/        ← Home, Category, Legal, Payment
+│   │   ├── Middleware/          ← EnsureOtpIsVerified, SetLocale, TrackCampaign...
+│   │   └── Requests/            ← LoginRequest, ProfileRequest...
+│   ├── Jobs/                    ← ProcessScheduledCampaigns
+│   ├── Listeners/Auth/          ← Log events (Login, Logout, Failed, Roles)
+│   ├── Models/                  ← 16+ Eloquent Models
+│   ├── Notifications/           ← CampaignNotification, ListingStatusNotification
+│   ├── Observers/               ← ListingObserver (fraud), PointTransactionObserver
+│   ├── Providers/               ← AppServiceProvider, AdminPanelProvider, Telescope
+│   └── Services/                ← GeminiService, PointService, PaymobService, SmsService
+├── bootstrap/                   ← app.php (middleware registration)
+├── config/                      ← app, auth, auth-security, activitylog, telescope...
+├── database/
+│   ├── factories/               ← UserFactory
+│   ├── migrations/              ← 30+ migration files
+│   └── seeders/                 ← LocationSeeder, LegalPageSeeder, RoleSeeder...
+├── docs/                        ← هذا الملف + Production Report
+├── lang/
+│   ├── ar/ui.php                ← كل نصوص الواجهة بالعربية
+│   └── en/ui.php                ← كل نصوص الواجهة بالإنجليزية
+├── public/
+│   ├── images/
+│   │   ├── logo/download.png    ← اللوجو
+│   │   ├── watermark.png        ← العلامة المائية (نسخة من اللوجو)
+│   │   ├── categories/          ← أيقونات التصنيفات
+│   │   └── SEO/                 ← صور SEO للمحافظات والتصنيفات
+│   └── fonts/Cairo-*.ttf        ← خط Cairo
+├── resources/
+│   ├── css/app.css
+│   ├── js/app.js
+│   └── views/
+│       ├── frontend/            ← home, listing, category, dashboard, auth views
+│       ├── layouts/             ← app.blade.php, navigation
+│       └── components/          ← footer, x-components
+├── routes/
+│   ├── web.php                  ← كل الـ Routes الرئيسية
+│   ├── auth.php                 ← Breeze auth routes
+│   └── console.php              ← Scheduled jobs
+├── cypress/                     ← E2E Tests
+├── docker/                      ← Nginx + PHP Dockerfile
+├── .github/workflows/ci.yml     ← CI/CD Pipeline
+└── composer.json / package.json</div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 6 — ROUTES
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div>
+      <div class="section-title">Routes — كل المسارات</div>
+      <div class="section-subtitle">routes/web.php + routes/auth.php</div>
+    </div>
+  </div>
+
+  <div class="warn-box">⚠️ لا يوجد <code>routes/api.php</code> — كل الـ Routes في <code>web.php</code> و <code>auth.php</code></div>
+
+  <h3>المسارات العامة (Public Routes)</h3>
+  <table>
+    <thead><tr><th>Method</th><th>URI</th><th>Name</th><th>Controller</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/</code></td><td>home</td><td>HomeController@index</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/search</code></td><td>listings.search</td><td>HomeController@search</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/pricing</code></td><td>pricing</td><td>HomeController@pricing</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/listings/{listing}</code></td><td>listings.show</td><td>ListingController@show</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/category/{category:slug}</code></td><td>category.show</td><td>CategoryController@show</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/language/{locale}</code></td><td>language.switch</td><td>Closure (session)</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/auth/{provider}/redirect</code></td><td>auth.social.redirect</td><td>SocialiteController@redirect</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/auth/{provider}/callback</code></td><td>auth.social.callback</td><td>SocialiteController@callback</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/listings/{listing}/reveal-phone</code></td><td>listings.reveal-phone</td><td>Closure (whatsapp)</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/payment/webhook</code></td><td>payment.webhook</td><td>PaymentController@webhook ⚠️</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/{slug}</code></td><td>legal.show</td><td>LegalPageController@show</td></tr>
+    </tbody>
+  </table>
+
+  <h3>مسارات المصادقة (Auth Required)</h3>
+  <table>
+    <thead><tr><th>Method</th><th>URI</th><th>Middleware</th><th>Handler</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/verify-otp</code></td><td>auth</td><td>OtpController@show</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/verify-otp</code></td><td>auth, throttle:otp-verify</td><td>OtpController@verify</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/verify-otp/resend</code></td><td>auth, throttle:otp-resend</td><td>OtpController@resend</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/listings/create</code></td><td>auth, otp.verified</td><td>HomeController@create</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/listings/store</code></td><td>auth, otp.verified</td><td>HomeController@store</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/dashboard</code></td><td>auth, otp.verified</td><td>Livewire UserDashboard</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/profile</code></td><td>auth, otp.verified</td><td>ProfileController@edit</td></tr>
+      <tr><td><span class="tag tag-yellow">PATCH</span></td><td><code>/profile</code></td><td>auth, otp.verified</td><td>ProfileController@update</td></tr>
+      <tr><td><span class="tag tag-red">DELETE</span></td><td><code>/profile</code></td><td>auth, otp.verified</td><td>ProfileController@destroy</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/points/history</code></td><td>auth, otp.verified</td><td>Closure: PointTransactions</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/payment/checkout</code></td><td>auth, otp.verified</td><td>PaymentController@checkout</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/payment/callback</code></td><td>auth, otp.verified</td><td>PaymentController@callback</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/messages</code></td><td>auth, otp.verified</td><td>MessageController@store</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Breeze Auth Routes</h3>
+  <table>
+    <thead><tr><th>Method</th><th>URI</th><th>Middleware</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/register</code></td><td>guest</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/register</code></td><td>guest, throttle:registration</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/login</code></td><td>guest</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/login</code></td><td>guest</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/logout</code></td><td>auth</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/forgot-password</code></td><td>guest</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/forgot-password</code></td><td>guest</td></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td><code>/reset-password/{token}</code></td><td>guest</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td><code>/reset-password</code></td><td>guest</td></tr>
+      <tr><td><span class="tag tag-green">PUT</span></td><td><code>/password</code></td><td>auth</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Middleware المطبقة على كل الطلبات</h3>
+  <table>
+    <thead><tr><th>Middleware</th><th>يُطبّق على</th><th>الوظيفة</th></tr></thead>
+    <tbody>
+      <tr><td><code>SecurityHeaders</code></td><td>كل الطلبات</td><td>X-Frame-Options, HSTS, nosniff</td></tr>
+      <tr><td><code>PreventStorageCache</code></td><td>كل الطلبات</td><td>منع كاش ملفات storage</td></tr>
+      <tr><td><code>EnsureUserIsNotBanned</code></td><td>Web group</td><td>طرد المستخدم المحظور</td></tr>
+      <tr><td><code>TrackCampaign</code></td><td>Web group</td><td>تتبع رابط الإحالة ?ref=CODE</td></tr>
+      <tr><td><code>SetLocale</code></td><td>Web group</td><td>ضبط اللغة من الـ Session</td></tr>
+      <tr><td><code>EnsureOtpIsVerified</code></td><td>otp.verified alias</td><td>التحقق من OTP قبل الدخول</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 7 — DATABASE
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <div>
+      <div class="section-title">قاعدة البيانات — الجداول والأعمدة</div>
+      <div class="section-subtitle">Database Schema</div>
+    </div>
+  </div>
+
+  <h3>جدول users</h3>
+  <table>
+    <thead><tr><th>العمود</th><th>النوع</th><th>ملاحظات</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>bigint unsigned</td><td>Primary Key</td></tr>
+      <tr><td>name</td><td>varchar</td><td>الاسم الكامل</td></tr>
+      <tr><td>email</td><td>varchar, nullable, unique</td><td>البريد الإلكتروني</td></tr>
+      <tr><td>email_verified_at</td><td>timestamp, nullable</td><td>تاريخ التحقق من الإيميل</td></tr>
+      <tr><td>phone</td><td>varchar, nullable, unique</td><td>رقم الهاتف المصري</td></tr>
+      <tr><td>phone_verified_at</td><td>timestamp, nullable</td><td>تاريخ التحقق من الهاتف</td></tr>
+      <tr><td>password</td><td>varchar, nullable</td><td>nullable للـ Social Login</td></tr>
+      <tr><td>avatar</td><td>varchar, nullable</td><td>مسار الصورة الشخصية</td></tr>
+      <tr><td>provider_name</td><td>varchar, nullable</td><td>google / facebook / tiktok</td></tr>
+      <tr><td>provider_id</td><td>varchar, nullable</td><td>ID المزود الاجتماعي</td></tr>
+      <tr><td>otp_code</td><td>varchar, nullable</td><td>كود OTP مشفر</td></tr>
+      <tr><td>otp_expires_at</td><td>timestamp, nullable</td><td>انتهاء صلاحية OTP</td></tr>
+      <tr><td>otp_attempts</td><td>tinyint</td><td>عدد المحاولات الفاشلة</td></tr>
+      <tr><td>is_phone_verified</td><td>boolean, default false</td><td>هل تم التحقق من الهاتف؟</td></tr>
+      <tr><td>device_id</td><td>varchar, nullable</td><td>معرف الجهاز (UUID Cookie)</td></tr>
+      <tr><td>ip_address</td><td>varchar, nullable</td><td>آخر IP للمستخدم</td></tr>
+      <tr><td>fingerprint_hash</td><td>varchar, nullable</td><td>SHA-256 بصمة الجهاز</td></tr>
+      <tr><td>is_banned</td><td>boolean, default false</td><td>هل المستخدم محظور؟</td></tr>
+      <tr><td>ban_reason</td><td>text, nullable</td><td>سبب الحظر</td></tr>
+      <tr><td>points</td><td>integer, default 0</td><td>رصيد النقاط العام</td></tr>
+      <tr><td>points_balance</td><td>integer, default 0</td><td>رصيد نقاط الشراء</td></tr>
+      <tr><td>strike_count</td><td>tinyint, default 0</td><td>عدد المخالفات (يُحظر عند 3)</td></tr>
+      <tr><td>remember_token</td><td>varchar, nullable</td><td>—</td></tr>
+      <tr><td>created_at / updated_at</td><td>timestamps</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>جدول listings</h3>
+  <table>
+    <thead><tr><th>العمود</th><th>النوع</th><th>ملاحظات</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>bigint</td><td>PK</td></tr>
+      <tr><td>title</td><td>varchar</td><td>عنوان الإعلان</td></tr>
+      <tr><td>slug</td><td>varchar, unique</td><td>الـ URL الودود</td></tr>
+      <tr><td>description</td><td>longtext</td><td>وصف تفصيلي</td></tr>
+      <tr><td>price</td><td>decimal(12,2)</td><td>السعر بالجنيه</td></tr>
+      <tr><td>condition</td><td>enum(new, used)</td><td>حالة المنتج</td></tr>
+      <tr><td>images</td><td>json</td><td>مسارات الصور الأساسية</td></tr>
+      <tr><td>extra_images</td><td>json</td><td>صور إضافية</td></tr>
+      <tr><td>category_id</td><td>FK → categories</td><td>—</td></tr>
+      <tr><td>user_id</td><td>FK → users</td><td>صاحب الإعلان</td></tr>
+      <tr><td>car_brand_id</td><td>FK → car_brands, nullable</td><td>للسيارات فقط</td></tr>
+      <tr><td>car_model_id</td><td>FK → car_models, nullable</td><td>—</td></tr>
+      <tr><td>province_id</td><td>FK → locations, nullable</td><td>المحافظة</td></tr>
+      <tr><td>location_id</td><td>FK → locations, nullable</td><td>المدينة</td></tr>
+      <tr><td>phone</td><td>varchar, nullable</td><td>رقم التواصل</td></tr>
+      <tr><td>status</td><td>enum(pending, published, rejected, flagged)</td><td>حالة الإعلان</td></tr>
+      <tr><td>is_flagged</td><td>boolean</td><td>علامة احتيال</td></tr>
+      <tr><td>is_featured</td><td>boolean</td><td>إعلان مميز؟</td></tr>
+      <tr><td>featured_until</td><td>timestamp, nullable</td><td>تاريخ انتهاء التمييز</td></tr>
+      <tr><td>rejection_reason</td><td>text, nullable</td><td>سبب الرفض</td></tr>
+      <tr><td>flag_reason</td><td>text, nullable</td><td>سبب الإبلاغ</td></tr>
+      <tr><td>moderated_by</td><td>FK → users, nullable</td><td>المشرف الذي اتخذ القرار</td></tr>
+      <tr><td>moderated_at</td><td>timestamp, nullable</td><td>وقت الإشراف</td></tr>
+      <tr><td>views_count</td><td>integer, default 0</td><td>عدد المشاهدات</td></tr>
+      <tr><td>whatsapp_clicks</td><td>integer, default 0</td><td>نقرات واتساب</td></tr>
+      <tr><td>custom_fields_values</td><td>json</td><td>حقول مخصصة حسب الفئة</td></tr>
+      <tr><td>created_at / updated_at</td><td>timestamps</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>جدول categories</h3>
+  <table>
+    <thead><tr><th>العمود</th><th>النوع</th></tr></thead>
+    <tbody>
+      <tr><td>id, name_ar, name_en, slug (unique)</td><td>—</td></tr>
+      <tr><td>icon</td><td>varchar, nullable — مسار الأيقونة</td></tr>
+      <tr><td>color</td><td>varchar, nullable</td></tr>
+      <tr><td>sort_order</td><td>integer, default 0</td></tr>
+      <tr><td>is_active</td><td>boolean, default true</td></tr>
+      <tr><td>parent_id</td><td>FK → categories (self), nullable — للفئات الفرعية</td></tr>
+      <tr><td>custom_fields_schema</td><td>json — مخطط الحقول المخصصة</td></tr>
+      <tr><td>views_count</td><td>integer, default 0</td></tr>
+    </tbody>
+  </table>
+
+  <h3>جدول locations</h3>
+  <table>
+    <thead><tr><th>العمود</th><th>النوع</th></tr></thead>
+    <tbody>
+      <tr><td>id, name_ar, name_en, slug</td><td>—</td></tr>
+      <tr><td>parent_id</td><td>FK → locations — للمدن تحت المحافظات</td></tr>
+      <tr><td>level</td><td>0 = محافظة, 1 = مدينة</td></tr>
+      <tr><td>latitude, longitude</td><td>decimal(10,7) — إحداثيات GPS</td></tr>
+      <tr><td>is_active, sort_order</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>باقي الجداول</h3>
+  <table>
+    <thead><tr><th>الجدول</th><th>الأعمدة الرئيسية</th></tr></thead>
+    <tbody>
+      <tr><td>point_transactions</td><td>user_id, amount (±), current_balance, description, reference morph</td></tr>
+      <tr><td>point_plans</td><td>name_ar, name_en, points, price, description, is_active</td></tr>
+      <tr><td>offers</td><td>listing_id, sender_id, receiver_id, amount, message, status</td></tr>
+      <tr><td>messages</td><td>sender_id, receiver_id, body</td></tr>
+      <tr><td>campaigns</td><td>title, message, target_group, status, scheduled_at, sent_at, recipients_count</td></tr>
+      <tr><td>campaign_links</td><td>code (unique), points_reward, expires_at, usage_limit, used_count, is_active</td></tr>
+      <tr><td>legal_pages</td><td>title (JSON), slug, content (JSON), is_active, seo fields</td></tr>
+      <tr><td>seo_templates</td><td>target_model, target_id, meta_title, meta_description, keywords, og_image, canonical_url, schema_markup (json)</td></tr>
+      <tr><td>audit_logs</td><td>admin_id, action, target_type, target_id, payload (json), ip_address</td></tr>
+      <tr><td>car_brands / car_models</td><td>name_ar, name_en, slug, is_active, sort_order</td></tr>
+      <tr><td>phone_brands / phone_models</td><td>نفس الهيكل (بدون Eloquent Model)</td></tr>
+      <tr><td>site_settings</td><td>auth_bg_image</td></tr>
+      <tr><td>activity_log</td><td>Spatie standard + event + batch_uuid columns</td></tr>
+      <tr><td>media</td><td>Spatie Media Library standard</td></tr>
+      <tr><td>roles / permissions</td><td>Spatie Permission package</td></tr>
+      <tr><td>telescope_entries + related</td><td>Laravel Telescope</td></tr>
+      <tr><td>sessions / cache / jobs / notifications</td><td>Laravel infrastructure tables</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 8 — MODELS
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">8</div>
+    <div>
+      <div class="section-title">Models — النماذج والعلاقات</div>
+      <div class="section-subtitle">app/Models/</div>
+    </div>
+  </div>
+
+  <h3>User Model</h3>
+  <table>
+    <thead><tr><th>الخاصية</th><th>التفاصيل</th></tr></thead>
+    <tbody>
+      <tr><td>Traits</td><td>HasApiTokens, HasRoles, LogsActivity, Notifiable</td></tr>
+      <tr><td>Implements</td><td>FilamentUser, MustVerifyEmail</td></tr>
+      <tr><td>Relations</td><td>listings() HasMany, pointTransactions() HasMany, auditLogs() HasMany</td></tr>
+      <tr><td>Methods</td><td>canAccessPanel(), hasPoints(n), ban(reason), unban(), addStrike()</td></tr>
+      <tr><td>Auto-ban</td><td>عند strike_count >= 3 يتم الحظر تلقائيًا</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Listing Model</h3>
+  <table>
+    <thead><tr><th>الخاصية</th><th>التفاصيل</th></tr></thead>
+    <tbody>
+      <tr><td>Traits</td><td>HasMedia (Spatie), Searchable (Scout), LogsActivity</td></tr>
+      <tr><td>Relations</td><td>category, user, moderator, province, location, carBrand, carModel</td></tr>
+      <tr><td>Scopes</td><td>active(), pending(), flagged(), featured()</td></tr>
+      <tr><td>Methods</td><td>approve(), reject(reason), flag(reason)</td></tr>
+      <tr><td>Media</td><td>thumb (300×300 WebP) + full_hd (1920×1080 WebP + Watermark)</td></tr>
+      <tr><td>Observer</td><td>ListingObserver يفحص كلمات الاحتيال تلقائيًا</td></tr>
+    </tbody>
+  </table>
+
+  <h3>كل العلاقات بين النماذج</h3>
+  <table>
+    <thead><tr><th>من</th><th>النوع</th><th>إلى</th><th>الوصف</th></tr></thead>
+    <tbody>
+      <tr><td>User</td><td>HasMany</td><td>Listing</td><td>مستخدم ينشر إعلانات</td></tr>
+      <tr><td>User</td><td>HasMany</td><td>PointTransaction</td><td>معاملات النقاط</td></tr>
+      <tr><td>User</td><td>HasMany</td><td>AuditLog (as admin)</td><td>سجل إجراءات المشرف</td></tr>
+      <tr><td>Listing</td><td>BelongsTo</td><td>Category</td><td>—</td></tr>
+      <tr><td>Listing</td><td>BelongsTo</td><td>User</td><td>صاحب الإعلان</td></tr>
+      <tr><td>Listing</td><td>BelongsTo</td><td>User (moderator)</td><td>المشرف</td></tr>
+      <tr><td>Listing</td><td>BelongsTo</td><td>Location (province)</td><td>المحافظة</td></tr>
+      <tr><td>Listing</td><td>BelongsTo</td><td>Location</td><td>المدينة</td></tr>
+      <tr><td>Listing</td><td>BelongsTo</td><td>CarBrand</td><td>للسيارات</td></tr>
+      <tr><td>Listing</td><td>BelongsTo</td><td>CarModel</td><td>موديل السيارة</td></tr>
+      <tr><td>Category</td><td>BelongsTo</td><td>Category (parent)</td><td>فئة أب</td></tr>
+      <tr><td>Category</td><td>HasMany</td><td>Category (children)</td><td>فئات فرعية</td></tr>
+      <tr><td>Category</td><td>HasMany</td><td>Listing</td><td>—</td></tr>
+      <tr><td>Location</td><td>BelongsTo</td><td>Location (parent)</td><td>محافظة أب</td></tr>
+      <tr><td>Location</td><td>HasMany</td><td>Location (children)</td><td>مدن تابعة</td></tr>
+      <tr><td>CarBrand</td><td>HasMany</td><td>CarModel</td><td>—</td></tr>
+      <tr><td>Message</td><td>BelongsTo</td><td>User (sender)</td><td>—</td></tr>
+      <tr><td>Message</td><td>BelongsTo</td><td>User (receiver)</td><td>—</td></tr>
+      <tr><td>PointTransaction</td><td>MorphTo</td><td>Any Model</td><td>reference polymorphic</td></tr>
+      <tr><td>SeoTemplate</td><td>MorphTo</td><td>Category / Location</td><td>—</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 9 — CONTROLLERS
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">9</div>
+    <div>
+      <div class="section-title">Controllers — وحدات التحكم</div>
+      <div class="section-subtitle">app/Http/Controllers/</div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Controller</th><th>المسار</th><th>الوظيفة الرئيسية</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>HomeController</code></td>
+        <td>Frontend/</td>
+        <td>الصفحة الرئيسية (featured + latest listings) + البحث المتقدم بـ Scout + صفحة إنشاء الإعلان (+10 نقاط)</td>
+      </tr>
+      <tr>
+        <td><code>CategoryController</code></td>
+        <td>Frontend/</td>
+        <td>صفحة الفئة مع فلترة وترتيب + increment views_count</td>
+      </tr>
+      <tr>
+        <td><code>LegalPageController</code></td>
+        <td>Frontend/</td>
+        <td>عرض الصفحات القانونية (سياسة الخصوصية، الشروط) حسب الـ slug</td>
+      </tr>
+      <tr>
+        <td><code>PaymentController</code></td>
+        <td>Frontend/</td>
+        <td>Paymob checkout لخطط النقاط (100/500/1000 نقطة) + callback success/fail</td>
+      </tr>
+      <tr>
+        <td><code>ListingController</code></td>
+        <td>—</td>
+        <td>عرض تفاصيل الإعلان + زيادة views + makeOffer() [غير مُوجَّه بعد]</td>
+      </tr>
+      <tr>
+        <td><code>MessageController</code></td>
+        <td>—</td>
+        <td>حفظ رسالة جديدة + broadcast NewMessage event</td>
+      </tr>
+      <tr>
+        <td><code>ProfileController</code></td>
+        <td>—</td>
+        <td>تعديل الملف الشخصي + رفع الصورة + حذف الحساب</td>
+      </tr>
+      <tr>
+        <td><code>RegisteredUserController</code></td>
+        <td>Auth/</td>
+        <td>تسجيل بالإيميل أو الهاتف + OTP + 100 نقطة ترحيبية + مكافأة الإحالة + حد الأجهزة</td>
+      </tr>
+      <tr>
+        <td><code>AuthenticatedSessionController</code></td>
+        <td>Auth/</td>
+        <td>تسجيل الدخول/الخروج + تحديث بصمة الجهاز + redirect لـ admin</td>
+      </tr>
+      <tr>
+        <td><code>OtpController</code></td>
+        <td>Auth/</td>
+        <td>عرض شاشة OTP + التحقق منها + إعادة الإرسال</td>
+      </tr>
+      <tr>
+        <td><code>SocialiteController</code></td>
+        <td>Auth/</td>
+        <td>OAuth redirect + callback لـ 4 مزودين + 100 نقطة عند التسجيل الأول</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 10 — FILAMENT ADMIN
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <div>
+      <div class="section-title">لوحة الإدارة Filament Admin</div>
+      <div class="section-subtitle">app/Filament/Admin/ — /admin</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>مسار اللوحة:</strong> <code>/admin</code> | الألوان: Dark mode + Violet primary | يمكن الدخول لـ: super_admin, admin, moderator فقط
+  </div>
+
+  <h3>Resources (14 Resource)</h3>
+  <table>
+    <thead><tr><th>Resource</th><th>Model</th><th>مجموعة Navigation</th><th>الوظيفة</th></tr></thead>
+    <tbody>
+      <tr><td>ModerationResource</td><td>Listing</td><td>الإشراف</td><td>طابور المراجعة — قبول/رفض/إبلاغ + ضربات للمخالفين</td></tr>
+      <tr><td>UserResource</td><td>User</td><td>الإشراف</td><td>إدارة المستخدمين — أدوار، حظر، ضربات، تعديل النقاط</td></tr>
+      <tr><td>ListingResource</td><td>Listing</td><td>المحتوى</td><td>CRUD كامل + حقول ديناميكية حسب الفئة (سيارات/عقار)</td></tr>
+      <tr><td>CategoryResource</td><td>Category</td><td>المحتوى</td><td>شجرة فئات مع ChildrenRelationManager</td></tr>
+      <tr><td>LocationResource</td><td>Location</td><td>المحتوى</td><td>محافظات/مدن مع ChildrenRelationManager</td></tr>
+      <tr><td>LegalPageResource</td><td>LegalPage</td><td>المحتوى</td><td>صفحات قانونية بعربي وإنجليزي</td></tr>
+      <tr><td>SeoTemplateResource</td><td>SeoTemplate</td><td>المحتوى</td><td>SEO مخصص لكل فئة وموقع</td></tr>
+      <tr><td>CampaignResource</td><td>Campaign</td><td>الإدارة</td><td>حملات CRM مجدولة بالـ Email والإشعارات</td></tr>
+      <tr><td>CampaignLinkResource</td><td>CampaignLink</td><td>الإدارة</td><td>روابط الإحالة مع نقاط مكافأة</td></tr>
+      <tr><td>PointPlanResource</td><td>PointPlan</td><td>الإدارة</td><td>خطط الأسعار لشراء النقاط</td></tr>
+      <tr><td>ActivityLogResource</td><td>Spatie Activity</td><td>الإدارة</td><td>سجل كل نشاطات النظام والمصادقة</td></tr>
+      <tr><td>AuditLogResource</td><td>AuditLog</td><td>الإدارة</td><td>سجل إجراءات المشرفين في الإشراف</td></tr>
+      <tr><td>SiteSettingResource</td><td>SiteSetting</td><td>الإدارة</td><td>إعداد صورة خلفية شاشة المصادقة</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Widgets</h3>
+  <table>
+    <thead><tr><th>Widget</th><th>من يراه</th><th>المحتوى</th></tr></thead>
+    <tbody>
+      <tr><td>StatsOverviewWidget</td><td>super_admin فقط</td><td>إجمالي المستخدمين، الإعلانات، الإعلانات المعلقة، الإيرادات</td></tr>
+      <tr><td>ListingsChart</td><td>الكل</td><td>رسم بياني لإعلانات آخر 30 يوم</td></tr>
+      <tr><td>CategoriesChartWidget</td><td>الكل</td><td>توزيع الإعلانات على الفئات</td></tr>
+      <tr><td>GovernoratesChartWidget</td><td>الكل</td><td>توزيع الإعلانات على المحافظات</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Livewire Components في الإدارة</h3>
+  <table>
+    <thead><tr><th>Component</th><th>الوظيفة</th></tr></thead>
+    <tbody>
+      <tr><td>SmartAdCreator</td><td>إنشاء إعلانات بالذكاء الاصطناعي من صور/صوت/نص عبر Gemini 1.5 Flash</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 11 — AUTH & SECURITY
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">11</div>
+    <div>
+      <div class="section-title">نظام المصادقة والأمان</div>
+      <div class="section-subtitle">app/Auth/ — Multi-layer Security</div>
+    </div>
+  </div>
+
+  <h3>خطوات تسجيل مستخدم جديد</h3>
+  <div class="info-box">
+    <strong>1.</strong> يملأ النموذج (إيميل أو هاتف مصري 01XXXXXXXXX) → 
+    <strong>2.</strong> فحص حد الأجهزة (max 3 حسابات/جهاز) → 
+    <strong>3.</strong> إنشاء الحساب + منح 100 نقطة ترحيبية → 
+    <strong>4.</strong> إرسال OTP (إيميل في Queue email-high أو SMS في Queue sms-high) → 
+    <strong>5.</strong> التحقق من OTP → 
+    <strong>6.</strong> فحص ref= في الـ Session ومنح نقاط الإحالة
+  </div>
+
+  <h3>نظام OTP</h3>
+  <table>
+    <thead><tr><th>الإعداد</th><th>القيمة</th></tr></thead>
+    <tbody>
+      <tr><td>طول الكود</td><td>4 أرقام</td></tr>
+      <tr><td>صلاحية الكود</td><td>5 دقائق</td></tr>
+      <tr><td>أقصى محاولات</td><td>5 محاولات</td></tr>
+      <tr><td>التأخير التدريجي عند الفشل</td><td>30s → 60s → 120s</td></tr>
+      <tr><td>Rate limit إعادة الإرسال</td><td>3 مرات/دقيقة</td></tr>
+      <tr><td>Rate limit التحقق</td><td>10 مرات/دقيقة</td></tr>
+      <tr><td>تخزين الكود</td><td>Hashed في قاعدة البيانات</td></tr>
+    </tbody>
+  </table>
+
+  <h3>بصمة الجهاز (Device Fingerprint)</h3>
+  <ul>
+    <li>SHA-256 hash من: User Agent + IP + Custom Headers + Cookie UUID</li>
+    <li>أقصى 3 حسابات لكل جهاز/IP/بصمة</li>
+    <li>Cookie <code>device_id</code> صالح لمدة ~5 سنوات</li>
+  </ul>
+
+  <h3>نظام الحظر والمخالفات</h3>
+  <table>
+    <thead><tr><th>الحدث</th><th>النتيجة</th></tr></thead>
+    <tbody>
+      <tr><td>رفض إعلان + تحديد ضربة</td><td>يزيد strike_count بـ 1</td></tr>
+      <tr><td>strike_count >= 3</td><td>الحظر التلقائي للمستخدم</td></tr>
+      <tr><td>is_banned = true</td><td>EnsureUserIsNotBanned يطرد المستخدم فور الدخول</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Security Headers المطبقة</h3>
+  <table>
+    <thead><tr><th>Header</th><th>القيمة</th></tr></thead>
+    <tbody>
+      <tr><td>X-Frame-Options</td><td>SAMEORIGIN</td></tr>
+      <tr><td>X-Content-Type-Options</td><td>nosniff</td></tr>
+      <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td></tr>
+      <tr><td>Strict-Transport-Security</td><td>على HTTPS فقط</td></tr>
+    </tbody>
+  </table>
+
+  <h3>الأدوار والصلاحيات (RBAC)</h3>
+  <table>
+    <thead><tr><th>الدور</th><th>الصلاحيات</th></tr></thead>
+    <tbody>
+      <tr><td>super_admin</td><td>كل شيء — بما فيها StatsOverview والتقارير</td></tr>
+      <tr><td>admin</td><td>إدارة المستخدمين والمحتوى والحملات</td></tr>
+      <tr><td>moderator</td><td>مراجعة الإعلانات وقبولها/رفضها فقط</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 12 — SERVICES
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">12</div>
+    <div>
+      <div class="section-title">Services — الخدمات</div>
+      <div class="section-subtitle">app/Services/</div>
+    </div>
+  </div>
+
+  <h3>GeminiService — الذكاء الاصطناعي</h3>
+  <table>
+    <thead><tr><th>Method</th><th>الوظيفة</th></tr></thead>
+    <tbody>
+      <tr><td><code>generateDescription(data)</code></td><td>يولّد وصفًا تلقائيًا للإعلان</td></tr>
+      <tr><td><code>suggestPrice(data)</code></td><td>يقترح سعرًا مناسبًا</td></tr>
+      <tr><td><code>autoCategorize(data)</code></td><td>يصنّف الإعلان تلقائيًا</td></tr>
+      <tr><td><code>generateFromInput(data)</code></td><td>يولّد بيانات JSON كاملة للإعلان من صور/نص/صوت</td></tr>
+    </tbody>
+  </table>
+  <p>النموذج المستخدم: <strong>Gemini 1.5 Flash</strong> عبر <code>GEMINI_API_KEY</code></p>
+
+  <h3>PointService — نظام النقاط</h3>
+  <ul>
+    <li>عمليات <strong>Credit</strong> (إضافة) و<strong>Debit</strong> (خصم) و<strong>Transfer</strong> (نقل)</li>
+    <li>يستخدم <code>lockForUpdate()</code> لمنع Race Conditions</li>
+    <li>يحفظ morph reference على كل معاملة</li>
+    <li>مُسجَّل كـ Singleton في AppServiceProvider</li>
+  </ul>
+
+  <h3>PaymobService — المدفوعات</h3>
+  <ul>
+    <li>يحصل على Auth Token من Paymob API</li>
+    <li>ينشئ Order بالـ Amount المطلوب (جنيه مصري)</li>
+    <li>يُرجع Payment Key لفتح Iframe</li>
+    <li>الخطط المتاحة: 100 نقطة / 500 نقطة / 1000 نقطة</li>
+  </ul>
+
+  <h3>SmsService — الرسائل النصية</h3>
+  <ul>
+    <li>يرسل OTP عبر SMS API المكوّن في <code>.env</code></li>
+    <li>في بيئة التطوير يُسجّل الرسالة في الـ Logs بدلًا من الإرسال الفعلي</li>
+    <li>يستخدم: <code>SMS_USERNAME</code>, <code>SMS_PASSWORD</code>, <code>SMS_SENDER_NAME</code></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 13 — JOBS
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">13</div>
+    <div>
+      <div class="section-title">Jobs والطوابير</div>
+      <div class="section-subtitle">app/Jobs/ + app/Auth/Jobs/</div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Job</th><th>Queue</th><th>Retries</th><th>الوظيفة</th></tr></thead>
+    <tbody>
+      <tr><td><code>ProcessScheduledCampaigns</code></td><td>default</td><td>—</td><td>يشغّل الحملات المجدولة كل 5 دقائق، يرسل CampaignNotification لكل مجموعة مستخدمين</td></tr>
+      <tr><td><code>SendOtpEmailJob</code></td><td>email-high</td><td>3</td><td>إرسال OTP بالبريد الإلكتروني</td></tr>
+      <tr><td><code>SendOtpSmsJob</code></td><td>sms-high</td><td>3</td><td>إرسال OTP برسالة SMS</td></tr>
+    </tbody>
+  </table>
+
+  <h3>تشغيل الطوابير</h3>
+  <div class="code-block">php artisan queue:listen --tries=1 --timeout=0
+# أو لكل queue بشكل منفصل:
+php artisan queue:work --queue=email-high,sms-high,auth-critical,default</div>
+
+  <h3>Scheduled Tasks</h3>
+  <table>
+    <thead><tr><th>الـ Job</th><th>الجدول</th><th>ملف التعريف</th></tr></thead>
+    <tbody>
+      <tr><td>ProcessScheduledCampaigns</td><td>كل 5 دقائق</td><td>routes/console.php</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 14 — EVENTS & LISTENERS
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">14</div>
+    <div>
+      <div class="section-title">Events & Listeners</div>
+      <div class="section-subtitle">app/Events/ + app/Listeners/</div>
+    </div>
+  </div>
+
+  <h3>Events</h3>
+  <table>
+    <thead><tr><th>Event</th><th>يُطلق عند</th><th>القناة</th></tr></thead>
+    <tbody>
+      <tr><td><code>NewMessage</code></td><td>إرسال رسالة جديدة</td><td>Private channel: <code>chat.{receiver_id}</code> (Broadcast)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Listeners (مسجّلة في AppServiceProvider)</h3>
+  <table>
+    <thead><tr><th>Listener</th><th>يستمع إلى</th><th>الفعل</th></tr></thead>
+    <tbody>
+      <tr><td>LogSuccessfulLogin</td><td>Laravel Login event</td><td>يسجل في Spatie Activity Log</td></tr>
+      <tr><td>LogSuccessfulLogout</td><td>Laravel Logout event</td><td>يسجل في Spatie Activity Log</td></tr>
+      <tr><td>LogFailedLogin</td><td>Laravel Failed event</td><td>يسجل في Spatie Activity Log</td></tr>
+      <tr><td>LogRoleAssigned</td><td>RoleAttachedEvent</td><td>يسجل تعيين الدور</td></tr>
+      <tr><td>LogRoleRevoked</td><td>RoleDetachedEvent</td><td>يسجل سحب الدور</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Observers</h3>
+  <table>
+    <thead><tr><th>Observer</th><th>Model</th><th>الوظيفة</th></tr></thead>
+    <tbody>
+      <tr><td>ListingObserver</td><td>Listing</td><td>يفحص عناوين الاحتيال في creating/updating ويُغيّر status لـ pending تلقائيًا</td></tr>
+      <tr><td>PointTransactionObserver</td><td>PointTransaction</td><td>يحسب current_balance تلقائيًا + Flash session message</td></tr>
+    </tbody>
+  </table>
+
+  <h3>كلمات الاحتيال المرصودة تلقائيًا</h3>
+  <div class="code-block">['نصب', 'احتيال', 'مسروق', 'مضروب', 'مزور', 'وهمي',
+ 'كاش فوري', 'ربح سريع', 'تحويل فوري', 'دولار رخيص', 'استثمار مضمون']</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 15 — POINTS & PAYMENTS
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">15</div>
+    <div>
+      <div class="section-title">نظام النقاط والمدفوعات</div>
+      <div class="section-subtitle">PointService + PaymobService</div>
+    </div>
+  </div>
+
+  <h3>كيف تُكسب النقاط؟</h3>
+  <table>
+    <thead><tr><th>الحدث</th><th>النقاط</th></tr></thead>
+    <tbody>
+      <tr><td>تسجيل حساب جديد (Email/Phone)</td><td>+100 نقطة</td></tr>
+      <tr><td>تسجيل عبر مواقع التواصل</td><td>+100 نقطة</td></tr>
+      <tr><td>نشر إعلان جديد</td><td>+10 نقاط</td></tr>
+      <tr><td>إحالة مستخدم جديد عبر رابط</td><td>مكافأة من campaign_links</td></tr>
+    </tbody>
+  </table>
+
+  <h3>كيف تُصرف النقاط؟</h3>
+  <table>
+    <thead><tr><th>الحدث</th><th>النقاط</th></tr></thead>
+    <tbody>
+      <tr><td>تمييز إعلان (Featured)</td><td>-10 نقاط/يوم</td></tr>
+    </tbody>
+  </table>
+
+  <h3>خطط شراء النقاط (Paymob)</h3>
+  <table>
+    <thead><tr><th>الخطة</th><th>النقاط</th><th>السعر</th></tr></thead>
+    <tbody>
+      <tr><td>الخطة الصغيرة</td><td>100 نقطة</td><td>—</td></tr>
+      <tr><td>الخطة المتوسطة</td><td>500 نقطة</td><td>—</td></tr>
+      <tr><td>الخطة الكبيرة</td><td>1000 نقطة</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p>الأسعار تُحدَّد من خلال <strong>PointPlan</strong> في لوحة الإدارة.</p>
+
+  <div class="danger-box">
+    ⚠️ <strong>مشكلة مهمة:</strong> مسار <code>POST /payment/webhook</code> موجود لكن <code>PaymentController@webhook</code> غير مُنفَّذ — النقاط لن تُضاف تلقائيًا بعد الدفع.
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 16 — LISTINGS & MEDIA
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">16</div>
+    <div>
+      <div class="section-title">نظام الإعلانات والوسائط</div>
+      <div class="section-subtitle">Spatie Media Library + Watermark</div>
+    </div>
+  </div>
+
+  <h3>دورة حياة الإعلان</h3>
+  <div class="info-box">
+    <strong>pending</strong> (مراجعة) → 
+    <strong>published</strong> (منشور) أو 
+    <strong>rejected</strong> (مرفوض) أو 
+    <strong>flagged</strong> (مُبلَّغ عنه)
+  </div>
+
+  <h3>Media Conversions</h3>
+  <table>
+    <thead><tr><th>الاسم</th><th>الأبعاد</th><th>الصيغة</th><th>Watermark</th><th>متى يُستخدم</th></tr></thead>
+    <tbody>
+      <tr><td>thumb</td><td>300×300 (Contain)</td><td>WebP</td><td>لا</td><td>البطاقات في القوائم — سريع</td></tr>
+      <tr><td>full_hd</td><td>1920×1080 (Max)</td><td>WebP</td><td>نعم (Bottom-Right, 150px, 40% شفافية)</td><td>صفحة تفاصيل الإعلان</td></tr>
+    </tbody>
+  </table>
+
+  <h3>الـ Watermark</h3>
+  <ul>
+    <li>ملف الـ Watermark: <code>public/images/watermark.png</code> (نسخة من اللوجو)</li>
+    <li>الموقع: أسفل اليمين (BottomRight)</li>
+    <li>المسافة: 20px من الحافة</li>
+    <li>العرض: 150px</li>
+    <li>الشفافية: 40% (لا يحجب المحتوى)</li>
+  </ul>
+
+  <div class="warn-box">
+    ⚠️ لاستخدام الـ Watermark في صفحة التفاصيل يجب استدعاء: <code>$listing->getFirstMediaUrl('images', 'full_hd')</code> وليس URL الأصلي
+  </div>
+
+  <h3>الحقول المخصصة (Custom Fields)</h3>
+  <p>كل فئة يمكنها تعريف حقول إضافية في <code>custom_fields_schema</code> (JSON)، تُخزَّن قيمها في <code>listings.custom_fields_values</code>.</p>
+  <p>الفئات التي لها حقول محددة مسبقًا: <strong>السيارات</strong> (brand, model) و<strong>العقارات</strong> (نوع الوحدة، المساحة، الدور)</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 17 — AI / GEMINI
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">17</div>
+    <div>
+      <div class="section-title">الذكاء الاصطناعي — Google Gemini</div>
+      <div class="section-subtitle">GeminiService + SmartAdCreator</div>
+    </div>
+  </div>
+
+  <h3>SmartAdCreator (Livewire في لوحة الإدارة)</h3>
+  <p>مكوّن Livewire يتيح للمشرفين إنشاء إعلانات احترافية عبر:</p>
+  <ul>
+    <li>رفع صورة المنتج → Gemini يستخرج الوصف والسعر والفئة تلقائيًا</li>
+    <li>إدخال نص وصفي بسيط → توليد محتوى متكامل</li>
+    <li>تسجيل صوتي → نسخ وتحويل لإعلان</li>
+  </ul>
+
+  <table>
+    <thead><tr><th>الإعداد</th><th>القيمة</th></tr></thead>
+    <tbody>
+      <tr><td>النموذج</td><td>Gemini 1.5 Flash</td></tr>
+      <tr><td>المفتاح</td><td><code>GEMINI_API_KEY</code> في .env</td></tr>
+      <tr><td>المكوّن</td><td><code>GeminiService</code> كـ Singleton</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 18 — SEO & CAMPAIGNS
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">18</div>
+    <div>
+      <div class="section-title">نظام SEO والحملات التسويقية</div>
+      <div class="section-subtitle">SeoTemplate + Campaign + CampaignLink</div>
+    </div>
+  </div>
+
+  <h3>SEO Templates</h3>
+  <ul>
+    <li>يمكن تعيين meta_title + meta_description + keywords + og_image لكل <strong>فئة</strong> أو <strong>موقع</strong></li>
+    <li>Schema Markup (JSON-LD) مخصص لكل صفحة</li>
+    <li>Canonical URL مخصص</li>
+    <li>صور SEO جاهزة في <code>public/images/SEO/</code> لكل محافظة وتصنيف</li>
+  </ul>
+
+  <h3>صور SEO المتاحة</h3>
+  <div class="two-col">
+    <div>
+      <p><strong>التصنيفات:</strong></p>
+      <ul>
+        <li>animals.jpg, appliances.jpg, cars.jpg</li>
+        <li>dresses.jpg, electronics.jpg, furniture.jpg</li>
+      </ul>
+    </div>
+    <div>
+      <p><strong>المحافظات (27 محافظة):</strong></p>
+      <ul>
+        <li>cairo.jpg, alexandria.jpg, giza.jpg</li>
+        <li>aswan.jpg, luxor.jpg, ismailia.jpg</li>
+        <li>... وبقية المحافظات</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>CRM Campaigns</h3>
+  <table>
+    <thead><tr><th>الفئة المستهدفة</th><th>target_group</th></tr></thead>
+    <tbody>
+      <tr><td>كل المستخدمين</td><td>all_users</td></tr>
+      <tr><td>المستخدمون الموثّقون</td><td>verified_users</td></tr>
+      <tr><td>البائعون النشطون</td><td>active_sellers</td></tr>
+      <tr><td>المستخدمون الجدد</td><td>new_users</td></tr>
+      <tr><td>المستخدمون المحظورون</td><td>banned_users</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Campaign Links (روابط الإحالة)</h3>
+  <ul>
+    <li>كل رابط له <code>code</code> فريد يُضاف لـ URL: <code>?ref=CODE</code></li>
+    <li>عند التسجيل يُفحص الـ Session ويُعطي <code>points_reward</code> نقاط للمُحيل</li>
+    <li>يمكن تحديد: usage_limit (حد الاستخدام) + expires_at (تاريخ انتهاء)</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 19 — ENV VARIABLES
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">19</div>
+    <div>
+      <div class="section-title">متغيرات البيئة</div>
+      <div class="section-subtitle">.env.example</div>
+    </div>
+  </div>
+
+  <h3>المتغيرات الموجودة في .env.example</h3>
+  <table>
+    <thead><tr><th>المتغير</th><th>الغرض</th><th>القيمة الافتراضية</th></tr></thead>
+    <tbody>
+      <tr><td>APP_NAME</td><td>اسم التطبيق</td><td>Nilex</td></tr>
+      <tr><td>APP_ENV</td><td>بيئة التشغيل</td><td>local</td></tr>
+      <tr><td>APP_KEY</td><td>مفتاح التشفير</td><td>—</td></tr>
+      <tr><td>APP_DEBUG</td><td>وضع التصحيح</td><td>true</td></tr>
+      <tr><td>APP_URL</td><td>رابط الموقع</td><td>http://localhost</td></tr>
+      <tr><td>APP_LOCALE</td><td>اللغة الافتراضية</td><td>ar</td></tr>
+      <tr><td>OTP_EXPIRES_MINUTES</td><td>مدة صلاحية OTP</td><td>5</td></tr>
+      <tr><td>OTP_MAX_VERIFY_ATTEMPTS</td><td>أقصى محاولات</td><td>5</td></tr>
+      <tr><td>DEVICE_MAX_ACCOUNTS</td><td>حسابات/جهاز</td><td>3</td></tr>
+      <tr><td>DB_CONNECTION</td><td>نوع قاعدة البيانات</td><td>sqlite</td></tr>
+      <tr><td>SESSION_DRIVER</td><td>محرك الجلسات</td><td>database</td></tr>
+      <tr><td>QUEUE_CONNECTION</td><td>محرك الطوابير</td><td>redis</td></tr>
+      <tr><td>CACHE_STORE</td><td>محرك الكاش</td><td>redis</td></tr>
+      <tr><td>QUEUE_SMS</td><td>queue اسم SMS</td><td>sms-high</td></tr>
+      <tr><td>QUEUE_EMAIL</td><td>queue اسم Email</td><td>email-high</td></tr>
+      <tr><td>QUEUE_AUTH</td><td>queue اسم Auth</td><td>auth-critical</td></tr>
+      <tr><td>REDIS_HOST / PORT / PASSWORD</td><td>اتصال Redis</td><td>127.0.0.1 / 6379</td></tr>
+      <tr><td>MAIL_MAILER / HOST / PORT</td><td>إعدادات البريد</td><td>log (dev)</td></tr>
+      <tr><td>GEMINI_API_KEY</td><td>مفتاح Google Gemini</td><td>—</td></tr>
+      <tr><td>SCOUT_DRIVER</td><td>محرك البحث</td><td>collection</td></tr>
+      <tr><td>MEILISEARCH_HOST</td><td>رابط Meilisearch</td><td>http://localhost:7700</td></tr>
+    </tbody>
+  </table>
+
+  <h3>متغيرات مطلوبة للإنتاج (غير موجودة في .env.example)</h3>
+  <div class="danger-box">
+    المتغيرات التالية مُستخدمة في الكود لكن غير موثّقة في .env.example:<br><br>
+    <code>PAYMOB_API_KEY</code>, <code>PAYMOB_INTEGRATION_ID</code>, <code>PAYMOB_IFRAME_ID</code><br>
+    <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, <code>GOOGLE_REDIRECT_URI</code><br>
+    <code>TIKTOK_CLIENT_ID</code>, <code>TIKTOK_CLIENT_SECRET</code>, <code>TIKTOK_REDIRECT_URI</code><br>
+    <code>SMS_USERNAME</code>, <code>SMS_PASSWORD</code>, <code>SMS_SENDER_NAME</code>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 20 — TESTING
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">20</div>
+    <div>
+      <div class="section-title">الاختبارات</div>
+      <div class="section-subtitle">Pest + PHPUnit + Cypress</div>
+    </div>
+  </div>
+
+  <h3>Unit / Feature Tests (Pest)</h3>
+  <p>المشروع يحتوي على <strong>24 اختبارًا</strong> تغطي:</p>
+  <ul>
+    <li>تسجيل المستخدمين (Email + Phone)</li>
+    <li>OTP: إصدار، تحقق، إعادة إرسال، انتهاء الصلاحية</li>
+    <li>حدود الأجهزة (Device Limits)</li>
+    <li>المصادقة الاجتماعية (Social Auth)</li>
+    <li>البحث والفلاتر (Scout)</li>
+    <li>كشف الاحتيال (Fraud Detection Keywords)</li>
+    <li>تكامل Gemini AI</li>
+    <li>نظام المحادثات</li>
+    <li>لوحة تحكم المستخدم</li>
+  </ul>
+
+  <h3>E2E Tests (Cypress)</h3>
+  <table>
+    <thead><tr><th>ملف</th><th>ما يختبر</th></tr></thead>
+    <tbody>
+      <tr><td>auth.cy.js</td><td>تسجيل الدخول والخروج والتسجيل</td></tr>
+      <tr><td>otp.cy.js</td><td>تدفق التحقق بـ OTP</td></tr>
+      <tr><td>social.cy.js</td><td>تسجيل الدخول بالمواقع الاجتماعية</td></tr>
+      <tr><td>abuse.cy.js</td><td>محاولات الإساءة وحدود الأجهزة</td></tr>
+    </tbody>
+  </table>
+
+  <h3>تشغيل الاختبارات</h3>
+  <div class="code-block"># PHP Tests
+composer test
+# أو
+./vendor/bin/pest
+
+# E2E Tests
+npm run cy:open    # واجهة تفاعلية
+npm run cy:run     # headless</div>
+
+  <h3>CI/CD</h3>
+  <p>ملف <code>.github/workflows/ci.yml</code> موجود (غير مُضاف للـ Git بعد)</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 21 — KNOWN ISSUES
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">21</div>
+    <div>
+      <div class="section-title">المشاكل والثغرات المكتشفة</div>
+      <div class="section-subtitle">Known Issues & Inconsistencies</div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>الأولوية</th><th>المشكلة</th><th>الموقع</th><th>الحل المقترح</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="tag tag-red">حرجة</span></td>
+        <td>PaymentController@webhook غير مُنفَّذ — النقاط لن تُضاف بعد الدفع</td>
+        <td>PaymentController</td>
+        <td>تنفيذ الـ method وتحقق HMAC من Paymob</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-yellow">متوسطة</span></td>
+        <td>مسارات Social Auth مكررة في web.php و auth.php</td>
+        <td>routes/</td>
+        <td>حذف النسخة الزائدة من أحد الملفين</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-yellow">متوسطة</span></td>
+        <td>ListingController@makeOffer موجود لكن بدون Route</td>
+        <td>ListingController</td>
+        <td>إضافة Route مناسب أو حذف الـ Method</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-yellow">متوسطة</span></td>
+        <td>رصيد نقاط مزدوج: points و points_balance غير موحّدَين</td>
+        <td>User Model</td>
+        <td>توحيد منطق النقاط في PointService</td></tr>
+      <tr>
+        <td><span class="tag tag-gray">منخفضة</span></td>
+        <td>phone_brands/phone_models جداول بدون Eloquent Models</td>
+        <td>database/migrations</td>
+        <td>إنشاء Models أو حذف الجداول</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-gray">منخفضة</span></td>
+        <td>ProfileController يتحقق من حقول (whatsapp, bio) غير موجودة في User $fillable</td>
+        <td>ProfileController</td>
+        <td>إضافة الحقول لـ $fillable أو إزالتها من الـ Request</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-gray">منخفضة</span></td>
+        <td>ListingImage Model موجود بدون migration (Spatie Media هي النظام الفعلي)</td>
+        <td>app/Models</td>
+        <td>حذف ListingImage Model</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-gray">منخفضة</span></td>
+        <td>Real-time chat يحتاج Echo/Pusher — BROADCAST_CONNECTION=log بالإعداد الافتراضي</td>
+        <td>config + .env</td>
+        <td>إعداد Pusher أو Laravel Reverb</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 22 — DEPLOYMENT GUIDE
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">22</div>
+    <div>
+      <div class="section-title">دليل التشغيل والنشر</div>
+      <div class="section-subtitle">Setup & Deployment Guide</div>
+    </div>
+  </div>
+
+  <h3>التثبيت المحلي (Local Development)</h3>
+  <div class="code-block"># 1. استنساخ المشروع
+git clone [repo-url]
+cd nilex_platform
+
+# 2. تثبيت الحزم
+composer install
+npm install
+
+# 3. إعداد البيئة
+cp .env.example .env
+php artisan key:generate
+
+# 4. قاعدة البيانات
+php artisan migrate --seed
+
+# 5. رفع الـ Assets
+npm run build
+
+# 6. إعداد الصلاحيات
+php artisan shield:generate --all
+
+# 7. تشغيل المشروع
+composer run dev</div>
+
+  <h3>Docker (للإنتاج)</h3>
+  <div class="code-block">docker-compose up -d
+
+# يُشغّل:
+# - nginx (Port 80)
+# - php-fpm (PHP 8.3)
+# - mysql (اختياري)
+# - redis</div>
+
+  <h3>أوامر Artisan المهمة</h3>
+  <table>
+    <thead><tr><th>الأمر</th><th>الوظيفة</th></tr></thead>
+    <tbody>
+      <tr><td><code>php artisan view:clear</code></td><td>مسح كاش الـ Blade Views</td></tr>
+      <tr><td><code>php artisan cache:clear</code></td><td>مسح الكاش</td></tr>
+      <tr><td><code>php artisan config:clear</code></td><td>مسح كاش الإعدادات</td></tr>
+      <tr><td><code>php artisan queue:work</code></td><td>تشغيل الطوابير</td></tr>
+      <tr><td><code>php artisan schedule:run</code></td><td>تشغيل المجدول مرة</td></tr>
+      <tr><td><code>php artisan schedule:work</code></td><td>تشغيل المجدول باستمرار</td></tr>
+      <tr><td><code>php artisan scout:import "App\Models\Listing"</code></td><td>مزامنة Meilisearch</td></tr>
+      <tr><td><code>php artisan media-library:regenerate</code></td><td>إعادة توليد Conversions للصور</td></tr>
+      <tr><td><code>php artisan shield:generate --all</code></td><td>توليد Filament permissions</td></tr>
+      <tr><td><code>php artisan db:seed --class=RoleSeeder</code></td><td>إنشاء الأدوار</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Cron Job للخادم</h3>
+  <div class="code-block"># أضف هذا السطر في crontab للإنتاج
+* * * * * cd /path/to/nilex_platform && php artisan schedule:run >> /dev/null 2>&1</div>
+
+  <h3>متطلبات الخادم</h3>
+  <ul>
+    <li>PHP 8.3+ مع extensions: pdo, mbstring, gd/imagick, redis, fileinfo</li>
+    <li>MySQL 8.0+ أو SQLite (dev)</li>
+    <li>Redis 6+</li>
+    <li>Meilisearch (اختياري — collection driver كـ fallback)</li>
+    <li>Nginx أو Apache</li>
+    <li>Node.js 18+ لبناء الـ Assets</li>
+  </ul>
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <p><strong>Nilex Platform</strong> — وثيقة التوثيق التقني الكاملة</p>
+  <p>تم الإنشاء بتاريخ يونيو 2026 | Laravel 13 · Filament 5 · PHP 8.3</p>
+  <p style="margin-top:6px;">هذه الوثيقة للاستخدام الداخلي فقط — جميع الحقوق محفوظة</p>
+</div>
+
+</body>
+</html>

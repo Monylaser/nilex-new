@@ -2,31 +2,21 @@
 
 namespace App\Filament\Admin\Resources;
 
-// ── Core ──────────────────────────────────────────────────────────────────────
 use App\Filament\Admin\Resources\SiteSettingResource\Pages;
 use App\Models\SiteSetting;
 use BackedEnum;
-
-// ── Filament Resource ─────────────────────────────────────────────────────────
 use Filament\Resources\Resource;
-
-// ── Schema (Filament v5 — replaces Filament\Forms\Form) ──────────────────────
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
-
-// ── Form Components ───────────────────────────────────────────────────────────
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
-
-// ── Table ─────────────────────────────────────────────────────────────────────
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Tables\Table;
-use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
-
-// ── Actions (Filament v5) ─────────────────────────────────────────────────────
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -35,8 +25,6 @@ class SiteSettingResource extends Resource
 {
     protected static ?string $model = SiteSetting::class;
 
-    // ── Navigation ────────────────────────────────────────────────────────────
-
     public static function getNavigationIcon(): string|BackedEnum|null
     {
         return 'heroicon-o-cog-6-tooth';
@@ -44,114 +32,127 @@ class SiteSettingResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Settings');
+        return 'Settings';
     }
 
     public static function getModelLabel(): string
     {
-        return __('Site Setting');
+        return 'إعدادات الموقع';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('Site Settings');
+        return 'إعدادات الموقع';
     }
-
-    // ── Form (Filament v5: Schema instead of Form) ────────────────────────────
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Section::make(__('General Information'))
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('site_name')
-                            ->label(__('Site Name'))
-                            ->required()
-                            ->maxLength(255),
+        return $schema->components([
 
-                        TextInput::make('site_email')
-                            ->label(__('Site Email'))
-                            ->email()
-                            ->maxLength(255),
+            Section::make('معلومات الموقع')
+                ->columns(2)
+                ->schema([
+                    TextInput::make('site_name')
+                        ->label('اسم الموقع')
+                        ->maxLength(255),
 
-                        TextInput::make('site_phone')
-                            ->label(__('Phone'))
-                            ->tel()
-                            ->maxLength(50),
+                    TextInput::make('site_email')
+                        ->label('البريد الإلكتروني')
+                        ->email()
+                        ->maxLength(255),
 
-                        TextInput::make('site_url')
-                            ->label(__('Site URL'))
-                            ->url()
-                            ->maxLength(255),
+                    TextInput::make('site_phone')
+                        ->label('رقم الهاتف')
+                        ->maxLength(50),
 
-                        Textarea::make('site_description')
-                            ->label(__('Description'))
-                            ->columnSpanFull()
-                            ->rows(3)
-                            ->maxLength(500),
-                    ]),
+                    Toggle::make('is_active')
+                        ->label('الموقع نشط'),
+                ]),
 
-                Section::make(__('Logo & Favicon'))
-                    ->columns(2)
-                    ->schema([
-                        FileUpload::make('site_logo')
-                            ->label(__('Site Logo'))
-                            ->image()
-                            ->imageEditor()
-                            ->directory('site-settings/logos')
-                            ->visibility('public')
-                            ->maxSize(2048),
+            Section::make('خلفية شاشة تسجيل الدخول')
+                ->description('التحكم في الجانب الأيسر من شاشة اللوجن')
+                ->columns(2)
+                ->schema([
 
-                        FileUpload::make('site_favicon')
-                            ->label(__('Favicon'))
-                            ->image()
-                            ->directory('site-settings/favicons')
-                            ->visibility('public')
-                            ->acceptedFileTypes(['image/x-icon', 'image/png', 'image/svg+xml'])
-                            ->maxSize(512),
-                    ]),
+                    Select::make('auth_bg_type')
+                        ->label('نوع الخلفية')
+                        ->options([
+                            'color' => '🎨 لون',
+                            'image' => '🖼️ صورة',
+                        ])
+                        ->default('color')
+                        ->live()
+                        ->required(),
 
-                Section::make(__('Status'))
-                    ->schema([
-                        Toggle::make('is_active')
-                            ->label(__('Active'))
-                            ->default(true),
-                    ]),
-            ]);
+                    ColorPicker::make('auth_bg_color')
+                        ->label('لون الخلفية')
+                        ->default('#085041')
+                        ->visible(fn ($get) => $get('auth_bg_type') === 'color'),
+
+                    FileUpload::make('auth_bg_image')
+                        ->label('صورة الخلفية')
+                        ->image()
+                        ->imageEditor()
+                        ->directory('site-settings/auth-bg')
+                        ->visibility('public')
+                        ->maxSize(5120)
+                        ->helperText('يُفضَّل أبعاد 1920×1080 أو أكبر')
+                        ->columnSpanFull()
+                        ->visible(fn ($get) => $get('auth_bg_type') === 'image'),
+
+                    TextInput::make('auth_headline')
+                        ->label('العنوان الرئيسي')
+                        ->placeholder('منصة الإعلانات المبوبة الأولى في مصر')
+                        ->maxLength(255)
+                        ->columnSpanFull(),
+
+                    Textarea::make('auth_subtext')
+                        ->label('النص الفرعي')
+                        ->placeholder('اشترِ وبِع بكل سهولة وأمان')
+                        ->rows(2)
+                        ->columnSpanFull(),
+                ]),
+
+            Section::make('اللوجو والفافيكون')
+                ->columns(2)
+                ->schema([
+                    FileUpload::make('site_logo')
+                        ->label('لوجو الموقع')
+                        ->image()
+                        ->imageEditor()
+                        ->directory('site-settings/logos')
+                        ->visibility('public')
+                        ->maxSize(2048),
+
+                    FileUpload::make('site_favicon')
+                        ->label('Favicon')
+                        ->image()
+                        ->directory('site-settings/favicons')
+                        ->visibility('public')
+                        ->maxSize(512),
+                ]),
+        ]);
     }
-
-    // ── Table ─────────────────────────────────────────────────────────────────
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                ImageColumn::make('site_logo')
-                    ->label(__('Logo'))
-                    ->height(40)
-                    ->circular(),
-
                 TextColumn::make('site_name')
-                    ->label(__('Site Name'))
-                    ->searchable()
-                    ->sortable(),
+                    ->label('اسم الموقع')
+                    ->placeholder('غير محدد'),
 
-                TextColumn::make('site_email')
-                    ->label(__('Email'))
-                    ->searchable(),
-
-                TextColumn::make('site_phone')
-                    ->label(__('Phone')),
+                TextColumn::make('auth_bg_type')
+                    ->label('نوع خلفية اللوجن')
+                    ->badge()
+                    ->color(fn ($state) => $state === 'image' ? 'success' : 'info')
+                    ->formatStateUsing(fn ($state) => $state === 'image' ? '🖼️ صورة' : '🎨 لون'),
 
                 ToggleColumn::make('is_active')
-                    ->label(__('Active')),
+                    ->label('نشط'),
 
                 TextColumn::make('updated_at')
-                    ->label(__('Last Updated'))
-                    ->dateTime()
-                    ->sortable()
+                    ->label('آخر تعديل')
                     ->since(),
             ])
             ->actions([
@@ -163,8 +164,6 @@ class SiteSettingResource extends Resource
                 ]),
             ]);
     }
-
-    // ── Pages ─────────────────────────────────────────────────────────────────
 
     public static function getPages(): array
     {

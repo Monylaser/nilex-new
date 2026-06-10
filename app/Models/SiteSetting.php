@@ -6,5 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class SiteSetting extends Model
 {
-    protected $fillable = ['auth_bg_image'];
+    protected $fillable = [
+        'site_name', 'site_email', 'site_phone',
+        'site_logo', 'site_favicon', 'is_active',
+        'auth_bg_image', 'auth_bg_type', 'auth_bg_color',
+        'auth_headline', 'auth_subtext',
+    ];
+
+    // دايما بنجيب الـ record الأول أو بنعمله
+    public static function getSettings(): self
+    {
+        return static::firstOrCreate(['id' => 1]);
+    }
 }

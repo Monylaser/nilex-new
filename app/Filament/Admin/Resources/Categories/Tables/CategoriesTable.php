@@ -7,10 +7,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Filters\TernaryFilter;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use App\Models\Category;
 use Illuminate\Support\Facades\Blade; // السطر ده مهم جداً عشان يشغل الأيقونة
 
@@ -84,8 +85,11 @@ class CategoriesTable
                     ->label(fn (Category $record) => $record->is_active ? 'إخفاء' : 'تنشيط')
                     ->icon(fn (Category $record) => $record->is_active ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
                     ->color(fn (Category $record) => $record->is_active ? 'warning' : 'success')
-                    ->action(fn (Category $record) => $record->update(['is_active' => !$record->is_active]))
+                    ->action(fn (Category $record) => $record->update(['is_active' => ! $record->is_active]))
                     ->requiresConfirmation(),
+
+                DeleteAction::make()
+                    ->label('حذف'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

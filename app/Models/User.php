@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Filament\Models\Contracts\FilamentUser;
@@ -14,7 +16,16 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'phone', 'is_banned', 'ban_reason', 'strike_count'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $event) => "User {$event}");
+    }
 
     protected $fillable = [
         'name',
@@ -22,14 +33,17 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'password',
         'phone',
         'points',
+        'points_balance',
         'is_banned',
         'ban_reason',
         'strike_count',
         'avatar',
         'ip_address', 
-        'device_id',  
-        'otp_code',          
-        'otp_expires_at',   
+        'device_id',
+        'fingerprint_hash',
+        'otp_code',
+        'otp_expires_at',
+        'otp_attempts',
         'is_phone_verified', 
         'provider_name',
         'provider_id',
@@ -38,6 +52,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'otp_code',
     ];
 
     protected $casts = [
@@ -45,14 +60,17 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'password'          => 'hashed',
         'is_banned'         => 'boolean',
         'strike_count'      => 'integer',
+        'otp_expires_at'    => 'datetime',
+        'is_phone_verified' => 'boolean',
+        'otp_attempts'      => 'integer',
     ];
 
     // ── Panel Access ──────────────────────────────────────────────────────────
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return str_ends_with($this->email, '@nilex.com')
-            || $this->hasRole('super_admin')
+        return $this->hasRole('super_admin')
+            || $this->hasRole('admin')
             || $this->hasRole('moderator');
     }
 
@@ -71,8 +89,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         return $this->hasMany(PointTransaction::class)->latest();
     }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class)->latest();
+    }
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * `points` هو الرصيد الفعلي الوحيد — `points_balance` مجرد مرآة له عبر PointService.
+     */
     public function hasPoints(int $amount): bool
     {
         return $this->points >= $amount;
