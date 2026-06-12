@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\PointsPurchased;
+use App\Listeners\AssignPlanEntitlementsListener;
 use App\Listeners\Auth\LogFailedLogin;
 use App\Listeners\Auth\LogRoleAssigned;
 use App\Listeners\Auth\LogRoleRevoked;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use App\Services\EntitlementService;
 use App\Services\PointService;
 use Spatie\Permission\Events\RoleAttachedEvent;
 use Spatie\Permission\Events\RoleDetachedEvent;
@@ -23,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PointService::class);
+        $this->app->singleton(EntitlementService::class);
     }
 
     public function boot(): void
@@ -31,6 +35,9 @@ class AppServiceProvider extends ServiceProvider
 
         \App\Models\PointTransaction::observe(\App\Observers\PointTransactionObserver::class);
         \App\Models\Listing::observe(\App\Observers\ListingObserver::class);
+        \App\Models\ListingPhoneClick::observe(\App\Observers\ListingPhoneClickObserver::class);
+        \App\Models\ListingWhatsappClick::observe(\App\Observers\ListingWhatsappClickObserver::class);
+        \App\Models\Offer::observe(\App\Observers\OfferLeadObserver::class);
 
         // ── Auth Activity Listeners ───────────────────────────────────────────
         Event::listen(Login::class,          LogSuccessfulLogin::class);
@@ -38,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Failed::class,         LogFailedLogin::class);
         Event::listen(RoleAttachedEvent::class, LogRoleAssigned::class);
         Event::listen(RoleDetachedEvent::class, LogRoleRevoked::class);
+        Event::listen(PointsPurchased::class, AssignPlanEntitlementsListener::class);
 
         // ── Footer Categories View Composer ────────────────────────────────────
         View::composer('layouts.app', function ($view) {

@@ -190,3 +190,52 @@ describe('User Dashboard Statistics', function () {
             ->assertViewHas('stats', fn (array $stats): bool => $stats['rejected'] === 2);
     });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TD-05 – featureListing() return contract (regression)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('User Dashboard featureListing (TD-05)', function () {
+
+    beforeEach(function () {
+        $this->user = User::factory()->create(['is_phone_verified' => true]);
+
+        $this->category = Category::create([
+            'name_ar'   => 'إلكترونيات',
+            'name_en'   => 'Electronics',
+            'slug'      => 'electronics-feature',
+            'is_active' => true,
+        ]);
+    });
+
+    it('flashes success and features listing when user has enough points', function () {
+        $this->user->update(['points' => 100]);
+
+        $listing = makeListing($this->user, $this->category, [
+            'is_featured' => false,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(UserDashboard::class)
+            ->call('featureListing', $listing->id)
+            ->assertSee('تم خصم النقاط وتمييز الإعلان بنجاح! 🚀');
+
+        expect($listing->fresh()->is_featured)->toBeTrue();
+    });
+
+    it('flashes exception message and does not feature listing when points are insufficient', function () {
+        $cost = Listing::featureCost(3);
+        $this->user->update(['points' => $cost - 1]);
+
+        $listing = makeListing($this->user, $this->category, [
+            'is_featured' => false,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(UserDashboard::class)
+            ->call('featureListing', $listing->id)
+            ->assertSee('نقاط غير كافية');
+
+        expect($listing->fresh()->is_featured)->toBeFalse();
+    });
+});

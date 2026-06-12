@@ -27,6 +27,18 @@ class UserInfolist
                     ->placeholder('-'),
                 TextEntry::make('points')
                     ->numeric(),
+
+                TextEntry::make('plan_tier')
+                    ->label('Plan Tier')
+                    ->placeholder('—'),
+
+                IconEntry::make('priority_support')
+                    ->label('Priority Support')
+                    ->boolean()
+                    ->getStateUsing(fn ($record) => app(\App\Services\EntitlementService::class)->hasFeature(
+                        $record,
+                        \App\Services\EntitlementService::FEATURE_PRIORITY_SUPPORT,
+                    )),
                 TextEntry::make('trust_score')
                     ->numeric(),
                 TextEntry::make('device_id')

@@ -47,6 +47,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'is_phone_verified', 
         'provider_name',
         'provider_id',
+        'plan_tier',
     ];
 
     protected $hidden = [
@@ -94,6 +95,32 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         return $this->hasMany(Transaction::class)->latest();
     }
+
+    public function listingViews(): HasMany
+    {
+        return $this->hasMany(ListingView::class);
+    }
+
+    public function listingPhoneClicks(): HasMany
+    {
+        return $this->hasMany(ListingPhoneClick::class);
+    }
+
+    public function listingWhatsappClicks(): HasMany
+    {
+        return $this->hasMany(ListingWhatsappClick::class);
+    }
+
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(UserEntitlement::class);
+    }
+
+    public function entitlementUsage(): HasMany
+    {
+        return $this->hasMany(UserEntitlementUsage::class);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**

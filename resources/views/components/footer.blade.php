@@ -150,37 +150,11 @@
             <div>
                 <h4 class="text-white font-bold text-sm mb-5 flex items-center gap-2">
                     <span class="w-1 h-4 rounded-full inline-block" style="background:#085041;"></span>
-                    {{ __('ui.footer.point_plans') }}
+                    <a href="{{ route('pricing') }}" class="hover:text-[#1D9E75] transition-colors duration-200">
+                        {{ __('ui.footer.point_plans') }}
+                    </a>
                 </h4>
-                @if($footerPlans->isNotEmpty())
-                    <ul class="space-y-3 text-sm">
-                        @foreach($footerPlans->take(5) as $plan)
-                            <li>
-                                <a href="{{ route('pricing') }}"
-                                   class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center justify-between group">
-                                    <span class="flex items-center gap-2">
-                                        <svg class="w-3.5 h-3.5 opacity-50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        {{ $plan->name_ar }}
-                                    </span>
-                                    <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(29,158,117,0.15); color:#1D9E75;">
-                                        {{ number_format($plan->points) }} {{ __('ui.footer.points_suffix') }}
-                                    </span>
-                                </a>
-                            </li>
-                        @endforeach
-                        @if($footerPlans->count() > 5)
-                            <li>
-                                <a href="{{ route('pricing') }}" class="text-xs hover:text-[#1D9E75] transition-colors" style="color:#475569;">
-                                    {{ __('ui.footer.view_all_plans') }}
-                                </a>
-                            </li>
-                        @endif
-                    </ul>
-                @else
-                    <p class="text-sm" style="color:#475569;">
-                        <a href="{{ route('pricing') }}" class="hover:text-[#1D9E75] transition-colors">{{ __('ui.footer.view_point_plans') }}</a>
-                    </p>
-                @endif
+             
             </div>
 
             {{-- Col 5 — Contact --}}
@@ -200,7 +174,7 @@
                         <svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1D9E75;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                         </svg>
-                        <span>١٢٣٤٥٦٧٨٩٠+</span>
+                        <span></span>
                     </li>
                     <li class="flex items-start gap-3">
                         <svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1D9E75;" fill="none" stroke="currentColor" viewBox="0 0 24 24">

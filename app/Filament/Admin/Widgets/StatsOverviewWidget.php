@@ -3,14 +3,13 @@
 namespace App\Filament\Admin\Widgets;
 
 use App\Models\Listing;
-use App\Models\PointTransaction;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsOverviewWidget extends BaseWidget
 {
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 10;
 
     public static function canView(): bool
     {
@@ -26,15 +25,7 @@ class StatsOverviewWidget extends BaseWidget
         $bannedUsers   = User::where('is_banned', true)->count();
         $flaggedAds    = Listing::where('is_flagged', true)->count();
 
-        // Total revenue = sum of all positive point transactions (purchases / top-ups)
-        $totalRevenue = PointTransaction::where('amount', '>', 0)->sum('amount');
-
         return [
-            Stat::make('إجمالي الإيرادات', number_format($totalRevenue) . ' نقطة')
-                ->description('مجموع شراء النقاط والرصيد المُضاف')
-                ->descriptionIcon('heroicon-m-currency-dollar')
-                ->color('success'),
-
             Stat::make('المستخدمون النشطون', number_format($activeUsers))
                 ->description('غير محظورين على المنصة')
                 ->descriptionIcon('heroicon-m-user-group')

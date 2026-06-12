@@ -12,3 +12,5 @@
 */
 
 uses(Tests\TestCase::class)->in('Feature');
+
+require_once __DIR__ . '/Feature/Plans/helpers.php';

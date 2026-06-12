@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
@@ -164,6 +165,26 @@ class Listing extends Model implements HasMedia
         return $this->belongsTo(CarModel::class, 'car_model_id');
     }
 
+    public function views(): HasMany
+    {
+        return $this->hasMany(ListingView::class);
+    }
+
+    public function phoneClicks(): HasMany
+    {
+        return $this->hasMany(ListingPhoneClick::class);
+    }
+
+    public function whatsappClicks(): HasMany
+    {
+        return $this->hasMany(ListingWhatsappClick::class);
+    }
+
+    public function offers(): HasMany
+    {
+        return $this->hasMany(Offer::class);
+    }
+
     // ── Scopes ────────────────────────────────────────────────────────────────
 
     public function scopeActive(Builder $query)
@@ -244,6 +265,18 @@ class Listing extends Model implements HasMedia
         $this->loadMissing('user');
         $user = $this->user;
 
+        $entitlements = app(\App\Services\EntitlementService::class);
+
+        $isNewFeaturedSlot = ! ($this->is_featured && $this->featured_until?->isFuture());
+
+        if ($isNewFeaturedSlot && ! $entitlements->canUseFeature($user, \App\Services\EntitlementService::FEATURE_FEATURED_LISTINGS_LIMIT, $this)) {
+            throw new \Exception('وصلت للحد الأقصى من الإعلانات المميزة في خطتك الحالية.');
+        }
+
+        if (! $entitlements->canUseFeature($user, \App\Services\EntitlementService::FEATURE_MONTHLY_BOOST_LIMIT)) {
+            throw new \Exception('وصلت للحد الشهري لعمليات التمييز في خطتك الحالية.');
+        }
+
         // ✅ تأكد من كفاية النقاط
         if (! $user->hasPoints($cost)) {
             throw new \Exception(
@@ -274,6 +307,8 @@ class Listing extends Model implements HasMedia
             'is_featured'    => true,
             'featured_until' => $from->addDays($days),
         ]);
+
+        $entitlements->recordUsage($user, \App\Services\EntitlementService::FEATURE_MONTHLY_BOOST_LIMIT);
     }
 
     /**

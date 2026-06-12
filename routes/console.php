@@ -17,3 +17,10 @@ Schedule::job(ProcessScheduledCampaigns::class)
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('ProcessScheduledCampaigns scheduler failed.');
     });
+
+Schedule::command('nilex:monthly-reports')
+    ->monthlyOn(1, '02:00')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('nilex:monthly-reports scheduler failed.');
+    });

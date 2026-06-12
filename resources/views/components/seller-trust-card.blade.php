@@ -16,7 +16,10 @@
         </div>
         <div class="flex-1 min-w-0">
             <p class="text-[11px] text-zinc-400 font-medium mb-0.5">البائع</p>
-            <p class="text-sm font-semibold text-zinc-900 leading-snug truncate">{{ $seller->name }}</p>
+            <div class="flex items-center gap-2 min-w-0">
+                <p class="text-sm font-semibold text-zinc-900 leading-snug truncate">{{ $seller->name }}</p>
+                @include('frontend.partials.business-badge', ['seller' => $seller])
+            </div>
         </div>
     </div>
 

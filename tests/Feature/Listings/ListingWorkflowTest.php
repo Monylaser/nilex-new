@@ -16,7 +16,12 @@
  * Test 6: Phone Reveal Endpoint
  *   - Guest → 401 Unauthenticated.
  *   - Authenticated user → 200 with phone number.
- *   - whatsapp_clicks increments by 1.
+ *   - phone reveal creates ListingPhoneClick records (not whatsapp_clicks).
+ *
+ * Test 7: WhatsApp Click Tracking (TD-01 Phase 1)
+ *   - First click creates listing_whatsapp_clicks row and increments whatsapp_clicks.
+ *   - Deduped click within 1h does not create a second row or increment again.
+ *   - revealPhone and view tracking remain unaffected.
  */
 
 use App\Models\Category;
@@ -309,7 +314,7 @@ describe('Phone Reveal Endpoint', function () {
             ->assertJsonFragment(['phone' => '01001234567']);
     });
 
-    it('increments whatsapp_clicks by 1 on each reveal', function () {
+    it('records a phone click on reveal without incrementing whatsapp_clicks', function () {
         $buyer = User::factory()->create(['is_phone_verified' => true]);
 
         expect($this->listing->whatsapp_clicks)->toBe(0);
@@ -317,12 +322,100 @@ describe('Phone Reveal Endpoint', function () {
         $this->actingAs($buyer)
             ->postJson(route('listings.reveal-phone', $this->listing));
 
-        expect($this->listing->fresh()->whatsapp_clicks)->toBe(1);
+        expect($this->listing->fresh()->whatsapp_clicks)->toBe(0);
+        $this->assertDatabaseCount('listing_phone_clicks', 1);
 
-        // A second reveal must increment to 2.
+        // Deduped within 1 hour — second reveal does not create another row.
         $this->actingAs($buyer)
             ->postJson(route('listings.reveal-phone', $this->listing));
 
-        expect($this->listing->fresh()->whatsapp_clicks)->toBe(2);
+        expect($this->listing->fresh()->whatsapp_clicks)->toBe(0);
+        $this->assertDatabaseCount('listing_phone_clicks', 1);
+    });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Test 7 – WhatsApp Click Tracking (TD-01 Phase 1)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('WhatsApp Click Tracking (TD-01 Phase 1)', function () {
+
+    beforeEach(function () {
+        $this->category = Category::create([
+            'name_ar'   => 'موبايلات',
+            'name_en'   => 'Phones',
+            'slug'      => 'phones-whatsapp',
+            'is_active' => true,
+        ]);
+
+        $seller = User::factory()->create([
+            'phone'             => '01009876543',
+            'is_phone_verified' => true,
+        ]);
+
+        $this->listing = Listing::create([
+            'title'           => 'سامسونج جالاكسي S24',
+            'slug'            => 'samsung-galaxy-s24',
+            'description'     => 'جهاز بحالة ممتازة.',
+            'price'           => 30_000,
+            'phone'           => '01009876543',
+            'category_id'     => $this->category->id,
+            'user_id'         => $seller->id,
+            'status'          => Listing::STATUS_PUBLISHED,
+            'views_count'     => 0,
+            'whatsapp_clicks' => 0,
+        ]);
+    });
+
+    it('records first whatsapp click in event table and increments whatsapp_clicks', function () {
+        $buyer = User::factory()->create(['is_phone_verified' => true]);
+
+        expect($this->listing->whatsapp_clicks)->toBe(0);
+
+        $this->actingAs($buyer)
+            ->postJson(route('listings.whatsapp-click', $this->listing))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        expect($this->listing->fresh()->whatsapp_clicks)->toBe(1);
+        $this->assertDatabaseCount('listing_whatsapp_clicks', 1);
+    });
+
+    it('does not record duplicate whatsapp click or increment whatsapp_clicks within dedup window', function () {
+        $buyer = User::factory()->create(['is_phone_verified' => true]);
+
+        $this->actingAs($buyer)
+            ->postJson(route('listings.whatsapp-click', $this->listing));
+
+        expect($this->listing->fresh()->whatsapp_clicks)->toBe(1);
+        $this->assertDatabaseCount('listing_whatsapp_clicks', 1);
+
+        $this->actingAs($buyer)
+            ->postJson(route('listings.whatsapp-click', $this->listing))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        expect($this->listing->fresh()->whatsapp_clicks)->toBe(1);
+        $this->assertDatabaseCount('listing_whatsapp_clicks', 1);
+    });
+
+    it('keeps revealPhone and view tracking behavior intact', function () {
+        $buyer = User::factory()->create(['is_phone_verified' => true]);
+
+        $this->actingAs($buyer)
+            ->postJson(route('listings.reveal-phone', $this->listing))
+            ->assertOk()
+            ->assertJsonStructure(['phone', 'whatsapp_url']);
+
+        expect($this->listing->fresh()->whatsapp_clicks)->toBe(0);
+        $this->assertDatabaseCount('listing_phone_clicks', 1);
+        $this->assertDatabaseCount('listing_whatsapp_clicks', 0);
+
+        $this->get(route('listings.show', $this->listing))
+            ->assertOk();
+
+        expect($this->listing->fresh()->views_count)->toBe(1);
+        $this->assertDatabaseCount('listing_views', 1);
+        expect($this->listing->fresh()->whatsapp_clicks)->toBe(0);
     });
 });

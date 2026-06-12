@@ -21,9 +21,17 @@ use App\Livewire\SmartAdCreator;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Admin\Widgets\BestSellingPlansChart;
 use App\Filament\Admin\Widgets\CategoriesChartWidget;
+use App\Filament\Admin\Widgets\ConversionMetricsWidget;
+use App\Filament\Admin\Widgets\LeadFunnelWidget;
+use App\Filament\Admin\Widgets\CategoryPerformanceWidget;
+use App\Filament\Admin\Widgets\TopListingsWidget;
+use App\Filament\Admin\Widgets\DailyRevenueWidget;
 use App\Filament\Admin\Widgets\GovernoratesChartWidget;
+use App\Filament\Admin\Widgets\MonetizationOverviewWidget;
+use App\Filament\Admin\Widgets\MonthlyRevenueWidget;
 use App\Filament\Admin\Widgets\RevenueAlertWidget;
 use App\Filament\Admin\Widgets\StatsOverviewWidget;
+use App\Filament\Admin\Widgets\WeeklyRevenueChart;
 use JeffersonGoncalves\FilamentTranslatable\FilamentTranslatablePlugin;
 
 class AdminPanelProvider extends PanelProvider
@@ -50,8 +58,16 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->widgets([
-                StatsOverviewWidget::class,
+                MonetizationOverviewWidget::class,
+                DailyRevenueWidget::class,
                 RevenueAlertWidget::class,
+                WeeklyRevenueChart::class,
+                MonthlyRevenueWidget::class,
+                ConversionMetricsWidget::class,
+                LeadFunnelWidget::class,
+                TopListingsWidget::class,
+                CategoryPerformanceWidget::class,
+                StatsOverviewWidget::class,
                 Widgets\AccountWidget::class,
                 \App\Filament\Admin\Widgets\ListingsChart::class,
                 GovernoratesChartWidget::class,
@@ -59,6 +75,10 @@ class AdminPanelProvider extends PanelProvider
                 BestSellingPlansChart::class,
             ])
             ->navigationGroups([
+                NavigationGroup::make('Settings')
+                    ->collapsed(false),
+                NavigationGroup::make('إدارة الوصول')
+                    ->collapsed(false),
                 NavigationGroup::make('الإشراف')
                     ->collapsed(false),
                 NavigationGroup::make('المحتوى')

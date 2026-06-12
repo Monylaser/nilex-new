@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;          // ✅ بدل OtpVerificationController
 use App\Http\Controllers\Auth\SocialiteController;    // ✅ بدل NilexAuthController
 use App\Livewire\Frontend\UserDashboard;
+use App\Livewire\Frontend\BusinessDashboard;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,19 +40,10 @@ Route::get('/listings/{listing}', [ListingController::class, 'show'])->name('lis
 Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->name('category.show');
 
 // 🟢 كشف الرقم وتتبع النقرات
-Route::post('/listings/{listing}/reveal-phone', function (App\Models\Listing $listing) {
-    if (!Auth::check()) {
-        return response()->json(['error' => 'Unauthenticated'], 401);
-    }
-    $listing->increment('whatsapp_clicks');
-    $phone = $listing->phone ?? $listing->user->phone;
-    $phoneForWhatsapp = '2' . ltrim($phone, '0');
-    $message = urlencode("مرحباً، بخصوص إعلانك: {$listing->title} على منصة Nilex. هل ما زال متاحاً؟");
-    return response()->json([
-        'phone'         => $phone,
-        'whatsapp_url'  => "https://wa.me/{$phoneForWhatsapp}?text={$message}",
-    ]);
-})->name('listings.reveal-phone');
+Route::post('/listings/{listing}/reveal-phone', [ListingController::class, 'revealPhone'])
+    ->name('listings.reveal-phone');
+Route::post('/listings/{listing}/whatsapp-click', [ListingController::class, 'trackWhatsappClick'])
+    ->name('listings.whatsapp-click');
 
 // 🌅 مسارات السوشيال ميديا — SocialiteController ✅
 Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])
@@ -84,6 +76,15 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
     Route::get('/dashboard', UserDashboard::class)
     ->middleware(['auth', 'otp.verified']) // ← بدل verified
     ->name('dashboard');
+
+    Route::get('/dashboard/leads', \App\Livewire\Frontend\SellerLeads::class)
+        ->name('dashboard.leads');
+
+    Route::get('/dashboard/leads/{lead}', \App\Livewire\Frontend\SellerLeadDetail::class)
+        ->name('dashboard.leads.show');
+
+    Route::get('/business/dashboard', BusinessDashboard::class)
+        ->name('business.dashboard');
 
     // 3. الملف الشخصي
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

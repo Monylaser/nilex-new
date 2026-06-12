@@ -60,6 +60,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // 4. أدوار وصلاحيات الأدمن (super_admin)
+        $this->call([
+            RoleSeeder::class,
+            PlanEntitlementSeeder::class,
+        ]);
+
         $this->command->info('✅ تم زرع البيانات بنجاح: 4 أقسام وحساب أدمن جاهز.');
     }
 }

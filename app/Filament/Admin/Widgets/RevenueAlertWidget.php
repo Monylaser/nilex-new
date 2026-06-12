@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 
 class RevenueAlertWidget extends BaseWidget
 {
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
 
     protected int $dailyRevenueThresholdEgp = 500;
 
@@ -21,7 +21,7 @@ class RevenueAlertWidget extends BaseWidget
     protected function getStats(): array
     {
         $todayRevenue = (float) Transaction::query()
-            ->where('status', 'completed')
+            ->completed()
             ->whereDate('created_at', Carbon::today())
             ->sum('amount');
 

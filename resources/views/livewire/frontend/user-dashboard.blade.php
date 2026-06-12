@@ -28,12 +28,18 @@
                     </div>
                 </div>
             </div>
-            <a href="{{ route('listings.create') }}"
-               class="flex items-center justify-center gap-2 bg-nilex hover:bg-nilex-dark text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shrink-0 text-sm"
-               style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                أضف إعلان جديد
-            </a>
+            <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                <a href="{{ route('dashboard.leads') }}"
+                   class="flex items-center justify-center gap-2 bg-white border border-nilex/30 text-nilex hover:bg-nilex/5 font-bold py-3 px-5 rounded-xl transition-all text-sm">
+                    {{ __('ui.leads.nav_link') }}
+                </a>
+                <a href="{{ route('listings.create') }}"
+                   class="flex items-center justify-center gap-2 bg-nilex hover:bg-nilex-dark text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 text-sm"
+                   style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    أضف إعلان جديد
+                </a>
+            </div>
         </div>
 
         {{-- ── STATS CARDS ─────────────────────────────────────────────────── --}}
@@ -70,7 +76,145 @@
             </div>
         </div>
 
-        {{-- ── CHART ───────────────────────────────────────────────────────── --}}
+        {{-- ── VERIFIED / EVENT-BASED ANALYTICS (Phase 2) ─────────────────── --}}
+        @if($access['analytics'] ?? false)
+            <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <h3 class="text-base font-black text-zinc-900">{{ __('ui.analytics.verified_title') }}</h3>
+                    <span class="sr-only">Verified Analytics</span>
+                    <span class="text-xs font-bold text-nilex bg-nilex/8 px-2.5 py-1 rounded-full">{{ __('ui.analytics.event_based') }}</span>
+                    <span class="sr-only">Event-Based Analytics</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    @if($access['event_views'] ?? false)
+                        <div class="bg-zinc-50 rounded-2xl border border-zinc-200 p-4 text-center">
+                            <p class="text-xs text-zinc-500 font-semibold mb-1">👁 {{ __('ui.pricing.analytics_views') }}</p>
+                            <span class="sr-only">Event Views</span>
+                            <p class="text-2xl font-black text-zinc-800">{{ number_format($stats['views_events'] ?? 0) }}</p>
+                        </div>
+                    @else
+                        <x-upgrade-prompt
+                            :feature-name="__('ui.pricing.features.event_views')"
+                            required-tier="growth"
+                            :current-tier="$user->plan_tier"
+                            class="min-h-[5rem]"
+                        />
+                    @endif
+                    @if($access['phone_clicks'] ?? false)
+                        <div class="bg-blue-50 rounded-2xl border border-blue-100 p-4 text-center">
+                            <p class="text-xs text-blue-600 font-semibold mb-1">📞 {{ __('ui.pricing.analytics_phone') }}</p>
+                            <span class="sr-only">Phone Clicks</span>
+                            <p class="text-2xl font-black text-blue-700">{{ number_format($stats['phone_clicks'] ?? 0) }}</p>
+                        </div>
+                    @else
+                        <x-upgrade-prompt
+                            :feature-name="__('ui.pricing.features.phone_clicks')"
+                            required-tier="pro_seller"
+                            :current-tier="$user->plan_tier"
+                            class="min-h-[5rem]"
+                        />
+                    @endif
+                    @if($access['whatsapp_clicks'] ?? false)
+                        <div class="rounded-2xl border p-4 text-center" style="background:rgba(37,211,102,0.06); border-color:rgba(37,211,102,0.2);">
+                            <p class="text-xs font-semibold mb-1" style="color:#1da851;">💬 {{ __('ui.pricing.analytics_whatsapp') }}</p>
+                            <span class="sr-only">WhatsApp Clicks</span>
+                            <p class="text-2xl font-black" style="color:#1da851;">{{ number_format($stats['whatsapp_clicks_events'] ?? 0) }}</p>
+                        </div>
+                    @else
+                        <x-upgrade-prompt
+                            :feature-name="__('ui.pricing.features.whatsapp_clicks')"
+                            required-tier="growth"
+                            :current-tier="$user->plan_tier"
+                            class="min-h-[5rem]"
+                        />
+                    @endif
+                </div>
+
+                {{-- Enhanced stats row --}}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                    @if(($access['phone_clicks'] ?? false) && isset($stats['total_phone_reveals']))
+                        <div class="bg-white rounded-xl border border-zinc-100 p-3 text-center">
+                            <p class="text-xs text-zinc-500 font-semibold mb-1">{{ __('ui.analytics.total_phone_reveals') }}</p>
+                            <p class="text-xl font-black text-zinc-800">{{ number_format($stats['total_phone_reveals']) }}</p>
+                        </div>
+                    @endif
+                    @if(($access['whatsapp_clicks'] ?? false) && isset($stats['total_whatsapp_clicks']))
+                        <div class="bg-white rounded-xl border border-zinc-100 p-3 text-center">
+                            <p class="text-xs text-zinc-500 font-semibold mb-1">{{ __('ui.analytics.total_whatsapp_clicks') }}</p>
+                            <p class="text-xl font-black text-zinc-800">{{ number_format($stats['total_whatsapp_clicks']) }}</p>
+                        </div>
+                    @endif
+                    @if(isset($stats['conversion_rate']))
+                        <div class="bg-nilex/5 rounded-xl border border-nilex/15 p-3 text-center">
+                            <p class="text-xs text-nilex font-semibold mb-1">{{ __('ui.analytics.conversion_rate') }}</p>
+                            <p class="text-xl font-black text-nilex">{{ $stats['conversion_rate'] }}%</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @else
+            <x-upgrade-prompt
+                :feature-name="__('ui.analytics.verified_title')"
+                required-tier="growth"
+                :current-tier="$user->plan_tier"
+            >
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="h-16 bg-zinc-200 rounded-xl"></div>
+                    <div class="h-16 bg-zinc-200 rounded-xl"></div>
+                    <div class="h-16 bg-zinc-200 rounded-xl"></div>
+                </div>
+            </x-upgrade-prompt>
+        @endif
+
+        {{-- ── ANALYTICS CHARTS (pro_seller+) ─────────────────────────────── --}}
+        @if($access['charts'] ?? false)
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {{-- Views per day --}}
+                <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+                    <h3 class="text-base font-black text-zinc-900 mb-4">{{ __('ui.analytics.chart_views_daily') }}</h3>
+                    <div wire:ignore class="relative h-52 w-full"
+                         id="viewsDailyChartContainer"
+                         data-labels="{{ json_encode($chartData['views_by_day']['labels'] ?? []) }}"
+                         data-values="{{ json_encode($chartData['views_by_day']['values'] ?? []) }}">
+                        <canvas id="viewsDailyChart"></canvas>
+                    </div>
+                </div>
+                {{-- WhatsApp by listing --}}
+                <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+                    <h3 class="text-base font-black text-zinc-900 mb-4">{{ __('ui.analytics.chart_whatsapp_listings') }}</h3>
+                    <div wire:ignore class="relative h-52 w-full"
+                         id="whatsappListingChartContainer"
+                         data-labels="{{ json_encode($chartData['whatsapp_by_listing']['labels'] ?? []) }}"
+                         data-values="{{ json_encode($chartData['whatsapp_by_listing']['values'] ?? []) }}">
+                        <canvas id="whatsappListingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            {{-- Category doughnut --}}
+            <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+                <h3 class="text-base font-black text-zinc-900 mb-4">{{ __('ui.analytics.chart_category_performance') }}</h3>
+                <div wire:ignore class="relative h-56 w-full max-w-md mx-auto"
+                     id="categoryChartContainer"
+                     data-labels="{{ json_encode($chartData['category_performance']['labels'] ?? []) }}"
+                     data-values="{{ json_encode($chartData['category_performance']['values'] ?? []) }}">
+                    <canvas id="categoryPerformanceChart"></canvas>
+                </div>
+            </div>
+        @elseif($access['analytics'] ?? false)
+            <x-upgrade-prompt
+                :feature-name="__('ui.pricing.features.analytics_charts')"
+                required-tier="pro_seller"
+                :current-tier="$user->plan_tier"
+            >
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="h-32 bg-zinc-200 rounded-xl"></div>
+                    <div class="h-32 bg-zinc-200 rounded-xl"></div>
+                </div>
+            </x-upgrade-prompt>
+        @endif
+
+        {{-- ── LEGACY LISTING CHART ───────────────────────────────────────── --}}
+        @if($access['analytics'] ?? false)
         <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
             <div class="flex items-center justify-between mb-5">
                 <h3 class="text-base font-black text-zinc-900">أداء الإعلانات</h3>
@@ -85,6 +229,7 @@
                 <canvas id="userAnalyticsChart"></canvas>
             </div>
         </div>
+        @endif
 
         {{-- ── INCOMING OFFERS ─────────────────────────────────────────────── --}}
         @if($incomingOffers->count() > 0)
@@ -320,24 +465,27 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
     (function () {
-        let chartInstance = null;
+        const chartInstances = {};
+
+        function destroyChart(id) {
+            if (chartInstances[id]) {
+                chartInstances[id].destroy();
+                chartInstances[id] = null;
+            }
+        }
 
         function initDashboardChart() {
             const container = document.getElementById('chartDataContainer');
             const canvas    = document.getElementById('userAnalyticsChart');
             if (!container || !canvas) return;
 
-            // Destroy previous instance to prevent memory leaks
-            if (chartInstance) {
-                chartInstance.destroy();
-                chartInstance = null;
-            }
+            destroyChart('legacy');
 
             const labels = JSON.parse(container.getAttribute('data-labels') || '[]');
             const views  = JSON.parse(container.getAttribute('data-views')  || '[]');
             const clicks = JSON.parse(container.getAttribute('data-clicks') || '[]');
 
-            chartInstance = new Chart(canvas, {
+            chartInstances.legacy = new Chart(canvas, {
                 type: 'bar',
                 data: {
                     labels,
@@ -379,8 +527,89 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', initDashboardChart);
-        document.addEventListener('livewire:navigated', initDashboardChart);
+        function initPhase2Charts() {
+            const viewsContainer = document.getElementById('viewsDailyChartContainer');
+            const viewsCanvas    = document.getElementById('viewsDailyChart');
+            if (viewsContainer && viewsCanvas) {
+                destroyChart('viewsDaily');
+                chartInstances.viewsDaily = new Chart(viewsCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: JSON.parse(viewsContainer.getAttribute('data-labels') || '[]'),
+                        datasets: [{
+                            label: 'المشاهدات',
+                            data: JSON.parse(viewsContainer.getAttribute('data-values') || '[]'),
+                            borderColor: '#1D9E75',
+                            backgroundColor: 'rgba(29,158,117,0.1)',
+                            fill: true,
+                            tension: 0.3,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        rtl: true,
+                        scales: { y: { beginAtZero: true } },
+                    }
+                });
+            }
+
+            const waContainer = document.getElementById('whatsappListingChartContainer');
+            const waCanvas    = document.getElementById('whatsappListingChart');
+            if (waContainer && waCanvas) {
+                destroyChart('whatsappListing');
+                chartInstances.whatsappListing = new Chart(waCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: JSON.parse(waContainer.getAttribute('data-labels') || '[]'),
+                        datasets: [{
+                            label: 'نقرات الواتساب',
+                            data: JSON.parse(waContainer.getAttribute('data-values') || '[]'),
+                            backgroundColor: 'rgba(37,211,102,0.2)',
+                            borderColor: '#25D366',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        rtl: true,
+                        scales: { y: { beginAtZero: true } },
+                    }
+                });
+            }
+
+            const catContainer = document.getElementById('categoryChartContainer');
+            const catCanvas    = document.getElementById('categoryPerformanceChart');
+            if (catContainer && catCanvas) {
+                destroyChart('category');
+                const colors = ['#1D9E75','#25D366','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#71717a'];
+                chartInstances.category = new Chart(catCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: JSON.parse(catContainer.getAttribute('data-labels') || '[]'),
+                        datasets: [{
+                            data: JSON.parse(catContainer.getAttribute('data-values') || '[]'),
+                            backgroundColor: colors,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        rtl: true,
+                    }
+                });
+            }
+        }
+
+        function initAllCharts() {
+            initDashboardChart();
+            initPhase2Charts();
+        }
+
+        document.addEventListener('DOMContentLoaded', initAllCharts);
+        document.addEventListener('livewire:navigated', initAllCharts);
     })();
 </script>
 @endsection

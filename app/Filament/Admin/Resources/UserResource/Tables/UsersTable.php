@@ -8,6 +8,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use App\Services\EntitlementService;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -47,6 +49,20 @@ class UsersTable
                 ->badge()
                 ->color('success')
                 ->alignEnd(),
+
+            TextColumn::make('plan_tier')
+                ->label('الخطة')
+                ->placeholder('—')
+                ->toggleable(),
+
+            IconColumn::make('priority_support')
+                ->label('دعم أولوية')
+                ->boolean()
+                ->getStateUsing(fn ($record) => app(EntitlementService::class)->hasFeature(
+                    $record,
+                    EntitlementService::FEATURE_PRIORITY_SUPPORT,
+                ))
+                ->toggleable(),
 
             TextColumn::make('created_at')
                 ->label('تاريخ التسجيل')

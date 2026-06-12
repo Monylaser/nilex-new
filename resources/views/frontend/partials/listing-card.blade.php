@@ -44,11 +44,15 @@
         @endif
 
         {{-- Title --}}
-        <h3 class="font-bold text-zinc-900 text-sm mb-3 line-clamp-1 group-hover:text-nilex transition-colors duration-200">
+        <h3 class="font-bold text-zinc-900 text-sm mb-2 line-clamp-1 group-hover:text-nilex transition-colors duration-200">
             <a href="{{ route('listings.show', $listing->id) }}">
                 {{ $listing->title }}
             </a>
         </h3>
+
+        @if($listing->relationLoaded('user') ? $listing->user : $listing->user()->first())
+            @include('frontend.partials.business-badge', ['seller' => $listing->user])
+        @endif
 
         {{-- Footer --}}
         <div class="flex items-center justify-between pt-3 border-t border-zinc-50">

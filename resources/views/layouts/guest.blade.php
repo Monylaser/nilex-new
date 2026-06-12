@@ -114,11 +114,21 @@
 </head>
 <body style="margin:0; background:#f4f4f5; min-height:100vh; -webkit-font-smoothing:antialiased;" class="font-sans">
 
+@php
+    use Illuminate\Support\Facades\Storage;
+    $settings = \App\Models\SiteSetting::getSettings();
+    if ($settings->auth_bg_type === 'image' && $settings->auth_bg_image) {
+        $bgStyle = "background-image:url('" . Storage::url($settings->auth_bg_image) . "'); background-size:cover; background-position:center;";
+    } else {
+        $bgStyle = "background:" . ($settings->auth_bg_color ?? '#085041') . ";";
+    }
+@endphp
+
 <div style="min-height:100vh; display:flex;">
 
     {{-- ── LEFT PANEL: Trust + brand (desktop only) ───────────────────────── --}}
     <div id="auth-left"
-         style="display:none; width:50%; flex-direction:column; justify-content:center; padding:48px; position:relative; overflow:hidden; background:#085041;">
+         style="display:none; width:50%; flex-direction:column; justify-content:center; padding:48px; position:relative; overflow:hidden; {{ $bgStyle }}">
 
         {{-- Subtle dot texture --}}
         <div style="position:absolute; inset:0; opacity:0.07;"

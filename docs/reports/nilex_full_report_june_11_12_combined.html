@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Nilex — التقرير الكامل 11–12 يونيو 2026</title>
+    <style>
+    @page {
+    size: A4;
+    margin: 18mm 15mm 20mm 15mm;
+}
+
+body {
+    font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+    direction: rtl;
+    text-align: right;
+    line-height: 1.65;
+    font-size: 10.5pt;
+    color: #18181b;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+h1 {
+    color: #1D9E75;
+    font-size: 20pt;
+    border-bottom: 2px solid #1D9E75;
+    padding-bottom: 8px;
+    margin-top: 0;
+    page-break-after: avoid;
+}
+
+h2 {
+    color: #1D9E75;
+    font-size: 14pt;
+    margin-top: 1.4em;
+    page-break-after: avoid;
+}
+
+h3 {
+    color: #3f3f46;
+    font-size: 12pt;
+    page-break-after: avoid;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0 1.2rem;
+    font-size: 9pt;
+    page-break-inside: avoid;
+}
+
+th, td {
+    border: 1px solid #d4d4d8;
+    padding: 6px 8px;
+    text-align: right;
+    vertical-align: top;
+}
+
+th {
+    background: #f4f4f5;
+    font-weight: 700;
+    color: #27272a;
+}
+
+tr:nth-child(even) td {
+    background: #fafafa;
+}
+
+code, pre {
+    direction: ltr;
+    text-align: left;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 8pt;
+}
+
+pre {
+    background: #f4f4f5;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #e4e4e7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    page-break-inside: avoid;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e4e4e7;
+    margin: 1.5rem 0;
+}
+
+.page-break {
+    page-break-before: always;
+}
+
+.cover-meta {
+    color: #71717a;
+    font-size: 10pt;
+    margin-bottom: 2rem;
+}
+
+.part-title {
+    background: #1D9E75;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13pt;
+    font-weight: 700;
+    margin: 2rem 0 1rem;
+    page-break-before: always;
+}
+
+ul, ol {
+    padding-right: 1.4rem;
+}
+
+strong {
+    color: #27272a;
+}
+
+    </style>
+</head>
+<body>
+<h1>Nilex Marketplace — التقرير الكامل</h1>
+<h2>التنفيذ الشامل + المراجعة الخبيرة | 11–12 يونيو 2026</h2>
+<p><strong>المشروع:</strong> Nilex Marketplace<br />
+<strong>التقنيات:</strong> Laravel 13 · Filament v5.4 · Livewire · Pest<br />
+<strong>حالة الاختبارات:</strong> 240 اختبارًا ناجحًا (727 assertion)<br />
+<strong>تاريخ الإصدار:</strong> 12 يونيو 2026</p>
+<p><strong>محتويات الوثيقة:</strong></p>
+<ol>
+<li><strong>الجزء الأول</strong> — تقرير شامل لكل ما تم تنفيذه (11–12 يونيو)</li>
+<li><strong>الجزء الثاني</strong> — مراجعة خبيرة: ما الذي ينقص للـ production readiness</li>
+</ol>
+<div class="page-break"></div>
+<div class="part-title">الجزء الأول — التقرير الشامل للتنفيذ</div>
+**المشروع:** Nilex Marketplace  
+**التقنيات:** Laravel 13 · Filament v5.4 · Livewire · Pest  
+**حالة الاختبارات الحالية:** **240 اختبارًا ناجحًا** (727 assertion) — 0 فشل  
+**ملاحظة:** معظم التغييرات **غير مُ commit-ed** في Git حتى الآن (العمل محلي)
+<hr />
+<h2>1. ملخص تنفيذي</h2>
+<p>خلال يومي <strong>11 و12 يونيو 2026</strong> تحوّلت المنصة من نظام إعلانات كلاسيكي بعدادات بسيطة إلى منصة <strong>تحليلات + leads + entitlements</strong> متكاملة، مع محاذاة بين:</p>
+<p>| الطبقة | قبل | بعد |
+|--------|-----|-----|
+| تتبع التفاعل | أعمدة legacy فقط (<code>views_count</code>, <code>whatsapp_clicks</code>) | جداول أحداث + مزامنة dual-write |
+| لوحة البائع | إحصائيات أساسية | تحليلات موثّقة + charts + gating حسب الباقة |
+| لوحة الأدمن | widgets جزئية | Lead funnel + Top listings + Category performance + revenue |
+| الباقات | نقاط فقط | Plan Entitlements (Phase 1) + Analytics (Phase 2) |
+| العملاء المحتملون | عروض + نقرات بدون CRM | <code>seller_leads</code> + واجهة إدارة leads |
+| صفحة التسعير | claims تسويقية غير دقيقة | compliance pass كامل |</p>
+<hr />
+<h2>2. الجدول الزمني</h2>
+<h3>📅 11 يونيو 2026 (أمس)</h3>
+<p>| # | المهمة | المرجع | الحالة |
+|---|--------|--------|--------|
+| 1 | إصلاح تضخم <code>views_count</code> | <code>view_tracking_fix_report.md</code> | ✅ |
+| 2 | جداول تتبع Lead (views, phone, whatsapp) | migration <code>2026_06_11_000001</code> | ✅ |
+| 3 | فهارس analytics للـ lead funnel | migration <code>2026_06_11_000002</code> | ✅ |
+| 4 | TD-04: إصلاح migration لـ SQLite | <code>td_04_implementation_report.md</code> | ✅ |
+| 5 | TD-05: إصلاح <code>featureListing()</code> | <code>td_05_implementation_report.md</code> | ✅ |
+| 6 | Phase 3B: TopListingsWidget (Admin) | <code>phase_3b_top_listings_widget_report.md</code> | ✅ |
+| 7 | Phase 3C: CategoryPerformanceWidget (Admin) | <code>phase_3c_category_performance_widget_report.md</code> | ✅ |</p>
+<h3>📅 12 يونيو 2026 (اليوم)</h3>
+<p>| # | المهمة | المرجع | الحالة |
+|---|--------|--------|--------|
+| 8 | TD-06: إصلاح Lazy Loading | <code>td_06_implementation_report.md</code> | ✅ |
+| 9 | TD-01 Phase 1: WhatsApp dual-write | <code>td_01_phase1_implementation_report.md</code> | ✅ |
+| 10 | TD-01 Phase 2: SellerListingAnalyticsService | <code>td_01_phase2_implementation_report.md</code> | ✅ |
+| 11 | TD-01 Phase 2B: Verified Analytics UI | <code>td_01_phase2b_seller_analytics_ui_report.md</code> | ✅ |
+| 12 | Lead Management (Seller CRM) | <code>lead_management_implementation_report.md</code> | ✅ |
+| 13 | Plan Entitlements Phase 1 | <code>plan_entitlements_implementation_report.md</code> | ✅ |
+| 14 | Pricing Compliance Final Pass | <code>pricing_compliance_final_pass_report.md</code> | ✅ |
+| 15 | Phase 2 Analytics &amp; Business Dashboard | <code>PHASE2_REPORT.md</code> | ✅ |</p>
+<hr />
+<h2>3. البنية التحتية — قاعدة البيانات</h2>
+<h3>3.1 Migrations جديدة</h3>
+<p>| الملف | التاريخ | الجداول / التغييرات |
+|-------|---------|---------------------|
+| <code>2026_06_11_000001_create_listing_lead_tracking_tables.php</code> | 11/06 | <code>listing_views</code>, <code>listing_phone_clicks</code>, <code>listing_whatsapp_clicks</code> |
+| <code>2026_06_11_000002_add_lead_funnel_analytics_indexes.php</code> | 11/06 | فهارس <code>created_at</code> على جداول الأحداث (متوافق SQLite + MySQL بعد TD-04) |
+| <code>2026_06_12_000001_create_seller_leads_tables.php</code> | 12/06 | <code>seller_leads</code>, <code>seller_lead_activities</code> |
+| <code>2026_06_12_100001_create_plan_entitlements_tables.php</code> | 12/06 | <code>plan_entitlements</code>, <code>user_entitlements</code>, <code>user_entitlement_usage</code> |
+| <code>2026_06_12_100002_add_tier_columns_to_plans_and_users.php</code> | 12/06 | <code>point_plans.tier_key</code>, <code>users.plan_tier</code> |</p>
+<h3>3.2 Models جديدة</h3>
+<p>| Model | الغرض |
+|-------|-------|
+| <code>ListingView</code> | سجل مشاهدة إعلان (deduplicated) |
+| <code>ListingPhoneClick</code> | سجل كشف رقم الهاتف |
+| <code>ListingWhatsappClick</code> | سجل نقر واتساب |
+| <code>SellerLead</code> | lead موحّد للبائع (CRM) |
+| <code>SellerLeadActivity</code> | timeline لكل lead |
+| <code>PlanEntitlement</code> | defaults لكل tier |
+| <code>UserEntitlement</code> | entitlements مُ materialized للمستخدم |
+| <code>UserEntitlementUsage</code> | عدّاد استخدام شهري (boost) |</p>
+<h3>3.3 Models مُ extended (additive)</h3>
+<p>| Model | التغيير |
+|-------|---------|
+| <code>User</code> | <code>plan_tier</code>, علاقات entitlements, listings |
+| <code>PointPlan</code> | <code>tier_key</code>, <code>resolveTierKey()</code> |
+| <code>Listing</code> | enforcement limits في <code>featureWithPoints()</code> |</p>
+<hr />
+<h2>4. الخدمات (Services)</h2>
+<h3>4.1 <code>ListingLeadTrackingService</code> (موجود — write path)</h3>
+<ul>
+<li><code>recordView()</code> — dedup + insert في <code>listing_views</code></li>
+<li><code>recordPhoneClick()</code> — dedup + insert</li>
+<li><code>recordWhatsappClick()</code> — dedup + insert</li>
+</ul>
+<h3>4.2 <code>SellerListingAnalyticsService</code> (جديد — TD-01 Phase 2 + Phase 2 Analytics)</h3>
+<p>| Method | الوظيفة |
+|--------|---------|
+| <code>totalViewsForUser()</code> | عد مشاهدات الأحداث لإعلانات البائع |
+| <code>totalPhoneClicksForUser()</code> | عد نقرات الهاتف |
+| <code>totalWhatsappClicksForUser()</code> | عد نقرات الواتساب |
+| <code>getDashboardStats()</code> | bundle للـ 3 metrics |
+| <code>getConversionRate()</code> | whatsapp / views × 100 |
+| <code>getViewsByDay()</code> | مشاهدات يومية (30 يوم) |
+| <code>getWhatsappClicksByListing()</code> | bar chart data |
+| <code>getCategoryPerformance()</code> | doughnut chart data |
+| <code>getMonthlyPerformance()</code> | أداء شهري (6 أشهر) |
+| <code>getTopPerformingListings()</code> | أفضل إعلانات |
+| <code>getCompetitorPriceComparison()</code> | مقارنة سعر vs متوسط القسم |
+| <code>getLastMonthStats()</code> | تقرير شهري |</p>
+<h3>4.3 <code>SellerLeadService</code> (جديد — Lead Management)</h3>
+<p>| Method | الوظيفة |
+|--------|---------|
+| <code>createFromPhoneClick()</code> | lead من كشف هاتف |
+| <code>createFromWhatsappClick()</code> | lead من واتساب |
+| <code>createFromOffer()</code> | lead من عرض شراء |
+| <code>updateStatus()</code> | CRM: new → contacted → qualified → closed |
+| <code>backfillExistingEvents()</code> | import تاريخي idempotent |</p>
+<h3>4.4 <code>EntitlementService</code> (جديد — Phase 1 + Phase 2)</h3>
+<p>| Method | الوظيفة |
+|--------|---------|
+| <code>hasFeature()</code> | boolean entitlement |
+| <code>canUseFeature()</code> | boolean أو quota |
+| <code>getLimit()</code> / <code>remainingUsage()</code> | حدود شهرية |
+| <code>assignFromPlan()</code> | عند شراء باقة |
+| <code>recordUsage()</code> | بعد boost |
+| <code>isLegacyGrandfathered()</code> | مستخدمون قدامى بدون entitlements = unlimited |</p>
+<p><strong>Feature keys (Phase 1):</strong></p>
+<ul>
+<li><code>featured_listings_limit</code>, <code>monthly_boost_limit</code></li>
+<li><code>search_priority</code>, <code>home_promotion</code>, <code>business_badge</code>, <code>priority_support</code></li>
+</ul>
+<p><strong>Feature keys (Phase 2 Analytics):</strong></p>
+<ul>
+<li><code>analytics_access</code>, <code>analytics_charts</code></li>
+<li><code>phone_clicks_access</code>, <code>whatsapp_clicks_access</code>, <code>event_views_access</code></li>
+<li><code>business_dashboard</code>, <code>monthly_reports</code></li>
+</ul>
+<h3>4.5 <code>MonthlyReportService</code> (جديد — Phase 2)</h3>
+<ul>
+<li>توليد PDF بسيط + HTML RTL</li>
+<li>حفظ في <code>storage/app/reports/{user_id}/</code></li>
+<li>حساب نقاط التمييز المنفقة</li>
+</ul>
+<hr />
+<h2>5. Controllers — التغييرات</h2>
+<h3>5.1 <code>ListingController.php</code></h3>
+<p>| Endpoint | التغيير |
+|----------|---------|
+| <code>show()</code> | <strong>View fix (11/06):</strong> <code>views_count++</code> فقط إذا <code>recordView()</code> رجّع true |
+| <code>trackWhatsappClick()</code> | <strong>TD-01 P1:</strong> <code>whatsapp_clicks++</code> فقط إذا <code>recordWhatsappClick()</code> رجّع true |
+| <code>revealPhone()</code> | tracking موجود (بدون تغيير جوهري) |</p>
+<h3>5.2 <code>HomeController.php</code></h3>
+<p>| Method | التغيير |
+|--------|---------|
+| <code>search()</code> | <strong>Phase 1:</strong> post-sort boost لـ <code>search_priority</code> |
+| <code>index()</code> / <code>search()</code> | <strong>TD-06:</strong> eager load <code>location</code>, <code>user</code> |</p>
+<h3>5.3 <code>PaymentController.php</code></h3>
+<p><strong>لم يُمس</strong> — قاعدة صارمة في كل المراحل.</p>
+<hr />
+<h2>6. Events &amp; Listeners</h2>
+<pre><code>PointsPurchased (event — unchanged)
+        │
+        ▼
+AssignPlanEntitlementsListener (new)
+        │
+        ▼
+EntitlementService::assignFromPlan()
+</code></pre>
+<ul>
+<li>يُ dispatch من <code>PaymobWebhookService</code> داخل <code>DB::afterCommit()</code> — <strong>بدون تعديل</strong></li>
+<li><code>PointService</code> — <strong>بدون تعديل</strong></li>
+</ul>
+<hr />
+<h2>7. Observers (Lead Management)</h2>
+<p>| Observer | Trigger | Action |
+|----------|---------|--------|
+| <code>ListingPhoneClickObserver</code> | created | <code>SellerLeadService::createFromPhoneClick()</code> |
+| <code>ListingWhatsappClickObserver</code> | created | <code>createFromWhatsappClick()</code> |
+| <code>OfferLeadObserver</code> | created | <code>createFromOffer()</code> |</p>
+<p>مسجّلة في <code>AppServiceProvider</code>.</p>
+<hr />
+<h2>8. واجهات Livewire — البائع</h2>
+<h3>8.1 <code>UserDashboard</code> — التطور الكامل</h3>
+<p>| المرحلة | ما أُضيف |
+|---------|----------|
+| TD-05 | <code>featureListing()</code> try/catch بدل boolean |
+| TD-01 P2 | stats: <code>views_events</code>, <code>phone_clicks</code>, <code>whatsapp_clicks_events</code> |
+| TD-01 P2B | Blade: قسم Verified Analytics |
+| Lead Mgmt | رابط &quot;عملائي المحتملون&quot; |
+| Phase 2 | entitlement gating + charts + conversion rate |</p>
+<p><strong>مسارات:</strong></p>
+<ul>
+<li><code>GET /dashboard</code> — لوحة البائع الرئيسية</li>
+</ul>
+<h3>8.2 <code>SellerLeads</code> + <code>SellerLeadDetail</code> (جديد — 12/06)</h3>
+<p>| Route | الوظيفة |
+|-------|---------|
+| <code>GET /dashboard/leads</code> | قائمة leads + فلاتر (اليوم / 7 / 30 / الكل) |
+| <code>GET /dashboard/leads/{lead}</code> | تفاصيل + تغيير status + timeline |</p>
+<p><strong>Middleware:</strong> <code>auth</code>, <code>otp.verified</code><br />
+<strong>Policy:</strong> <code>SellerLeadPolicy</code> — البائع يرى leads الخاصة به فقط</p>
+<h3>8.3 <code>BusinessDashboard</code> (جديد — Phase 2)</h3>
+<p>| Route | الوظيفة |
+|-------|---------|
+| <code>GET /business/dashboard</code> | business tier فقط |</p>
+<p><strong>يعرض:</strong></p>
+<ul>
+<li>كل الإعلانات + analytics</li>
+<li>ملخص نقاط التمييز</li>
+<li>Top performing listings</li>
+<li>Chart.js شهري</li>
+<li>مقارنة أسعار المنافسين</li>
+<li>Export CSV</li>
+</ul>
+<hr />
+<h2>9. Blade Components &amp; Views</h2>
+<p>| الملف | الغرض |
+|-------|-------|
+| <code>upgrade-prompt.blade.php</code> | overlay مقفول + CTA → pricing |
+| <code>business-badge.blade.php</code> | شارة business tier |
+| <code>seller-trust-card.blade.php</code> | بطاقة ثقة البائع |
+| <code>user-dashboard.blade.php</code> | stats + analytics + charts + offers + listings |
+| <code>business-dashboard.blade.php</code> | لوحة الأعمال |
+| <code>seller-leads.blade.php</code> | CRM list |
+| <code>seller-lead-detail.blade.php</code> | CRM detail |
+| <code>monthly-performance.blade.php</code> | template تقرير HTML |</p>
+<hr />
+<h2>10. Filament Admin — Widgets</h2>
+<h3>موجودة / مُحدّثة</h3>
+<p>| Widget | الوظيفة |
+|--------|---------|
+| <code>LeadFunnelWidget</code> | funnel views → phone → whatsapp → offers |
+| <code>TopListingsWidget</code> | <strong>3B (11/06)</strong> — أفضل إعلانات بالأحداث |
+| <code>CategoryPerformanceWidget</code> | <strong>3C (11/06)</strong> — أداء الأقسام + CTR |
+| <code>StatsOverviewWidget</code> | overview |
+| <code>ConversionMetricsWidget</code> | conversion |
+| <code>MonetizationOverviewWidget</code> | monetization |
+| <code>DailyRevenueWidget</code> / <code>WeeklyRevenueChart</code> / <code>MonthlyRevenueWidget</code> | revenue |
+| <code>RevenueAlertWidget</code> | alerts |</p>
+<h3>Filament User Resource (Phase 1)</h3>
+<ul>
+<li><code>UsersTable</code>: <code>plan_tier</code>, <code>priority_support</code> (read-only)</li>
+<li><code>UserInfolist</code>: نفس الحقول</li>
+</ul>
+<hr />
+<h2>11. Plan Entitlements — مصفوفة الباقات</h2>
+<h3>Phase 1 (6 features × 4 tiers)</h3>
+<p>| Tier | Featured Limit | Monthly Boost | Search Priority | Home Promo | Business Badge | Priority Support |
+|------|---------------|---------------|-----------------|------------|----------------|------------------|
+| starter | 1 | 2 | ❌ | ✅ | ❌ | ❌ |
+| growth | 3 | 5 | ✅ | ✅ | ❌ | ❌ |
+| pro_seller | 5 | 10 | ✅ | ✅ | ❌ | ❌ |
+| business | 10 | 20 | ✅ | ✅ | ✅ | ✅ |</p>
+<h3>Phase 2 Analytics (7 features إضافية)</h3>
+<p>| Tier | Analytics | Charts | Phone | WhatsApp | Event Views | Business Dash | Monthly Reports |
+|------|-----------|--------|-------|----------|-------------|---------------|-----------------|
+| starter | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| growth | ✅ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| pro_seller | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| business | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |</p>
+<p><strong>Seeder:</strong> <code>PlanEntitlementSeeder</code> — 13 entitlement لكل tier<br />
+<strong>Legacy grandfathering:</strong> مستخدم بدون <code>user_entitlements</code> = unlimited + analytics كاملة</p>
+<hr />
+<h2>12. Enforcement — أين تُطبَّق الـ Entitlements</h2>
+<p>| Feature | Surface |
+|---------|---------|
+| <code>business_badge</code> | listing-card, show, seller-trust-card |
+| <code>search_priority</code> | <code>HomeController::search()</code> re-sort |
+| <code>featured_listings_limit</code> | <code>Listing::featureWithPoints()</code> |
+| <code>monthly_boost_limit</code> | <code>Listing::featureWithPoints()</code> + usage table |
+| <code>analytics_*</code> | <code>UserDashboard</code> gating |
+| <code>business_dashboard</code> | <code>BusinessDashboard::mount()</code> redirect |
+| <code>monthly_reports</code> | <code>nilex:monthly-reports</code> command |</p>
+<hr />
+<h2>13. صفحة التسعير — Compliance (12/06)</h2>
+<h3>مشاكل وُجدت وأُصلحت</h3>
+<p>| # | المشكلة | الإصلاح |
+|---|---------|---------|
+| 1 | Business plan يذكر CTR / lead funnel | نص compliant |
+| 2 | &quot;analytics tier-gated&quot; في subtitle | تصحيح — dashboard متاح للجميع حالياً |
+| 3 | &quot;أول إعلان مجاني&quot; | حذف claim غير موجود backend |
+| 4 | &quot;النقاط 90 يوم&quot; | تصحيح — بدون expiry |
+| 5 | &quot;دفع للشركات فقط&quot; | تصحيح — للجميع |</p>
+<h3>إضافات</h3>
+<ul>
+<li>قسم <strong>&quot;What You'll See In Your Dashboard&quot;</strong></li>
+<li><code>PricingMarketingComplianceTest.php</code> — 4 tests</li>
+<li>Matrix badges: 🚧 Coming Soon / 🔒 Admin Only</li>
+</ul>
+<p><strong>Config:</strong> <code>config/pricing.php</code> — feature matrix</p>
+<hr />
+<h2>14. Console &amp; Scheduler</h2>
+<p>| Command | Schedule | الوظيفة |
+|---------|----------|---------|
+| <code>nilex:monthly-reports</code> | 1st of month @ 02:00 | PDF + email لـ pro_seller+ |</p>
+<p><strong>Notification:</strong> <code>MonthlyPerformanceReportNotification</code></p>
+<hr />
+<h2>15. الترجمة (i18n)</h2>
+<p>| الملف | Keys جديدة |
+|-------|-----------|
+| <code>lang/ar/ui.php</code> | <code>ui.leads.*</code>, <code>ui.analytics.*</code>, pricing fixes |
+| <code>lang/en/ui.php</code> | نفس البنية |</p>
+<p>دعم RTL كامل في كل الواجهات الجديدة.</p>
+<hr />
+<h2>16. الاختبارات — التطور</h2>
+<p>| التاريخ | العدد | ملاحظة |
+|---------|-------|--------|
+| قبل TD-04 | 2 pass / 145 | migration SQLite broken |
+| بعد TD-04 | 142 pass | 3 lazy loading failures |
+| بعد TD-05 | 144 pass | +2 regression |
+| بعد TD-06 | <strong>147 pass</strong> | lazy loading fixed |
+| بعد Phase 1 Entitlements | <strong>117 pass</strong> | (suite restructured) |
+| بعد Lead + Analytics Phase 2 | <strong>240 pass</strong> | +14 analytics tests |</p>
+<h3>Suites جديدة</h3>
+<p>| المجلد | الملفات | Tests |
+|--------|---------|-------|
+| <code>tests/Feature/Plans/</code> | 7 files + helpers | ~24 |
+| <code>tests/Feature/Leads/</code> | SellerLeadManagementTest | ~12 |
+| <code>tests/Feature/Analytics/</code> | 4 files | 14 |
+| <code>tests/Feature/Pricing/</code> | 3 files | ~28 |
+| <code>tests/Feature/Dashboard/</code> | 3 files | ~18 |</p>
+<hr />
+<h2>17. التقارير والـ Audits المُ produced</h2>
+<p>| التقرير | النوع |
+|---------|-------|
+| <code>view_tracking_fix_report.md</code> | Implementation |
+| <code>td_04_sqlite_migration_audit.md</code> + implementation | Audit + Fix |
+| <code>td_05_feature_with_points_audit.md</code> + implementation | Audit + Fix |
+| <code>td_06_lazy_loading_audit.md</code> + implementation | Audit + Fix |
+| <code>td_01_phase1/2/2b_*</code> | TD-01 series |
+| <code>phase_3b_top_listings_widget_report.md</code> | Admin widget |
+| <code>phase_3c_category_performance_*</code> | Admin widget |
+| <code>lead_management_audit/validation/implementation</code> | Lead CRM |
+| <code>plan_entitlements_audit/validation/execution/implementation</code> | Entitlements |
+| <code>pricing_*</code> (5 reports) | Pricing compliance |
+| <code>seller_dashboard_*</code> (2 audits) | UX + compliance |
+| <code>business_plan_marketing_audit.md</code> | Marketing |
+| <code>post_phase3_architecture_audit.md</code> | Architecture |
+| <code>PHASE2_REPORT.md</code> | Analytics Phase 2 |
+| <strong>هذا التقرير</strong> | Comprehensive summary |</p>
+<hr />
+<h2>18. ما لم يُمس (قواعد صارمة)</h2>
+<p>| الملف / النظام | السبب |
+|----------------|-------|
+| <code>PaymentController.php</code> | حماية payment flow |
+| <code>PaymobWebhookService.php</code> | webhook integrity |
+| <code>PointService.php</code> | نقاط unchanged |
+| Migrations قديمة | additive only |
+| <code>ListingLeadTrackingService</code> | write path frozen (Lead Mgmt) |</p>
+<hr />
+<h2>19. مؤجّل لـ Phase 3</h2>
+<p>| Item | السبب |
+|------|-------|
+| PDF عربي غني (dompdf) | PDF حالي ASCII minimal |
+| Pricing matrix: <code>business_dashboard</code> → ✅ Business | still <code>coming_soon</code> in config |
+| Admin analytics → seller path | admin_only في matrix |
+| CTR / Lead funnel seller UI | coming_soon |
+| Backfill views/whatsapp historical | TD-01 Phase 3 |
+| إزالة legacy grandfathering | يحتاج migration plan |</p>
+<hr />
+<h2>20. خطوات النشر</h2>
+<pre><code class="language-bash"># 1. Migrations
+php artisan migrate
+
+# 2. Seed entitlements
+php artisan db:seed --class=PlanEntitlementSeeder
+
+# 3. Optional: backfill leads
+php artisan tinker
+&gt;&gt;&gt; app(\App\Services\SellerLeadService::class)-&gt;backfillExistingEvents();
+
+# 4. Verify
+php artisan test
+
+# 5. Manual monthly report test
+php artisan nilex:monthly-reports
+</code></pre>
+<hr />
+<h2>21. إحصائيات الملفات (تقريبية)</h2>
+<p>| الفئة | Created | Modified |
+|-------|---------|----------|
+| Migrations | 5 | 1 (TD-04 fix) |
+| Models | 8 | 3 |
+| Services | 4 | 2 |
+| Livewire | 3 | 1 |
+| Observers | 3 | — |
+| Policies | 1 | — |
+| Listeners | 1 | — |
+| Commands | 1 | — |
+| Notifications | 1 | — |
+| Filament Widgets | 2+ | AdminPanelProvider |
+| Blade views | 8+ | 5+ |
+| Tests | 15+ files | 3 |
+| Lang | — | ar + en |
+| Reports/docs | 30+ | — |</p>
+<hr />
+<h2>22. خريطة تدفق البيانات (شاملة)</h2>
+<pre><code>[Buyer] ──► Listing Page
+              │
+              ├─► recordView() ──► listing_views ──► views_count (if new)
+              ├─► revealPhone() ──► listing_phone_clicks ──► SellerLead
+              ├─► whatsappClick() ──► listing_whatsapp_clicks ──► whatsapp_clicks + SellerLead
+              └─► makeOffer() ──► offers ──► SellerLead
+
+[Seller Dashboard] ◄── SellerListingAnalyticsService ◄── event tables
+                   ◄── EntitlementService ◄── user_entitlements
+
+[Purchase Plan] ──► PointsPurchased ──► AssignPlanEntitlementsListener
+                                      ──► user_entitlements + plan_tier
+
+[Admin Filament] ◄── LeadFunnel / TopListings / CategoryPerformance widgets
+
+[Business Dashboard] ◄── pro_seller+ / business tier only
+</code></pre>
+<hr />
+<h2>23. الخلاصة</h2>
+<p><strong>11 يونيو:</strong> بناء <strong>طبقة الأحداث</strong> + إصلاحات tech debt (TD-04/05) + widgets أدمن (3B/3C) + view tracking fix.</p>
+<p><strong>12 يونيو:</strong> <strong>محاذاة analytics</strong> (TD-01) + <strong>CRM leads</strong> + <strong>Plan Entitlements</strong> + <strong>pricing compliance</strong> + <strong>Phase 2 Analytics</strong> (gating, charts, business dashboard, monthly reports).</p>
+<p><strong>النتيجة:</strong> منصة جاهزة للmonetization tier-based مع 240 test passing، بدون كسر payment flow، مع backward compatibility للمستخدمين القدامى.</p>
+<hr />
+<p><em>آخر تحديث: 12 يونيو 2026 — Nilex Platform Engineering</em></p>
+<div class="page-break"></div>
+<div class="part-title">الجزء الثاني — المراجعة الخبيرة (Production Readiness)</div>
+**المشروع:** Nilex Marketplace  
+**التاريخ:** 12 يونيو 2026  
+**المراجع:** `comprehensive_implementation_report_june_11_12_2026.md`  
+**المنظور:** منصات marketplace كبيرة — production readiness
+<hr />
+<h2>1. تقييم عام</h2>
+<p>| البعد | التقييم | ملاحظة |
+|-------|---------|--------|
+| Inventory تقني | ⭐⭐⭐⭐ | يجيب &quot;ماذا بُني؟&quot; بشكل ممتاز |
+| Architecture depth | ⭐⭐ | ينقص ER diagram، dedup rules، caching |
+| Operations / DevOps | ⭐ | runbook، cron، queue، rollback جزئي |
+| Security / Privacy | ⭐⭐ | Lead audit غير منقول للتقرير الشامل |
+| Product / Business | ⭐⭐ | تناقض pricing vs tier gating |
+| Enterprise readiness | ⭐⭐⭐ | جيد للفريق التقني، غير كافٍ للإدارة |</p>
+<hr />
+<h2>2. تناقضات داخل المشروع (غير موثّقة)</h2>
+<p>| # | التناقض | الخطورة |
+|---|---------|---------|
+| 1 | Pricing compliance يقول &quot;لوحة البائع للجميع&quot; — Phase 2 يقفل analytics حسب الباقة | 🔴 عالية |
+| 2 | Legacy grandfathering = analytics كاملة — Starter الجديد = مقفول | 🟡 متوسطة |
+| 3 | Dual-write للـ views و WhatsApp فقط — phone clicks بدون sync legacy | 🟡 متوسطة |
+| 4 | <code>search_priority</code> = re-sort داخل pagination فقط | 🟡 متوسطة |
+| 5 | 240 test vs 117 في Phase 1 — إعادة هيكلة suite غير مشروحة | 🟢 منخفضة |</p>
+<p><strong>التوصية:</strong> إضافة قسم <strong>Known Contradictions &amp; Product Debt</strong> بدرجات خطورة.</p>
+<hr />
+<h2>3. Architecture — نواقص</h2>
+<h3>3.1 البيانات</h3>
+<ul>
+<li><strong>ER Diagram</strong> لعلاقات listings ↔ events ↔ seller_leads ↔ entitlements</li>
+<li><strong>Dedup rules:</strong> 24h views / 1h clicks (بدونها الأرقام غير قابلة للتفسير)</li>
+<li><strong>Backfill plan:</strong> TD-01 Phase 3 مؤجل — legacy ≠ events للبيانات القديمة</li>
+<li><strong>Data retention:</strong> سياسة حذف events/leads (GDPR)</li>
+</ul>
+<h3>3.2 Caching &amp; Queues</h3>
+<ul>
+<li>Entitlement cache 300s — قواعد invalidation</li>
+<li><code>MonthlyPerformanceReportNotification</code> implements <code>ShouldQueue</code> → queue worker مطلوب</li>
+<li>Chart.js من CDN — نقطة فشل خارجية</li>
+</ul>
+<h3>3.3 Observability</h3>
+<ul>
+<li>Logging للـ observers و entitlement assignment</li>
+<li>Monitoring: funnel drop، webhook failures، monthly reports</li>
+<li>Runbook لـ scheduler failures</li>
+<li>Audit trail لتغييرات <code>plan_tier</code></li>
+</ul>
+<hr />
+<h2>4. Security &amp; Privacy — نواقص</h2>
+<p>| Control | في الكود | في التقرير الشامل |
+|---------|----------|-------------------|
+| SellerLeadPolicy / IDOR | ✅ | مختصر |
+| عدم عرض email/phone للمشتري | ✅ | ❌ |
+| buyer_id nullOnDelete | ✅ | ❌ |
+| Rate limiting على tracking | ❓ | ❌ |
+| CSV export authorization | business tier | ❌ |
+| Entitlements vs Spatie Shield | نظامان | ❌ |</p>
+<p><strong>التوصية:</strong> Security &amp; Privacy appendix من <code>lead_management_implementation_report.md</code>.</p>
+<hr />
+<h2>5. Product &amp; UX — نواقص</h2>
+<p>| من audit UX | بعد Phase 2 | ما زال ناقصًا |
+|-------------|-------------|---------------|
+| Duplicate metrics | gating جزئي | شرح Legacy vs Event |
+| No derived KPIs | conversion rate | contact rate، trends |
+| Chart low-value | charts pro+ | chart قديم + subtitle |
+| Monetization nudges | upgrade-prompt | low balance، ROI |
+| Business invisible | <code>/business/dashboard</code> | لا link من dashboard |
+| Leads → action | CRM | لا ربط lead ↔ analytics |</p>
+<hr />
+<h2>6. Business &amp; Monetization — نواقص</h2>
+<ul>
+<li><strong>Activation funnel:</strong> pricing → checkout → webhook → entitlements → unlock</li>
+<li><strong>Retroactive entitlements:</strong> مستخدم اشترى Growth قبل Phase 1</li>
+<li><strong>Pricing matrix sync:</strong> <code>business_dashboard</code> still <code>coming_soon</code> في config</li>
+<li><strong>KPIs للنجاح:</strong> upgrade rate، lead response time، conversion uplift</li>
+</ul>
+<hr />
+<h2>7. Testing &amp; QA — نواقص</h2>
+<p>| النوع | موجود؟ |
+|-------|--------|
+| E2E browser tests | ❌ |
+| Load tests على widgets | ❌ |
+| Coverage % | ❌ |
+| Manual QA checklist | ❌ |
+| Staging sign-off | ❌ |</p>
+<hr />
+<h2>8. DevOps &amp; Deployment — نواقص</h2>
+<p>خطوات النشر في التقرير minimal. ينقص:</p>
+<ul>
+<li>Git commit + tag release (التقرير يذكر: غير commit-ed!)</li>
+<li>Backup DB قبل migrate</li>
+<li>Staging-first migration</li>
+<li><code>schedule:run</code> + <code>queue:work</code> على السيرفر</li>
+<li>MAIL_* config للتقارير الشهرية</li>
+<li>Rollback step-by-step per migration</li>
+<li>Smoke tests post-deploy</li>
+</ul>
+<hr />
+<h2>9. Filament Admin — توثيق سطحي</h2>
+<ul>
+<li>Phase 1 Revenue widgets — خارج نطاق 11–12؟</li>
+<li><code>discoverWidgets()</code> + explicit array — duplicate risk</li>
+<li>Query cost / N+1 على CategoryPerformanceWidget</li>
+<li>Admin vs Seller feature parity matrix</li>
+</ul>
+<hr />
+<h2>10. هيكل تقرير Enterprise — أقسام مفقودة</h2>
+<p>| Section | الغرض |
+|---------|-------|
+| Audience split | CEO / PM / Dev / Ops |
+| Risk Register | severity × likelihood |
+| Decision Log | لماذا grandfathering؟ |
+| Glossary | TD-01، dual-write، Phase 2B |
+| Dependency graph | بين 30+ report |
+| RACI / Owners | من ي maintain كل module |
+| Sign-off | QA / Security / Product |
+| Changelog | commit SHAs |</p>
+<hr />
+<h2>11. أولويات الإكمال</h2>
+<h3>🔴 Critical (قبل production)</h3>
+<ol>
+<li>Known Contradictions — pricing vs tier gating</li>
+<li>Deployment Runbook — cron، queue، mail، rollback</li>
+<li>Security &amp; Privacy appendix</li>
+<li>Git release status</li>
+<li>Retroactive entitlements للمستخدمين الحاليين</li>
+</ol>
+<h3>🟡 High (قبل scale)</h3>
+<ol start="6">
+<li>Dedup rules + dual-write status table</li>
+<li>Observability &amp; alerting</li>
+<li>Performance notes (widget queries)</li>
+<li>QA checklist</li>
+<li>Pricing matrix sync مع Phase 2</li>
+</ol>
+<h3>🟢 Medium (product maturity)</h3>
+<ol start="11">
+<li>UX before/after matrix</li>
+<li>KPIs &amp; success metrics</li>
+<li>Phase 3 roadmap مع estimates</li>
+<li>ER diagram (Mermaid)</li>
+<li>Glossary + report index</li>
+</ol>
+<hr />
+<h2>12. الخلاصة</h2>
+<p>التقرير الشامل <strong>inventory ممتاز</strong> لكنه لا يجيب بقوة على:</p>
+<ul>
+<li><strong>هل آمن للإنتاج؟</strong></li>
+<li><strong>ماذا يمكن أن يكسر؟</strong></li>
+<li><strong>هل marketing = product؟</strong></li>
+<li><strong>ماذا بعد؟ وبأي أولوية؟</strong></li>
+</ul>
+<p>إكمال الأقسام أعلاه يرفع التقرير من <strong>وثيقة فريق</strong> إلى <strong>وثيقة منصة enterprise-ready</strong>.</p>
+<hr />
+<p><em>مراجعة: Senior Platform Architecture — 12 يونيو 2026</em></p>
+
+</body>
+</html>

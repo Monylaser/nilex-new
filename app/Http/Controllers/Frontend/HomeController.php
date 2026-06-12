@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Listing;
 use App\Models\PointPlan;
+use App\Services\EntitlementService;
 use App\Services\PointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,8 +25,8 @@ class HomeController extends Controller
         ->orderBy('sort_order')
         ->get();
 
-        $featuredListings = Listing::with('category')->active()->featured()->latest()->take(3)->get();
-        $latestListings   = Listing::with('category')->active()->latest()->paginate(12);
+        $featuredListings = Listing::with(['category', 'location', 'user'])->active()->featured()->latest()->take(3)->get();
+        $latestListings   = Listing::with(['category', 'location', 'user'])->active()->latest()->paginate(12);
 
     return response()
         ->view('frontend.home', compact('categories', 'featuredListings', 'latestListings'))
@@ -108,7 +109,12 @@ class HomeController extends Controller
     {
         $plans = PointPlan::active()->orderBy('price')->get();
 
-        return view('frontend.pricing', compact('plans'));
+        return view('frontend.pricing', [
+            'plans'                  => $plans,
+            'featureMatrix'          => config('pricing.feature_matrix', []),
+            'planColumnKeys'         => config('pricing.plan_column_keys', []),
+            'registrationWelcomePoints' => (int) config('pricing.registration_welcome_points', 0),
+        ]);
     }
 
     /**
@@ -159,7 +165,7 @@ class HomeController extends Controller
         )
         // Eloquent constraints — run on every Scout driver (collection, database, meilisearch)
         ->query(function ($q) use ($minPrice, $maxPrice, $categoryId, $provinceId) {
-            $q->with('category')->where('status', Listing::STATUS_PUBLISHED);
+            $q->with(['category', 'location', 'user'])->where('status', Listing::STATUS_PUBLISHED);
 
             if ($minPrice !== null && $minPrice !== '') {
                 $q->where('price', '>=', (float) $minPrice);
@@ -176,6 +182,16 @@ class HomeController extends Controller
         });
 
         $listings = $search->paginate(12)->withQueryString();
+
+        $entitlementService = app(EntitlementService::class);
+        $listings->setCollection(
+            $listings->getCollection()
+                ->sortByDesc(fn (Listing $listing) => $listing->user && $entitlementService->hasFeature(
+                    $listing->user,
+                    EntitlementService::FEATURE_SEARCH_PRIORITY,
+                ) ? 1 : 0)
+                ->values()
+        );
 
         return view('frontend.search-results', compact(
             'listings', 'query', 'lat', 'lng', 'radius',
