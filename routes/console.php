@@ -24,3 +24,5 @@ Schedule::command('nilex:monthly-reports')
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('nilex:monthly-reports scheduler failed.');
     });
+
+Schedule::command('campaigns:expire')->hourly();

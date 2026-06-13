@@ -143,6 +143,12 @@
                         <ul class="space-y-2 text-sm">
                             <li><a href="{{ route('home') }}" class="hover:text-indigo-400 transition">الرئيسية</a></li>
                             <li><a href="{{ route('listings.search') }}" class="hover:text-indigo-400 transition">البحث</a></li>
+                            <li>
+                                <a href="{{ route('ads.pricing') }}"
+                                   class="text-zinc-400 hover:text-[#1D9E75] text-sm transition-colors">
+                                    المساحات الإعلانية
+                                </a>
+                            </li>
                             @auth
                                 <li><a href="{{ route('dashboard') }}" class="hover:text-indigo-400 transition">لوحة التحكم</a></li>
                             @else

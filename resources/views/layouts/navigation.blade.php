@@ -9,6 +9,10 @@
                 </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <a href="{{ route('ads.pricing') }}"
+                       class="text-sm text-zinc-600 hover:text-[#1D9E75] transition-colors inline-flex items-center px-1 pt-1">
+                        المساحات الإعلانية
+                    </a>
                     {{-- ✅ يظهر بس للأدمن --}}
                     @auth
                         @if(Auth::user()->hasRole('super_admin') || Auth::user()->hasRole('admin'))

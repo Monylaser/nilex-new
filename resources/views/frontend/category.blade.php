@@ -93,6 +93,14 @@
         </div>
 
         {{-- ── LISTINGS GRID ───────────────────────────────────────────────── --}}
+        @php
+            $catCampaign = app(\App\Services\AdCampaignService::class)
+                ->getForPlacement('category_page', $category->id ?? null);
+        @endphp
+        @if($catCampaign)
+            <x-ad-banner :campaign="$catCampaign" />
+        @endif
+
         @if($listings->count() > 0)
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 @foreach($listings as $listing)

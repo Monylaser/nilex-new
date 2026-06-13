@@ -142,9 +142,15 @@ class EntitlementService
             return;
         }
 
+        $userUpdates = [
+            'plan_type' => $plan->plan_type ?? PointPlan::PLAN_TYPE_INDIVIDUAL,
+        ];
+
         if ($incomingRank > $currentRank) {
-            $user->update(['plan_tier' => $tier]);
+            $userUpdates['plan_tier'] = $tier;
         }
+
+        $user->update($userUpdates);
 
         $planEntitlements = PlanEntitlement::query()
             ->where('plan_tier', $tier)

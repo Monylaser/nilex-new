@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\PointPlans;
 use App\Filament\Admin\Resources\PointPlans\Pages;
 use App\Models\PointPlan;
 use BackedEnum;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -58,6 +59,15 @@ class PointPlanResource extends Resource
             Toggle::make('is_active')
                 ->label('نشط')
                 ->default(true),
+
+            Select::make('plan_type')
+                ->label('نوع الخطة')
+                ->options([
+                    'individual' => 'Individual',
+                    'company'    => 'Company',
+                ])
+                ->default('individual')
+                ->required(),
         ]);
     }
 
@@ -89,6 +99,21 @@ class PointPlanResource extends Resource
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
+
+                TextColumn::make('plan_type')
+                    ->label('نوع الخطة')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'company'    => 'Company',
+                        'individual' => 'Individual',
+                        default      => ucfirst($state),
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'company'    => 'primary',
+                        'individual' => 'gray',
+                        default      => 'gray',
+                    })
+                    ->sortable(),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')

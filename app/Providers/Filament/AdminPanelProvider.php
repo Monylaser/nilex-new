@@ -75,6 +75,8 @@ class AdminPanelProvider extends PanelProvider
                 BestSellingPlansChart::class,
             ])
             ->navigationGroups([
+                NavigationGroup::make('الحملات الإعلانية')
+                    ->collapsed(false),
                 NavigationGroup::make('Settings')
                     ->collapsed(false),
                 NavigationGroup::make('إدارة الوصول')

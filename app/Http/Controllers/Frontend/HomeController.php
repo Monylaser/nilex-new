@@ -11,7 +11,6 @@ use App\Services\PointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class HomeController extends Controller
 {
@@ -21,18 +20,27 @@ class HomeController extends Controller
     public function index()
     {
         $categories = Category::whereNull('parent_id')
-        ->where('is_active', true)
-        ->orderBy('sort_order')
-        ->get();
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
 
-        $featuredListings = Listing::with(['category', 'location', 'user'])->active()->featured()->latest()->take(3)->get();
-        $latestListings   = Listing::with(['category', 'location', 'user'])->active()->latest()->paginate(12);
+        $featuredListings = Listing::with(['category', 'location', 'user'])
+            ->active()
+            ->featured()
+            ->latest()
+            ->take(3)
+            ->get();
 
-    return response()
-        ->view('frontend.home', compact('categories', 'featuredListings', 'latestListings'))
-        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-        ->header('Pragma', 'no-cache')
-        ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+        $latestListings = Listing::with(['category', 'location', 'user'])
+            ->active()
+            ->latest()
+            ->paginate(12);
+
+        return response()
+            ->view('frontend.home', compact('categories', 'featuredListings', 'latestListings'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
     }
 
     /**
@@ -40,15 +48,14 @@ class HomeController extends Controller
      */
     public function create()
     {
-        return view('frontend.listings.create'); 
+        return view('frontend.listings.create');
     }
 
     /**
-     * حفظ الإعلان الجديد ومنح النقاط 🎁
+     * حفظ الإعلان الجديد ومنح النقاط
      */
     public function store(Request $request)
     {
-        // 1. التحقق من البيانات الأساسية
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
@@ -56,7 +63,6 @@ class HomeController extends Controller
             'price'       => 'required|numeric|min:0',
         ]);
 
-        // 2. التحقق من الحقول المخصصة المطلوبة حسب القسم
         $category = Category::findOrFail($validated['category_id']);
 
         if (!empty($category->custom_fields_schema)) {
@@ -65,7 +71,7 @@ class HomeController extends Controller
 
             foreach ($category->custom_fields_schema as $field) {
                 if (!empty($field['required'])) {
-                    $key = "custom_fields_values.{$field['name']}";
+                    $key                            = "custom_fields_values.{$field['name']}";
                     $customRules[$key]              = 'required';
                     $customMessages[$key . '.required'] = ($field['label_ar'] ?? $field['name']) . ' مطلوب';
                 }
@@ -76,7 +82,6 @@ class HomeController extends Controller
             }
         }
 
-        // 3. إنشاء الإعلان
         $listing                       = new Listing();
         $listing->title                = $validated['title'];
         $listing->slug                 = Str::slug($validated['title']) . '-' . Str::random(6);
@@ -88,14 +93,12 @@ class HomeController extends Controller
         $listing->custom_fields_values = $request->input('custom_fields_values', []);
         $listing->save();
 
-        // 4. رفع الصور باستخدام Spatie Media Library
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $listing->addMedia($image)->toMediaCollection('images');
             }
         }
 
-        // 5. 🎁 منح اليوزر 10 نقاط مكافأة النشر
         $pointService = new PointService();
         $pointService->credit(Auth::user(), 10, 'مكافأة نشر إعلان جديد: ' . $listing->title, $listing);
 
@@ -110,9 +113,9 @@ class HomeController extends Controller
         $plans = PointPlan::active()->orderBy('price')->get();
 
         return view('frontend.pricing', [
-            'plans'                  => $plans,
-            'featureMatrix'          => config('pricing.feature_matrix', []),
-            'planColumnKeys'         => config('pricing.plan_column_keys', []),
+            'plans'                     => $plans,
+            'featureMatrix'             => config('pricing.feature_matrix', []),
+            'planColumnKeys'            => config('pricing.plan_column_keys', []),
             'registrationWelcomePoints' => (int) config('pricing.registration_welcome_points', 0),
         ]);
     }
@@ -120,14 +123,14 @@ class HomeController extends Controller
     /**
      * Advanced search (full-text + filters).
      *
-     * Query params accepted:
-     *   q          - search keyword
-     *   min_price  - minimum price (EGP)
-     *   max_price  - maximum price (EGP)
-     *   category_id - category ID filter
-     *   province_id - governorate (province) ID filter
-     *   lat / lng  - GPS coordinates for geo-sort (Meilisearch only)
-     *   radius     - radius in km for geo-filter (default 50, Meilisearch only)
+     * Query params:
+     *   q           - keyword
+     *   min_price   - minimum price
+     *   max_price   - maximum price
+     *   category_id - category filter
+     *   province_id - governorate filter
+     *   lat / lng   - GPS for geo-sort (Meilisearch only)
+     *   radius      - radius in km (default 50)
      */
     public function search(Request $request)
     {
@@ -140,22 +143,19 @@ class HomeController extends Controller
         $categoryId = $request->input('category_id');
         $provinceId = $request->input('province_id');
 
-        $search = Listing::search(
+        $listings = Listing::search(
             $query,
-            // Meilisearch-specific callback.
-            // The CollectionEngine also invokes this callback (passing an Eloquent Builder
-            // as the first arg), so we guard against that to avoid a TypeError.
             function ($meiliSearch, $query, $options) use ($lat, $lng, $radius) {
                 if ($meiliSearch instanceof \Illuminate\Database\Eloquent\Builder) {
-                    return; // CollectionEngine path — Eloquent filters handled via .query() below
+                    return;
                 }
 
                 $filters = ['status = "' . Listing::STATUS_PUBLISHED . '"'];
 
                 if ($lat && $lng) {
-                    $radiusInMeters   = $radius * 1000;
-                    $filters[]        = "_geoRadius({$lat}, {$lng}, {$radiusInMeters})";
-                    $options['sort']  = ["_geoPoint({$lat}, {$lng}):asc"];
+                    $radiusInMeters  = $radius * 1000;
+                    $filters[]       = "_geoRadius({$lat}, {$lng}, {$radiusInMeters})";
+                    $options['sort'] = ["_geoPoint({$lat}, {$lng}):asc"];
                 }
 
                 $options['filter'] = implode(' AND ', $filters);
@@ -163,33 +163,34 @@ class HomeController extends Controller
                 return $meiliSearch->search($query, $options);
             }
         )
-        // Eloquent constraints — run on every Scout driver (collection, database, meilisearch)
         ->query(function ($q) use ($minPrice, $maxPrice, $categoryId, $provinceId) {
-            $q->with(['category', 'location', 'user'])->where('status', Listing::STATUS_PUBLISHED);
+            $q->with(['category', 'location', 'user'])
+              ->where('listings.status', Listing::STATUS_PUBLISHED);
 
             if ($minPrice !== null && $minPrice !== '') {
-                $q->where('price', '>=', (float) $minPrice);
+                $q->where('listings.price', '>=', (float) $minPrice);
             }
             if ($maxPrice !== null && $maxPrice !== '') {
-                $q->where('price', '<=', (float) $maxPrice);
+                $q->where('listings.price', '<=', (float) $maxPrice);
             }
             if ($categoryId) {
-                $q->where('category_id', (int) $categoryId);
+                $q->where('listings.category_id', (int) $categoryId);
             }
             if ($provinceId) {
-                $q->where('province_id', (int) $provinceId);
+                $q->where('listings.province_id', (int) $provinceId);
             }
-        });
+        })
+        ->paginate(12)
+        ->withQueryString();
 
-        $listings = $search->paginate(12)->withQueryString();
+        $entitlements = app(EntitlementService::class);
 
-        $entitlementService = app(EntitlementService::class);
         $listings->setCollection(
             $listings->getCollection()
-                ->sortByDesc(fn (Listing $listing) => $listing->user && $entitlementService->hasFeature(
+                ->sortBy(fn (Listing $listing) => $entitlements->hasFeature(
                     $listing->user,
                     EntitlementService::FEATURE_SEARCH_PRIORITY,
-                ) ? 1 : 0)
+                ) ? 0 : 1)
                 ->values()
         );
 

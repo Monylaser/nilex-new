@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdSpacesController;
+use App\Http\Controllers\AdTrackingController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\CategoryController;
 use App\Http\Controllers\Frontend\LegalPageController;
@@ -117,6 +119,11 @@ Route::post('/payment/webhook', [PaymobController::class, 'callback'])->name('pa
 
 // تحميل مسارات المصادقة (Breeze)
 require __DIR__.'/auth.php';
+
+// 📢 مسارات الإعلانات والتتبع
+Route::get('/ads/pricing', [AdSpacesController::class, 'index'])->name('ads.pricing');
+Route::get('/ads/{campaign}/impression', [AdTrackingController::class, 'impression'])->name('ads.impression');
+Route::get('/ads/{campaign}/click', [AdTrackingController::class, 'click'])->name('ads.click');
 
 // ✅ الصفحات القانونية — catch-all يجب أن يكون آخر مسار حتى لا يلتهم المسارات المحددة
 Route::get('/{slug}', [LegalPageController::class, 'show'])->name('legal.show');

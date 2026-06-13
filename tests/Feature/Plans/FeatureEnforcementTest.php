@@ -66,11 +66,12 @@ describe('Feature Enforcement', function () {
         $response = $this->get('/search?q=سيارة');
 
         $response->assertOk();
-        $body = $response->getContent();
+$body = $response->getContent();
 
-        expect($body)->toContain('سيارة أولوية')
-            ->and($body)->toContain('سيارة عادية')
-            ->and(strpos($body, 'سيارة أولوية'))->toBeLessThan(strpos($body, 'سيارة عادية'));
+expect($body)->toContain('سيارة أولوية')
+    ->and($body)->toContain('سيارة عادية')
+    ->and(strpos($body, 'سيارة أولوية'))->toBeLessThan(strpos($body, 'سيارة عادية'));
+    
     });
 
     it('exposes priority_support flag for business users in service layer', function () {

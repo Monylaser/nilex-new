@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PointPlan extends Model
 {
+    public const PLAN_TYPE_INDIVIDUAL = 'individual';
+
+    public const PLAN_TYPE_COMPANY = 'company';
+
     protected $fillable = [
         'name_ar',
         'name_en',
@@ -15,6 +19,7 @@ class PointPlan extends Model
         'description',
         'is_active',
         'tier_key',
+        'plan_type',
     ];
 
     protected $casts = [

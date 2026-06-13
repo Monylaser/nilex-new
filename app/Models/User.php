@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPlanType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -16,7 +17,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity, HasPlanType;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -48,6 +49,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'provider_name',
         'provider_id',
         'plan_tier',
+        'plan_type',
     ];
 
     protected $hidden = [

@@ -16,6 +16,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use App\Models\AdCampaign;
+use App\Observers\AdCampaignObserver;
+use App\Services\AdCampaignService;
 use App\Services\EntitlementService;
 use App\Services\PointService;
 use Spatie\Permission\Events\RoleAttachedEvent;
@@ -27,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(PointService::class);
         $this->app->singleton(EntitlementService::class);
+        $this->app->singleton(AdCampaignService::class);
     }
 
     public function boot(): void
@@ -38,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\ListingPhoneClick::observe(\App\Observers\ListingPhoneClickObserver::class);
         \App\Models\ListingWhatsappClick::observe(\App\Observers\ListingWhatsappClickObserver::class);
         \App\Models\Offer::observe(\App\Observers\OfferLeadObserver::class);
+        AdCampaign::observe(AdCampaignObserver::class);
 
         // ── Auth Activity Listeners ───────────────────────────────────────────
         Event::listen(Login::class,          LogSuccessfulLogin::class);
