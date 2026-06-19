@@ -16,7 +16,7 @@ class ExpireCampaigns extends Command
         AdCampaign::query()
             ->where('ends_at', '<', now())
             ->where('status', '!=', 'expired')
-            ->each(function ($campaign) {
+            ->each(function (AdCampaign $campaign) {
                 $campaign->update(['status' => 'expired']);
             });
 

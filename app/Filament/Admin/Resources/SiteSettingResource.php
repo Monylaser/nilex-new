@@ -25,6 +25,16 @@ class SiteSettingResource extends Resource
 {
     protected static ?string $model = SiteSetting::class;
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
+
     public static function getNavigationIcon(): string|BackedEnum|null
     {
         return 'heroicon-o-cog-6-tooth';
@@ -93,6 +103,7 @@ class SiteSettingResource extends Resource
                         ->label('صورة الخلفية')
                         ->image()
                         ->imageEditor()
+                        ->disk('public')
                         ->directory('site-settings/auth-bg')
                         ->visibility('public')
                         ->maxSize(5120)
@@ -120,6 +131,7 @@ class SiteSettingResource extends Resource
                         ->label('لوجو الموقع')
                         ->image()
                         ->imageEditor()
+                        ->disk('public')
                         ->directory('site-settings/logos')
                         ->visibility('public')
                         ->maxSize(2048),
@@ -127,6 +139,7 @@ class SiteSettingResource extends Resource
                     FileUpload::make('site_favicon')
                         ->label('Favicon')
                         ->image()
+                        ->disk('public')
                         ->directory('site-settings/favicons')
                         ->visibility('public')
                         ->maxSize(512),
@@ -168,9 +181,8 @@ class SiteSettingResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListSiteSettings::route('/'),
-            'create' => Pages\CreateSiteSetting::route('/create'),
-            'edit'   => Pages\EditSiteSetting::route('/{record}/edit'),
+            'index' => Pages\ListSiteSettings::route('/'),
+            'edit'  => Pages\EditSiteSetting::route('/{record}/edit'),
         ];
     }
 }

@@ -117,8 +117,16 @@
 @php
     use Illuminate\Support\Facades\Storage;
     $settings = \App\Models\SiteSetting::getSettings();
-    if ($settings->auth_bg_type === 'image' && $settings->auth_bg_image) {
-        $bgStyle = "background-image:url('" . Storage::url($settings->auth_bg_image) . "'); background-size:cover; background-position:center;";
+    
+    // Filament 5.4 FileUpload array structure compatibility
+    $imagePath = is_array($settings->auth_bg_image) 
+                 ? ($settings->auth_bg_image[0] ?? null) 
+                 : $settings->auth_bg_image;
+
+    $bgImageUrl = $imagePath ? Storage::disk('public')->url($imagePath) : null;
+
+    if ($settings && $settings->auth_bg_type === 'image' && $bgImageUrl) {
+        $bgStyle = "background-image:url('{$bgImageUrl}'); background-size:cover; background-position:center;";
     } else {
         $bgStyle = "background:" . ($settings->auth_bg_color ?? '#085041') . ";";
     }
@@ -238,6 +246,8 @@
         window.addEventListener('resize', check);
     })();
 </script>
+
+@stack('scripts')
 
 </body>
 </html>

@@ -13,9 +13,13 @@ class SiteSetting extends Model
         'auth_headline', 'auth_subtext',
     ];
 
-    // دايما بنجيب الـ record الأول أو بنعمله
     public static function getSettings(): self
     {
-        return static::firstOrCreate(['id' => 1]);
+        return static::query()->orderBy('id')->first()
+            ?? static::create([
+                'auth_bg_type' => 'color',
+                'auth_bg_color' => '#085041',
+                'is_active' => true,
+            ]);
     }
 }

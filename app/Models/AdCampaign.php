@@ -21,6 +21,7 @@ class AdCampaign extends Model implements HasMedia
         'placement',
         'category_id',
         'target_url',
+        'duration_days',
         'status',
         'approval_status',
         'rejected_reason',
@@ -30,6 +31,12 @@ class AdCampaign extends Model implements HasMedia
         'clicks_count',
         'priority',
         'created_by',
+        'seller_id',
+        'payment_status',
+        'paymob_order_id',
+        'paymob_transaction_id',
+        'amount_paid',
+        'paid_at',
     ];
 
     protected function casts(): array
@@ -37,12 +44,16 @@ class AdCampaign extends Model implements HasMedia
         return [
             'starts_at'       => 'datetime',
             'ends_at'         => 'datetime',
+            'paid_at'         => 'datetime',
             'approval_status' => 'string',
             'status'          => 'string',
             'placement'       => 'string',
+            'payment_status'  => 'string',
+            'duration_days'   => 'integer',
             'views_count'     => 'integer',
             'clicks_count'    => 'integer',
             'priority'        => 'integer',
+            'amount_paid'     => 'decimal:2',
         ];
     }
 
@@ -80,9 +91,24 @@ class AdCampaign extends Model implements HasMedia
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'seller_id');
+    }
+
     public function logs(): HasMany
     {
         return $this->hasMany(AdCampaignLog::class);
+    }
+
+    public function paymentAttempts(): HasMany
+    {
+        return $this->hasMany(PaymentAttempt::class, 'campaign_id');
+    }
+
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AdCampaignAuditLog::class, 'campaign_id');
     }
 
     public function scopeActive(Builder $query): Builder
@@ -92,6 +118,24 @@ class AdCampaign extends Model implements HasMedia
             ->where('approval_status', 'approved')
             ->where('starts_at', '<=', now())
             ->where('ends_at', '>=', now());
+    }
+
+    public function scopeDisplayable(Builder $query): Builder
+    {
+        return $query
+            ->where('approval_status', 'approved')
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
+            ->where(function (Builder $paymentQuery) {
+                $paymentQuery
+                    ->whereNull('payment_status')
+                    ->orWhere('payment_status', 'paid');
+            });
+    }
+
+    public function scopePaid(Builder $query): Builder
+    {
+        return $query->where('payment_status', 'paid');
     }
 
     public function scopeByPlacement(Builder $query, string $placement): Builder
@@ -132,6 +176,40 @@ class AdCampaign extends Model implements HasMedia
     public function getIsRejectedAttribute(): bool
     {
         return $this->approval_status === 'rejected';
+    }
+
+    public function getIsPaidAttribute(): bool
+    {
+        return $this->payment_status === 'paid'
+            || ($this->payment_status === null && $this->seller_id === null);
+    }
+
+    public function isDisplayable(): bool
+    {
+        if ($this->approval_status !== 'approved') {
+            return false;
+        }
+
+        if ($this->starts_at === null || $this->ends_at === null) {
+            return false;
+        }
+
+        if ($this->starts_at->isFuture() || $this->ends_at->isPast()) {
+            return false;
+        }
+
+        if ($this->payment_status !== null && $this->payment_status !== 'paid') {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function isTrackable(): bool
+    {
+        return $this->status === 'active'
+            && $this->approval_status === 'approved'
+            && $this->isDisplayable();
     }
 
     public function approve(): void

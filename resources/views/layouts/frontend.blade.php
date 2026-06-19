@@ -178,6 +178,10 @@
     {{ $slot ?? '' }}
 @endif
 
+@if(config('features.self_service_ads'))
+    <x-ad-popup />
+@endif
+
 <x-footer />
 
 @stack('scripts')

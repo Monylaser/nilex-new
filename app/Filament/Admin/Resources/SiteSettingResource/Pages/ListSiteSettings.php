@@ -3,17 +3,15 @@
 namespace App\Filament\Admin\Resources\SiteSettingResource\Pages;
 
 use App\Filament\Admin\Resources\SiteSettingResource;
-use Filament\Actions\CreateAction;
+use App\Models\SiteSetting;
 use Filament\Resources\Pages\ListRecords;
 
 class ListSiteSettings extends ListRecords
 {
     protected static string $resource = SiteSettingResource::class;
 
-    protected function getHeaderActions(): array
+    public function mount(): void
     {
-        return [
-            CreateAction::make(),
-        ];
+        $this->redirect(SiteSettingResource::getUrl('edit', ['record' => SiteSetting::getSettings()]));
     }
 }

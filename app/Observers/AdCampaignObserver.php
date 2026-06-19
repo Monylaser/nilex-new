@@ -3,7 +3,7 @@
 namespace App\Observers;
 
 use App\Models\AdCampaign;
-use Illuminate\Support\Facades\Cache;
+use App\Services\AdCampaignService;
 
 class AdCampaignObserver
 {
@@ -20,30 +20,16 @@ class AdCampaignObserver
 
     public function saved(AdCampaign $campaign): void
     {
-        $this->clearCache($campaign);
-    }
-
-    public function created(AdCampaign $campaign): void
-    {
-        $this->clearCache($campaign);
-    }
-
-    public function updated(AdCampaign $campaign): void
-    {
-        $this->clearCache($campaign);
+        app(AdCampaignService::class)->queueCampaignCacheInvalidation($campaign);
     }
 
     public function deleted(AdCampaign $campaign): void
     {
-        $this->clearCache($campaign);
+        app(AdCampaignService::class)->queueCampaignCacheInvalidation($campaign);
     }
 
-    private function clearCache(AdCampaign $campaign): void
+    public function restored(AdCampaign $campaign): void
     {
-        Cache::forget('ad_campaign_hero_top');
-        Cache::forget('ad_campaign_home_feed');
-        Cache::forget('ad_campaign_listing_detail');
-        Cache::forget('ad_campaign_search_results');
-        Cache::forget('ad_campaign_category_page_' . ($campaign->category_id ?? 'all'));
+        app(AdCampaignService::class)->queueCampaignCacheInvalidation($campaign);
     }
 }

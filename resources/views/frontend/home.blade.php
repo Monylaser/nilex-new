@@ -44,20 +44,13 @@
 
 @section('content')
 
-@php
-    $heroCampaign = app(\App\Services\AdCampaignService::class)
-        ->getForPlacement('hero_top');
-@endphp
-@if($heroCampaign)
-    <div class="max-w-7xl mx-auto px-4 pt-4" style="padding-top:64px;">
-        <x-ad-banner :campaign="$heroCampaign" />
-    </div>
-@endif
-
 {{-- ══════════════════════════════════════════
      HERO — minimal centered search
 ══════════════════════════════════════════ --}}
-<section class="bg-white" style="{{ $heroCampaign ? '' : 'padding-top:64px;' }} border-bottom:1px solid #ebebeb;">
+<section class="bg-white" style="padding-top:64px; border-bottom:1px solid #ebebeb;">
+    @if(config('features.self_service_ads'))
+        <x-ad-banner placement="hero_top" wrapper-class="max-w-7xl mx-auto px-4 pb-4" />
+    @endif
     <div class="max-w-2xl mx-auto px-4 py-10 text-center">
         <h1 class="text-2xl sm:text-3xl font-black text-zinc-900 mb-1 leading-tight">
             {{ __('ui.hero.title_1') ?? 'بيع واشتري' }}
@@ -400,16 +393,11 @@
                             </svg>
                         </button>
                     </div>
-                    @if($loop->iteration % 8 === 0)
-                        @php
-                            $feedCampaign ??= app(\App\Services\AdCampaignService::class)
-                                ->getForPlacement('home_feed');
-                        @endphp
-                        @if($feedCampaign)
-                            <div class="col-span-2 sm:col-span-3 md:col-span-4">
-                                <x-ad-banner :campaign="$feedCampaign" />
-                            </div>
-                        @endif
+                    @if($loop->iteration % 8 === 0 && config('features.self_service_ads'))
+                        <x-ad-banner
+                            placement="home_feed"
+                            wrapper-class="col-span-2 sm:col-span-3 md:col-span-4"
+                        />
                     @endif
                 @endforeach
             </div>

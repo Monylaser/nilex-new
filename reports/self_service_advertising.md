@@ -3,7 +3,7 @@
 **Date:** 2026-06-13  
 **Project:** Nilex Marketplace  
 **Stack:** Laravel 13 · Filament v5.4 · Paymob · Alpine.js · Livewire  
-**Status:** Planned (Pre-Implementation)
+**Status:** Complete (Implemented 2026-06-13)
 
 ---
 
@@ -381,4 +381,4 @@ Featured listing / promotion logic
 
 ---
 
-**Implementation status:** Not started. See `reports/self_service_ads_pre_implementation.md` for discovery snapshot.
+**Implementation status:** Complete. Phase reports: `self_service_execution_phase1.md` through `phase6.md`. Enable with `SELF_SERVICE_ADS=true` in `.env`.

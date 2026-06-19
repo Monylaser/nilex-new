@@ -96,6 +96,15 @@
                             {{ __('ui.footer.link_pricing') }}
                         </a>
                     </li>
+                    @if(config('features.self_service_ads'))
+                    <li>
+                        <a href="{{ route('ads.pricing') }}"
+                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                            <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            المساحات الإعلانية
+                        </a>
+                    </li>
+                    @endif
                     @auth
                     <li>
                         <a href="{{ route('dashboard') }}"

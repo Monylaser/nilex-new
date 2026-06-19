@@ -93,12 +93,8 @@
         </div>
 
         {{-- ── LISTINGS GRID ───────────────────────────────────────────────── --}}
-        @php
-            $catCampaign = app(\App\Services\AdCampaignService::class)
-                ->getForPlacement('category_page', $category->id ?? null);
-        @endphp
-        @if($catCampaign)
-            <x-ad-banner :campaign="$catCampaign" />
+        @if(config('features.self_service_ads'))
+            <x-ad-banner placement="category_page" :category-id="$category->id ?? null" />
         @endif
 
         @if($listings->count() > 0)

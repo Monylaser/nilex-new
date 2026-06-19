@@ -10,6 +10,7 @@ use App\Services\EntitlementService;
 use App\Services\PointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class HomeController extends Controller
@@ -48,7 +49,15 @@ class HomeController extends Controller
      */
     public function create()
     {
-        return view('frontend.listings.create');
+        $categories = Category::whereNull('parent_id')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->with(['children' => function ($query) {
+                $query->where('is_active', true)->orderBy('sort_order');
+            }])
+            ->get();
+
+        return view('frontend.listings.create', compact('categories'));
     }
 
     /**
@@ -61,6 +70,12 @@ class HomeController extends Controller
             'description' => 'required|string',
             'category_id' => 'required|exists:categories,id',
             'price'       => 'required|numeric|min:0',
+            // ── Multi-Step Listing Wizard fields ──
+            'condition'   => 'required|string|max:50',
+            'price_type'  => 'required|string|max:50',
+            'phone'       => 'required|string|max:20',
+            // location is reused via the existing location_id relationship
+            'location_id' => 'nullable|exists:locations,id',
         ]);
 
         $category = Category::findOrFail($validated['category_id']);
@@ -82,25 +97,43 @@ class HomeController extends Controller
             }
         }
 
-        $listing                       = new Listing();
-        $listing->title                = $validated['title'];
-        $listing->slug                 = Str::slug($validated['title']) . '-' . Str::random(6);
-        $listing->description          = $validated['description'];
-        $listing->price                = $validated['price'];
-        $listing->category_id          = $validated['category_id'];
-        $listing->user_id              = Auth::id();
-        $listing->status               = Listing::STATUS_PENDING;
-        $listing->custom_fields_values = $request->input('custom_fields_values', []);
-        $listing->save();
+        // Sanitize free-text input: trim and collapse duplicate spaces.
+        $phone = preg_replace('/\s+/', ' ', trim($validated['phone']));
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $listing->addMedia($image)->toMediaCollection('images');
+        $listing = DB::transaction(function () use ($request, $validated, $phone) {
+            $listing                       = new Listing();
+            $listing->title                = $validated['title'];
+            $listing->slug                 = Str::slug($validated['title']) . '-' . Str::random(6);
+            $listing->description          = $validated['description'];
+            $listing->price                = $validated['price'];
+            $listing->category_id          = $validated['category_id'];
+            $listing->user_id              = Auth::id();
+            $listing->status               = Listing::STATUS_PENDING;
+            $listing->condition            = $validated['condition'];
+            $listing->price_type           = $validated['price_type'];
+            $listing->phone                = $phone;
+            $listing->location_id          = $validated['location_id'] ?? null;
+            $listing->custom_fields_values = $request->input('custom_fields_values', []);
+            $listing->save();
+
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $listing->addMedia($image)->toMediaCollection('images');
+                }
             }
-        }
 
-        $pointService = new PointService();
-        $pointService->credit(Auth::user(), 10, 'مكافأة نشر إعلان جديد: ' . $listing->title, $listing);
+            $pointService = new PointService();
+            $pointService->credit(Auth::user(), 10, 'مكافأة نشر إعلان جديد: ' . $listing->title, $listing);
+
+            return $listing;
+        });
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success'  => true,
+                'redirect' => route('dashboard'),
+            ]);
+        }
 
         return redirect()->route('dashboard')->with('success', 'تم حفظ الإعلان بنجاح، وكسبت 10 نقاط! 🚀');
     }

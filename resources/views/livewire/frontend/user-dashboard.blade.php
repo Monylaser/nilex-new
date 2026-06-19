@@ -29,6 +29,12 @@
                 </div>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                @if(\App\Services\AdCampaignService::selfServiceEnabled())
+                    <a href="{{ route('dashboard.ads.index') }}"
+                       class="flex items-center justify-center gap-2 bg-white border border-amber-200 text-amber-700 hover:bg-amber-50 font-bold py-3 px-5 rounded-xl transition-all text-sm">
+                        📢 حملاتي الإعلانية
+                    </a>
+                @endif
                 <a href="{{ route('dashboard.leads') }}"
                    class="flex items-center justify-center gap-2 bg-white border border-nilex/30 text-nilex hover:bg-nilex/5 font-bold py-3 px-5 rounded-xl transition-all text-sm">
                     {{ __('ui.leads.nav_link') }}

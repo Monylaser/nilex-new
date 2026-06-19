@@ -35,6 +35,7 @@
                         <input type="text"
                                inputmode="numeric"
                                maxlength="1"
+                               dir="ltr"
                                x-model="otp[{{ $i }}]"
                                @input="moveToNext({{ $i }}, $event)"
                                @keydown.backspace="moveToPrev({{ $i }}, $event)"

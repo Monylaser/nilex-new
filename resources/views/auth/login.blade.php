@@ -19,6 +19,10 @@
     {{-- ── Session Status ── --}}
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    @if(config('features.self_service_ads'))
+        <x-ad-banner placement="login_page" />
+    @endif
+
     {{-- ── الفورم ── --}}
     <form method="POST" action="{{ route('login') }}" style="display:flex; flex-direction:column; gap:16px;">
         @csrf
