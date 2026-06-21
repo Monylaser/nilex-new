@@ -5,7 +5,7 @@
  *
  * Covers:
  *   1. Registration  → 100 welcome points, is_phone_verified=false, redirect /verify-otp
- *   2. Points        → listing creation credits 10 pts; featureWithPoints deducts correctly
+ *   2. Points        → listing creation credits 3 pts; featureWithPoints deducts correctly
  *   3. Admin ACL     → normal user blocked (403); super_admin allowed through
  */
 
@@ -109,7 +109,7 @@ describe('Points', function () {
         ]);
     });
 
-    it('credits 10 points to a verified user who creates a listing', function () {
+    it('credits 3 points to a verified user who creates a listing', function () {
 
         $user = User::factory()->create([
             'points'            => 200,
@@ -128,7 +128,7 @@ describe('Points', function () {
             ])
             ->assertRedirect(route('dashboard'));
 
-        expect($user->fresh()->points)->toBe(210); // 200 + 10 credit
+        expect($user->fresh()->points)->toBe(203); // 200 + 3 credit
     });
 
     it('deducts the correct number of points when a listing is featured', function () {
@@ -149,19 +149,19 @@ describe('Points', function () {
         ]);
 
         $days         = 3;
-        $expectedCost = Listing::featureCost($days); // 10 pts/day × 3 = 30
+        $expectedCost = Listing::featureCost($days); // 60 pts for 3 days
 
         $listing->featureWithPoints($days);
 
         expect($user->fresh()->points)
-            ->toBe(300 - $expectedCost)              // 300 − 30 = 270
+            ->toBe(300 - $expectedCost)              // 300 − 60 = 240
             ->and($listing->fresh()->is_featured)->toBeTrue()
             ->and($listing->fresh()->featured_until)->not->toBeNull();
     });
 
     it('throws an exception when user has insufficient points for featuring', function () {
         $user = User::factory()->create([
-            'points'            => 5,   // not enough for 1 day (costs 10)
+            'points'            => 5,   // not enough for 1 day (costs 25)
             'is_phone_verified' => true,
         ]);
 

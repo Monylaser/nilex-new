@@ -53,8 +53,14 @@ class Listing extends Model implements HasMedia
         self::REASON_PROHIBITED,
     ];
 
-    // ✅ تكلفة التمييز: 10 نقاط / يوم — غيّر من هنا
-    const FEATURE_COST_PER_DAY = 10;
+    // تكاليف التمييز بالنقاط — لا تعتمد على سعر يومي ثابت
+    // يجب أن تطابق القيم المعروضة في صفحة /pricing
+    const FEATURE_COSTS = [
+        1  => 25,
+        3  => 60,
+        7  => 120,
+        14 => 220,
+    ];
 
     // ── Options ───────────────────────────────────────────────────────────────
 
@@ -251,7 +257,11 @@ class Listing extends Model implements HasMedia
      */
     public static function featureCost(int $days): int
     {
-        return $days * self::FEATURE_COST_PER_DAY;
+        if (! array_key_exists($days, self::FEATURE_COSTS)) {
+            throw new \InvalidArgumentException("مدة التمييز غير مدعومة: {$days} أيام. القيم المتاحة: " . implode(', ', array_keys(self::FEATURE_COSTS)));
+        }
+
+        return self::FEATURE_COSTS[$days];
     }
 
     /**

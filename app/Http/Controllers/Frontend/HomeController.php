@@ -68,7 +68,11 @@ class HomeController extends Controller
             }])
             ->get(['id', 'name_ar', 'parent_id', 'level', 'sort_order']);
 
-        return view('frontend.listings.create', compact('categories', 'governorates'));
+        $user             = Auth::user();
+        $isPhoneVerified  = (bool) $user->is_phone_verified;
+        $userPoints       = (int)  $user->points;
+
+        return view('frontend.listings.create', compact('categories', 'governorates', 'isPhoneVerified', 'userPoints'));
     }
 
     /**
@@ -77,16 +81,18 @@ class HomeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
-            'description' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'price'       => 'required|numeric|min:0',
+            'title'        => 'required|string|max:255',
+            'description'  => 'required|string',
+            'category_id'  => 'required|exists:categories,id',
+            'price'        => 'required|numeric|min:0',
             // ── Multi-Step Listing Wizard fields ──
-            'condition'   => 'required|string|max:50',
-            'price_type'  => 'required|string|max:50',
-            'phone'       => 'required|string|max:20',
+            'condition'    => 'required|string|max:50',
+            'price_type'   => 'required|string|max:50',
+            'phone'        => 'required|string|max:20',
             // location is reused via the existing location_id relationship
-            'location_id' => 'nullable|exists:locations,id',
+            'location_id'  => 'nullable|exists:locations,id',
+            // optional featuring after creation (0 = none)
+            'feature_days' => 'nullable|integer|in:0,1,3,7,14',
         ]);
 
         $category = Category::findOrFail($validated['category_id']);
@@ -134,19 +140,33 @@ class HomeController extends Controller
             }
 
             $pointService = new PointService();
-            $pointService->credit(Auth::user(), 10, 'مكافأة نشر إعلان جديد: ' . $listing->title, $listing);
+            $pointService->credit(Auth::user(), 3, 'مكافأة نشر إعلان جديد: ' . $listing->title, $listing);
 
             return $listing;
         });
 
+        // Attempt featuring after the listing is committed — best effort only.
+        // A failure here must never block listing creation.
+        $featured     = false;
+        $featureDays  = (int) ($validated['feature_days'] ?? 0);
+        if ($featureDays > 0) {
+            try {
+                $listing->featureWithPoints($featureDays);
+                $featured = true;
+            } catch (\Exception) {
+                // Silent fail: insufficient points or plan limits
+            }
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success'  => true,
+                'featured' => $featured,
                 'redirect' => route('dashboard'),
             ]);
         }
 
-        return redirect()->route('dashboard')->with('success', 'تم حفظ الإعلان بنجاح، وكسبت 10 نقاط! 🚀');
+        return redirect()->route('dashboard')->with('success', 'تم حفظ الإعلان بنجاح، وكسبت 3 نقاط! 🚀');
     }
 
     /**

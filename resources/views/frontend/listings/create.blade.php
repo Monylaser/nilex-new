@@ -410,6 +410,11 @@
                                class="wizard-input" :class="errors.phone ? 'has-error' : ''"
                                placeholder="01xxxxxxxxx">
                         <p x-show="errors.phone" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.phone"></p>
+                        @if(! $isPhoneVerified)
+                        <p class="mt-1.5 flex items-center gap-1 text-xs text-[#1D9E75] font-semibold">
+                            <span>💡</span> وثّق رقم هاتفك واحصل على 50 نقطة
+                        </p>
+                        @endif
                     </div>
 
                     {{-- Governorate (level 0) --}}
@@ -500,6 +505,40 @@
                         <p x-show="imagePreviews.length === 0" x-cloak class="text-xs text-zinc-400">لم تتم إضافة صور</p>
                     </div>
                 </div>
+
+                {{-- ── ⭐ تمييز الإعلان بالنقاط ──────────────────────────── --}}
+                <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <h3 class="text-sm font-bold text-zinc-800 flex items-center gap-1.5">
+                            <span>⭐</span> هل تريد تمييز إعلانك؟
+                        </h3>
+                        <span class="text-xs font-semibold text-zinc-500">
+                            نقاطك الحالية:
+                            <span class="text-[#1D9E75] font-bold" x-text="userPoints"></span>
+                            نقطة
+                        </span>
+                    </div>
+                    <p class="text-xs text-zinc-500 mb-3">الإعلانات المميزة تظهر في المقدمة وتحصل على مشاهدات أكثر.</p>
+                    <select x-model.number="formData.feature_days" class="wizard-input">
+                        <template x-for="opt in featureOptions" :key="opt.days">
+                            <option
+                                :value="opt.days"
+                                :disabled="opt.cost > 0 && userPoints < opt.cost"
+                                x-text="opt.cost === 0
+                                    ? opt.label
+                                    : (userPoints >= opt.cost
+                                        ? opt.label + ' — ' + opt.cost + ' نقطة'
+                                        : opt.label + ' — ' + opt.cost + ' نقطة  (نقاط غير كافية)')">
+                            </option>
+                        </template>
+                    </select>
+                    <p x-show="formData.feature_days > 0" x-cloak
+                       class="mt-2 text-xs text-amber-700 font-semibold">
+                        سيتم خصم
+                        <span x-text="NILEX_FEATURE_COSTS[formData.feature_days] ?? 0"></span>
+                        نقطة بعد نشر الإعلان مباشرةً.
+                    </p>
+                </div>
             </div>
 
             {{-- ══════════════════════════════════════════
@@ -526,14 +565,19 @@
                 </button>
 
                 {{-- Submit --}}
-                <button type="submit" x-show="currentStep === totalSteps" x-cloak :disabled="isSubmitting"
-                        class="inline-flex items-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold px-7 py-2.5 rounded-xl text-sm ms-auto min-h-[44px]">
-                    <svg x-show="isSubmitting" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                    <span x-text="isSubmitting ? 'جاري النشر...' : 'نشر الإعلان الآن 🚀'"></span>
-                </button>
+                <div x-show="currentStep === totalSteps" x-cloak class="ms-auto flex flex-col items-end gap-1.5">
+                    <button type="submit" :disabled="isSubmitting"
+                            class="inline-flex items-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold px-7 py-2.5 rounded-xl text-sm min-h-[44px]">
+                        <svg x-show="isSubmitting" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span x-text="isSubmitting ? 'جاري النشر...' : 'نشر الإعلان الآن 🚀'"></span>
+                    </button>
+                    <p class="text-[11px] text-zinc-400 flex items-center gap-1">
+                        <span>💡</span> ستحصل على 3 نقاط عند نشر هذا الإعلان
+                    </p>
+                </div>
             </div>
         </form>
 
@@ -550,14 +594,17 @@
 
 @push('scripts')
 <script>
-    const NILEX_CATEGORIES = @json($categories);
-    const NILEX_LOCATIONS = @json($governorates);
-    const NILEX_STORAGE_BASE = "{{ asset('storage') }}";
-    const NILEX_STORE_URL = "{{ route('listings.store') }}";
-    const NILEX_AI_URL = "{{ route('listings.ai-generate') }}";
+    const NILEX_CATEGORIES    = @json($categories);
+    const NILEX_LOCATIONS     = @json($governorates);
+    const NILEX_STORAGE_BASE  = "{{ asset('storage') }}";
+    const NILEX_STORE_URL     = "{{ route('listings.store') }}";
+    const NILEX_AI_URL        = "{{ route('listings.ai-generate') }}";
     const NILEX_DASHBOARD_URL = "{{ route('dashboard') }}";
     const NILEX_PREFILL_PHONE = @json(optional(auth()->user())->phone ?? '');
-    const NILEX_WIZARD_KEY = 'nilex_listing_wizard';
+    const NILEX_WIZARD_KEY    = 'nilex_listing_wizard';
+    const NILEX_PHONE_VERIFIED = @json($isPhoneVerified);
+    const NILEX_USER_POINTS    = @json($userPoints);
+    const NILEX_FEATURE_COSTS  = { 1: 25, 3: 60, 7: 120, 14: 220 };
 
     function listingWizard() {
         return {
@@ -578,6 +625,7 @@
                 phone: '',
                 governorate_id: '',
                 location_id: '',
+                feature_days: 0,
             },
 
             errors: {},
@@ -586,6 +634,16 @@
             isSubmitting: false,
             submitError: '',
             isDragging: false,
+
+            // ⭐ خيارات التمييز — يجب أن تطابق NILEX_FEATURE_COSTS وصفحة /pricing
+            featureOptions: [
+                { days: 0,  label: 'بدون تمييز (مجاني)', cost: 0 },
+                { days: 1,  label: 'يوم واحد',            cost: 25 },
+                { days: 3,  label: '3 أيام',              cost: 60 },
+                { days: 7,  label: '7 أيام',              cost: 120 },
+                { days: 14, label: '14 يوم',              cost: 220 },
+            ],
+            userPoints: NILEX_USER_POINTS,
 
             // 🤖 المساعد الذكي (Gemini)
             aiPrompt: '',
@@ -860,6 +918,7 @@
                 fd.append('price_type', this.formData.price_type);
                 fd.append('phone', this.formData.phone);
                 fd.append('location_id', this.formData.location_id);
+                fd.append('feature_days', this.formData.feature_days);
 
                 for (const [key, value] of Object.entries(this.formData.custom_fields)) {
                     fd.append('custom_fields_values[' + key + ']', value === true ? '1' : (value === false ? '0' : value));

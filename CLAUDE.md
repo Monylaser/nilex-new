@@ -128,6 +128,31 @@ The platform has 14 categories. **"خردة وخامات" (Scrap & Raw Materials
 
 The full category list should be sourced from the `categories` table / seeder rather than hardcoded here, as it may evolve.
 
+## Point Economy Rules (source of truth)
+
+These values are authoritative. Any view displaying points must match them — never hardcode different numbers.
+
+| Action | Points | Where |
+|--------|--------|-------|
+| Phone OTP verified (once only) | +50 | `OtpController::verify()` |
+| Listing created | +3 | `HomeController::store()` |
+| Daily login | +1 | (scheduled) |
+| Referral | +25 | (referral flow) |
+| Registration welcome | +100 | `RegisteredUserController` |
+
+**Featuring costs** — defined in `Listing::FEATURE_COSTS` (non-linear, not per-day):
+
+| Duration | Cost | Supported |
+|----------|------|-----------|
+| 1 day | 25 pts | ✅ |
+| 3 days | 60 pts | ✅ |
+| 7 days | 120 pts | ✅ |
+| 14 days | 220 pts | ✅ |
+
+- Use `Listing::featureCost(int $days)` to get cost — throws `InvalidArgumentException` for unsupported durations
+- Use `$listing->featureWithPoints(int $days)` to feature (deducts points + checks entitlement limits)
+- Featuring is best-effort after listing creation: failure is silent and does not block the listing
+
 ## Current Project Status (as of June 2026)
 
 - **Tests:** 257 passing, 0 failures
