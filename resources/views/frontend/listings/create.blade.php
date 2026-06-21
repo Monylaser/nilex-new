@@ -171,6 +171,37 @@
                 <h2 class="text-lg font-bold text-zinc-900 mb-1">تفاصيل الإعلان</h2>
                 <p class="text-sm text-zinc-400 mb-5">اكتب وصفاً واضحاً ليجذب المشترين</p>
 
+                {{-- ────────────────────────────────────────
+                     🤖 المساعد الذكي (Gemini) — إضافة فقط
+                ──────────────────────────────────────── --}}
+                <div class="mb-6 rounded-2xl border border-[#1D9E75]/30 bg-gradient-to-br from-green-50 to-white p-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-lg">🤖</span>
+                        <h3 class="text-sm font-bold text-zinc-800">المساعد الذكي</h3>
+                    </div>
+                    <p class="text-xs text-zinc-500 mb-3">اكتب وصفاً مختصراً لمنتجك ودع الذكاء الاصطناعي يكتب العنوان والوصف والسعر المقترح تلقائياً.</p>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" x-model="aiPrompt" @keydown.enter.prevent="generateWithAI()"
+                               class="wizard-input flex-1"
+                               placeholder="مثال: آيفون 13 مستعمل بحالة ممتازة لون أسود">
+                        <button type="button" @click="generateWithAI()"
+                                :disabled="aiLoading || aiPrompt.trim().length < 3"
+                                class="inline-flex items-center justify-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-5 py-2.5 rounded-xl text-sm min-h-[44px] shrink-0">
+                            <svg x-show="aiLoading" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span x-text="aiLoading ? 'جاري التوليد...' : '✨ ولّد بالـ AI'"></span>
+                        </button>
+                    </div>
+                    <div x-show="aiMessage" x-cloak
+                         class="mt-3 text-xs font-semibold rounded-xl px-3 py-2"
+                         :class="aiMessage && aiMessage.type === 'success'
+                            ? 'bg-green-100 text-[#178a64]'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'"
+                         x-text="aiMessage ? aiMessage.text : ''"></div>
+                </div>
+
                 <div class="space-y-5">
                     {{-- Title --}}
                     <div>
@@ -380,10 +411,32 @@
                                placeholder="01xxxxxxxxx">
                         <p x-show="errors.phone" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.phone"></p>
                     </div>
+
+                    {{-- Governorate (level 0) --}}
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">المدينة / المحافظة</label>
-                        <input type="text" x-model="formData.location"
-                               class="wizard-input" placeholder="مثال: القاهرة - مدينة نصر">
+                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">المحافظة</label>
+                        <select x-model="formData.governorate_id" @change="onGovernorateChange()"
+                                class="wizard-input">
+                            <option value="">اختر المحافظة</option>
+                            <template x-for="gov in governorates" :key="gov.id">
+                                <option :value="gov.id" x-text="gov.name_ar"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    {{-- City (level 1, child of selected governorate) --}}
+                    <div>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">المدينة</label>
+                        <select x-model="formData.location_id"
+                                :disabled="!formData.governorate_id"
+                                class="wizard-input disabled:bg-gray-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
+                                :class="errors.location_id ? 'has-error' : ''">
+                            <option value="" x-text="formData.governorate_id ? 'اختر المدينة' : 'اختر المحافظة أولاً'"></option>
+                            <template x-for="city in cities" :key="city.id">
+                                <option :value="city.id" x-text="city.name_ar"></option>
+                            </template>
+                        </select>
+                        <p x-show="errors.location_id" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.location_id"></p>
                     </div>
                 </div>
 
@@ -498,8 +551,10 @@
 @push('scripts')
 <script>
     const NILEX_CATEGORIES = @json($categories);
+    const NILEX_LOCATIONS = @json($governorates);
     const NILEX_STORAGE_BASE = "{{ asset('storage') }}";
     const NILEX_STORE_URL = "{{ route('listings.store') }}";
+    const NILEX_AI_URL = "{{ route('listings.ai-generate') }}";
     const NILEX_DASHBOARD_URL = "{{ route('dashboard') }}";
     const NILEX_PREFILL_PHONE = @json(optional(auth()->user())->phone ?? '');
     const NILEX_WIZARD_KEY = 'nilex_listing_wizard';
@@ -509,6 +564,7 @@
             currentStep: 1,
             totalSteps: 4,
             categories: NILEX_CATEGORIES,
+            governorates: NILEX_LOCATIONS,
             selectedRootId: null,
 
             formData: {
@@ -520,7 +576,8 @@
                 price_type: 'fixed',
                 custom_fields: {},
                 phone: '',
-                location: '',
+                governorate_id: '',
+                location_id: '',
             },
 
             errors: {},
@@ -529,6 +586,11 @@
             isSubmitting: false,
             submitError: '',
             isDragging: false,
+
+            // 🤖 المساعد الذكي (Gemini)
+            aiPrompt: '',
+            aiLoading: false,
+            aiMessage: null,
 
             priceTypes: [
                 { value: 'fixed',      label: 'سعر ثابت' },
@@ -567,6 +629,11 @@
                 const cat = this.activeCategory;
                 return (cat && Array.isArray(cat.custom_fields_schema)) ? cat.custom_fields_schema : [];
             },
+            // Child cities of the currently selected governorate (dependent dropdown).
+            get cities() {
+                const gov = this.governorates.find(g => g.id == this.formData.governorate_id);
+                return (gov && Array.isArray(gov.children)) ? gov.children : [];
+            },
             get checklist() {
                 return [
                     { label: 'تم اختيار القسم',        done: !!this.formData.category_id },
@@ -592,6 +659,14 @@
             },
             categoryIconUrl(cat) {
                 return cat.icon ? (NILEX_STORAGE_BASE + '/' + cat.icon) : null;
+            },
+
+            // ── Location selection ─────────────────────────────────────
+            // Reset the chosen city whenever the governorate changes so the
+            // stored location_id always belongs to the selected governorate.
+            onGovernorateChange() {
+                this.formData.location_id = '';
+                delete this.errors.location_id;
             },
 
             // ── Navigation ─────────────────────────────────────────────
@@ -696,6 +771,63 @@
                 this.imagePreviews.splice(index, 1);
             },
 
+            // ── 🤖 AI Assistant (Gemini) ───────────────────────────────
+            // يعيد استخدام GeminiService عبر مسار listings.ai-generate.
+            // لا يكسر تدفق الويزارد: عند أي فشل تظهر رسالة عربية والمستخدم يكمل يدوياً.
+            async generateWithAI() {
+                const prompt = this.aiPrompt.trim();
+                if (prompt.length < 3) {
+                    this.aiMessage = { type: 'error', text: 'اكتب وصفاً مختصراً (3 أحرف على الأقل) أولاً.' };
+                    return;
+                }
+                this.aiLoading = true;
+                this.aiMessage = null;
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const res = await fetch(NILEX_AI_URL, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({ prompt }),
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.success && data.data) {
+                            if (data.data.title) {
+                                this.formData.title = data.data.title;
+                                delete this.errors.title;
+                            }
+                            if (data.data.description) {
+                                this.formData.description = data.data.description;
+                                delete this.errors.description;
+                            }
+                            if (data.data.suggested_price && Number(data.data.suggested_price) > 0) {
+                                this.formData.price = String(data.data.suggested_price);
+                                delete this.errors.price;
+                            }
+                            this.aiMessage = { type: 'success', text: 'تم توليد البيانات ✨ راجعها وعدّلها كما تريد.' };
+                        } else {
+                            this.aiMessage = { type: 'error', text: data.message || 'تعذّر توليد الإعلان حالياً، يمكنك المتابعة يدوياً.' };
+                        }
+                    } else if (res.status === 422) {
+                        this.aiMessage = { type: 'error', text: 'اكتب وصفاً مختصراً صالحاً أولاً (3 أحرف على الأقل).' };
+                    } else if (res.status === 419) {
+                        this.aiMessage = { type: 'error', text: 'انتهت صلاحية الجلسة، يرجى تحديث الصفحة وإعادة المحاولة.' };
+                    } else {
+                        this.aiMessage = { type: 'error', text: 'تعذّر الاتصال بالمساعد الذكي، يمكنك المتابعة يدوياً.' };
+                    }
+                } catch (e) {
+                    this.aiMessage = { type: 'error', text: 'تعذّر الاتصال بالمساعد الذكي، يمكنك المتابعة يدوياً.' };
+                } finally {
+                    this.aiLoading = false;
+                }
+            },
+
             // ── Labels ─────────────────────────────────────────────────
             conditionLabel() {
                 return this.formData.condition === 'new' ? 'جديد ✨' : 'مستعمل 🔄';
@@ -727,7 +859,7 @@
                 fd.append('condition', this.formData.condition);
                 fd.append('price_type', this.formData.price_type);
                 fd.append('phone', this.formData.phone);
-                fd.append('location', this.formData.location);
+                fd.append('location_id', this.formData.location_id);
 
                 for (const [key, value] of Object.entries(this.formData.custom_fields)) {
                     fd.append('custom_fields_values[' + key + ']', value === true ? '1' : (value === false ? '0' : value));
@@ -780,6 +912,9 @@
                     } else if (key.startsWith('custom_fields_values.')) {
                         this.errors['cf_' + key.substring('custom_fields_values.'.length)] = msg;
                         targetStep = 2;
+                    } else if (key === 'phone' || key === 'location_id') {
+                        this.errors[key] = msg;
+                        targetStep = 4;
                     } else {
                         this.errors[key] = msg;
                     }

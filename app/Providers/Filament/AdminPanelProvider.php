@@ -50,6 +50,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Nilex Admin')
             ->brandLogo(asset('images/logo/download.png'))
             ->brandLogoHeight('40px')
+            ->homeUrl(fn (): string => route('home'))
             ->favicon(asset('images/logo/download.png'))
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')

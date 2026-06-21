@@ -37,15 +37,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/search', [HomeController::class, 'search'])->name('listings.search');
 Route::get('/pricing', [HomeController::class, 'pricing'])->name('pricing');
 
-// ✅ مسارات العرض العامة
-Route::get('/listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
+// ✅ مسارات العرض العامة للأقسام
 Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->name('category.show');
-
-// 🟢 كشف الرقم وتتبع النقرات
-Route::post('/listings/{listing}/reveal-phone', [ListingController::class, 'revealPhone'])
-    ->name('listings.reveal-phone');
-Route::post('/listings/{listing}/whatsapp-click', [ListingController::class, 'trackWhatsappClick'])
-    ->name('listings.whatsapp-click');
 
 // 🌅 مسارات السوشيال ميديا — SocialiteController ✅
 Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])
@@ -70,14 +63,15 @@ Route::middleware(['auth'])->group(function () {
 // 🛡️ المسارات المحمية (تسجيل دخول + OTP)
 Route::middleware(['auth', 'otp.verified'])->group(function () {
 
-    // 1. إدارة الإعلانات
+    // 1. إدارة الإعلانات (يجب أن تكون قبل مسار عرض الإعلان العام)
     Route::get('/listings/create', [HomeController::class, 'create'])->name('listings.create');
     Route::post('/listings/store', [HomeController::class, 'store'])->name('listings.store');
+    // 🤖 المساعد الذكي لتوليد بيانات الإعلان (Gemini) — يُستخدم داخل ويزارد الإضافة
+    Route::post('/listings/ai-generate', [HomeController::class, 'aiGenerate'])->name('listings.ai-generate');
 
     // 2. لوحة التحكم
     Route::get('/dashboard', UserDashboard::class)
-    ->middleware(['auth', 'otp.verified']) // ← بدل verified
-    ->name('dashboard');
+    ->name('dashboard'); // تم إزالة الـ middleware المكرر هنا لأن الجروب بيقوم بالدور
 
     Route::get('/dashboard/leads', \App\Livewire\Frontend\SellerLeads::class)
         ->name('dashboard.leads');
@@ -112,6 +106,15 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
     Route::post('/listings/{listing}/offer', [ListingController::class, 'makeOffer'])->name('listings.offer');
 
 }); // ✅ إغلاق الـ middleware group
+
+// ✅ مسار عرض تفاصيل الإعلان (تم نقله هنا لأسفل لتفادي تعارض الـ 404 مع listings/create)
+Route::get('/listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
+
+// 🟢 كشف الرقم وتتبع النقرات (يجب أن يكونوا هنا تحت الـ middleware جروب أو داخله حسب متطلباتك)
+Route::post('/listings/{listing}/reveal-phone', [ListingController::class, 'revealPhone'])
+    ->name('listings.reveal-phone');
+Route::post('/listings/{listing}/whatsapp-click', [ListingController::class, 'trackWhatsappClick'])
+    ->name('listings.whatsapp-click');
 
 // 🤝 Paymob server callbacks (no auth / no CSRF)
 Route::post('/payments/callback', [PaymobController::class, 'callback'])->name('payments.callback');

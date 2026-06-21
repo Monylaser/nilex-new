@@ -197,6 +197,9 @@ describe('Dynamic Category Forms', function () {
                 'description' => 'سيارة بحالة ممتازة، مالك واحد.',
                 'category_id' => $this->carCategory->id,
                 'price'       => 250_000,
+                'condition'   => 'used',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
                 'custom_fields_values' => [
                     'car_brand'  => 'تويوتا',
                     'model_year' => 2023,
@@ -220,6 +223,9 @@ describe('Dynamic Category Forms', function () {
                 'description' => 'وصف مختصر.',
                 'category_id' => $this->carCategory->id,
                 'price'       => 100_000,
+                'condition'   => 'used',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
                 // car_brand, model_year, fuel_type are required — all missing
             ])
             ->assertSessionHasErrors([
@@ -238,6 +244,9 @@ describe('Dynamic Category Forms', function () {
                 'description' => 'وصف السيارة.',
                 'category_id' => $this->carCategory->id,
                 'price'       => 180_000,
+                'condition'   => 'used',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
                 'custom_fields_values' => [
                     'car_brand'  => 'هوندا',
                     'model_year' => 2022,
@@ -257,6 +266,9 @@ describe('Dynamic Category Forms', function () {
                 'description' => 'شقة ممتازة في موقع متميز.',
                 'category_id' => $this->realEstateCategory->id,
                 'price'       => 2_500_000,
+                'condition'   => 'used',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
                 'custom_fields_values' => [
                     'property_type' => 'apartment',
                     'area_sqm'      => 150,
@@ -279,6 +291,9 @@ describe('Dynamic Category Forms', function () {
                 'description' => 'وصف.',
                 'category_id' => $this->realEstateCategory->id,
                 'price'       => 500_000,
+                'condition'   => 'used',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
                 // property_type, area_sqm, bedrooms all missing
             ])
             ->assertSessionHasErrors([
@@ -297,6 +312,9 @@ describe('Dynamic Category Forms', function () {
                 'description' => 'فيلا بمواصفات ممتازة.',
                 'category_id' => $this->realEstateCategory->id,
                 'price'       => 5_000_000,
+                'condition'   => 'used',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
                 'custom_fields_values' => [
                     'property_type' => 'villa',
                     'area_sqm'      => 400,
@@ -316,6 +334,9 @@ describe('Dynamic Category Forms', function () {
                 'description' => 'سيارة جديدة بالكرتونة.',
                 'category_id' => $this->carCategory->id,
                 'price'       => 400_000,
+                'condition'   => 'new',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
                 'custom_fields_values' => [
                     'car_brand'  => 'نيسان',
                     'model_year' => 2024,
@@ -350,6 +371,9 @@ describe('Dynamic Category Forms', function () {
                 'description' => 'تصميم احترافي بأسعار مناسبة.',
                 'category_id' => $simpleCategory->id,
                 'price'       => 500,
+                'condition'   => 'new',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
             ])
             ->assertRedirect(route('dashboard'));
     });

@@ -122,6 +122,9 @@ describe('Points', function () {
                 'description' => 'جهاز جديد، 256 جيجا، لون تيتانيوم.',
                 'category_id' => Category::value('id'),
                 'price'       => 500,
+                'condition'   => 'new',
+                'price_type'  => 'fixed',
+                'phone'       => '01000000000',
             ])
             ->assertRedirect(route('dashboard'));
 

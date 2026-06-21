@@ -29,7 +29,7 @@
             <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
                 <div class="p-6 border-b flex justify-between items-center">
                     <h3 class="font-black text-xl text-gray-800">إدارة إعلاناتي</h3>
-                    <a href="/register" class="text-blue-600 font-bold text-sm">+ إضافة إعلان جديد</a>
+                    <a href="{{ route('listings.create') }}" class="text-blue-600 font-bold text-sm hover:text-blue-800 transition-colors">+ إضافة إعلان جديد</a>
                 </div>
 
                 <div class="overflow-x-auto">

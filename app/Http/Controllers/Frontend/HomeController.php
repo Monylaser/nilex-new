@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Listing;
+use App\Models\Location;
 use App\Models\PointPlan;
 use App\Services\EntitlementService;
+use App\Services\GeminiService;
 use App\Services\PointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -57,7 +59,16 @@ class HomeController extends Controller
             }])
             ->get();
 
-        return view('frontend.listings.create', compact('categories'));
+        // Governorates (level 0) eager-loaded with their active child cities (level 1)
+        // for the dependent location dropdowns in the listing wizard.
+        $governorates = Location::governorates()
+            ->active()
+            ->with(['children' => function ($query) {
+                $query->active()->orderBy('sort_order');
+            }])
+            ->get(['id', 'name_ar', 'parent_id', 'level', 'sort_order']);
+
+        return view('frontend.listings.create', compact('categories', 'governorates'));
     }
 
     /**
@@ -136,6 +147,40 @@ class HomeController extends Controller
         }
 
         return redirect()->route('dashboard')->with('success', 'تم حفظ الإعلان بنجاح، وكسبت 10 نقاط! 🚀');
+    }
+
+    /**
+     * 🤖 المساعد الذكي لويزارد إضافة الإعلان.
+     *
+     * يعيد استخدام منطق Gemini الموجود (GeminiService::generateFromInput)
+     * لتوليد عنوان ووصف وسعر مقترح من وصف مختصر يكتبه المستخدم.
+     * لا يكسر تدفق الويزارد إطلاقاً: عند فشل/تجاوز حد Gemini يرجع رسالة
+     * عربية واضحة (success=false) ويُكمل المستخدم يدوياً.
+     */
+    public function aiGenerate(Request $request, GeminiService $gemini)
+    {
+        $validated = $request->validate([
+            'prompt' => 'required|string|min:3|max:500',
+        ]);
+
+        $result = $gemini->generateFromInput($validated['prompt']);
+
+        // generateFromInput يرجع قيماً فارغة عند فشل الاتصال أو تجاوز الحصة.
+        if (empty($result['title']) && empty($result['description'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'تعذّر توليد الإعلان حالياً (قد يكون بسبب تجاوز حد الاستخدام). يمكنك إكمال البيانات يدوياً والمتابعة.',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'title'           => $result['title'],
+                'description'     => $result['description'],
+                'suggested_price' => $result['suggested_price'],
+            ],
+        ]);
     }
 
     /**
