@@ -250,7 +250,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-zinc-700 mb-1.5">السعر <span class="text-red-500">*</span></label>
                         <div class="relative">
-                            <input type="number" x-model="formData.price" min="0" step="0.01"
+                            <input type="number" x-model="formData.price" min="0" max="9999999999.99" step="0.01"
                                    class="wizard-input pe-16" :class="errors.price ? 'has-error' : ''"
                                    placeholder="0">
                             <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">ج.م</span>
@@ -828,6 +828,9 @@
     const NILEX_PHONE_VERIFIED = @json($isPhoneVerified);
     const NILEX_USER_POINTS    = @json($userPoints);
     const NILEX_FEATURE_COSTS  = { 1: 25, 3: 60, 7: 120, 14: 220 };
+    // Mirrors the listings.price column cap (decimal(12,2)) so the user gets an
+    // instant client-side error before submitting, matching the server rule.
+    const NILEX_MAX_PRICE      = 9999999999.99;
 
     function listingWizard() {
         return {
@@ -1125,6 +1128,9 @@
                     }
                     if (this.formData.price === '' || isNaN(this.formData.price) || Number(this.formData.price) < 0) {
                         this.errors.price = 'أدخل سعراً صحيحاً';
+                        ok = false;
+                    } else if (Number(this.formData.price) > NILEX_MAX_PRICE) {
+                        this.errors.price = 'السعر المدخل كبير جداً، يرجى التحقق من الرقم';
                         ok = false;
                     }
                     for (const field of this.customFieldsSchema) {

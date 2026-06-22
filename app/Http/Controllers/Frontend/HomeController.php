@@ -95,7 +95,9 @@ class HomeController extends Controller
             'title'        => 'required|string|max:255',
             'description'  => 'required|string',
             'category_id'  => 'required|exists:categories,id',
-            'price'        => 'required|numeric|min:0',
+            // max mirrors the listings.price column (decimal(12,2) → 9,999,999,999.99)
+            // to return a friendly 422 instead of a DB out-of-range (22003) 500.
+            'price'        => 'required|numeric|min:0|max:9999999999.99',
             // ── Multi-Step Listing Wizard fields ──
             'condition'    => 'required|string|max:50',
             'price_type'   => 'required|string|max:50',
@@ -107,6 +109,8 @@ class HomeController extends Controller
             'car_model_id' => 'nullable|exists:car_models,id',
             // optional featuring after creation (0 = none)
             'feature_days' => 'nullable|integer|in:0,1,3,7,14',
+        ], [
+            'price.max' => 'السعر المدخل كبير جداً، يرجى التحقق من الرقم',
         ]);
 
         $category = Category::findOrFail($validated['category_id']);
