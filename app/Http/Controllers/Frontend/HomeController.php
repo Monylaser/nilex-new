@@ -125,12 +125,16 @@ class HomeController extends Controller
                 ],
                 'custom_fields_values.fuel'         => 'required|string',
                 'custom_fields_values.transmission' => 'required|string',
+                'custom_fields_values.year'         => 'required',
+                'custom_fields_values.condition'    => 'required|string|max:255',
             ], [
                 'car_brand_id.required'                      => 'الماركة مطلوبة',
                 'car_model_id.required'                      => 'الموديل مطلوب',
                 'car_model_id.exists'                        => 'الموديل المختار لا يتبع هذه الماركة',
                 'custom_fields_values.fuel.required'         => 'نوع الوقود مطلوب',
                 'custom_fields_values.transmission.required' => 'ناقل الحركة مطلوب',
+                'custom_fields_values.year.required'         => 'سنة الصنع مطلوبة',
+                'custom_fields_values.condition.required'    => 'حالة السيارة مطلوبة',
             ]);
 
             $brand = CarBrand::find($validated['car_brand_id'] ?? $request->input('car_brand_id'));
@@ -141,6 +145,20 @@ class HomeController extends Controller
                     'custom_fields_values.car_brand_other.required' => 'اكتب اسم الماركة',
                 ]);
             }
+        }
+
+        // ── Real-estate-specific validation (real-estate category only) ──
+        // Mirrors the admin RealEstateFields schema: property_type & listing_type
+        // are required; the remaining property fields are optional. All values
+        // are stored in custom_fields_values to stay consistent with the admin.
+        if ($category->slug === 'real-estate') {
+            $request->validate([
+                'custom_fields_values.property_type' => 'required|string',
+                'custom_fields_values.listing_type'  => 'required|string',
+            ], [
+                'custom_fields_values.property_type.required' => 'نوع العقار مطلوب',
+                'custom_fields_values.listing_type.required'  => 'نوع العرض مطلوب',
+            ]);
         }
 
         if (!empty($category->custom_fields_schema)) {

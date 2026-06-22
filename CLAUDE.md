@@ -167,6 +167,12 @@ These values are authoritative. Any view displaying points must match them — n
 - Brand & Model persist to the `listings.car_brand_id` / `car_model_id` FK columns; Fuel/Transmission (and the manual `car_brand_other`) persist in `custom_fields_values`. `HomeController::store()` enforces these only when `category->slug === 'cars'` (model must belong to brand).
 - Brand/model data lives in `car_brands` / `car_models` (25 brands, ~209 models) via `CarBrandSeeder`, now registered in `DatabaseSeeder`.
 - Fixed: `/category/{slug}` 500 (LazyLoadingViolationException) by eager-loading `['category','location','user']` in `CategoryController::show()`.
+- Public wizard now mirrors the admin (`CarFields`/`RealEstateFields`) dropdowns with identical option values:
+  - **Cars** (slug `cars`): added Year (select, current→1970), Condition (select, Arabic values), Mileage (number), Color (text) on top of Brand/Model/Fuel/Transmission. Year + Condition are required (client + `HomeController::store` server-side).
+  - **Real estate** (slug `real-estate`): full set added — Property type, Listing type, Rooms, Bathrooms, Floor, Finishing, Area, Compound — all in `custom_fields_values`. Property type + Listing type are required.
+  - Categories detected by `slug` (`cars`/`real-estate`, both have 0 subcategories); option codes match admin exactly so admin- and user-created listings stay consistent.
+  - `show.blade.php` now humanizes these coded `custom_fields_values` keys into Arabic labels/values (e.g. `property_type: apartment` → `نوع العقار: شقة`), since these categories have no `custom_fields_schema`.
+  - Fixed admin `DynamicFields::STATIC_CATEGORY_IDS` (was `[1,12,20]`; cars is id 2 and 20 doesn't exist → corrected to `[1,2]`).
 
 ### Listing Cards & Detail Page
 

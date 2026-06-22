@@ -345,6 +345,152 @@
                                 </select>
                                 <p x-show="errors.transmission" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.transmission"></p>
                             </div>
+
+                            {{-- Year (سنة الصنع) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">سنة الصنع <span class="text-red-500">*</span></label>
+                                <select x-model="formData.custom_fields.year"
+                                        class="wizard-input" :class="errors.year ? 'has-error' : ''">
+                                    <option value="">اختر سنة الصنع</option>
+                                    <template x-for="y in yearOptions" :key="y">
+                                        <option :value="y" x-text="y"></option>
+                                    </template>
+                                </select>
+                                <p x-show="errors.year" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.year"></p>
+                            </div>
+
+                            {{-- Condition (حالة السيارة) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">حالة السيارة <span class="text-red-500">*</span></label>
+                                <select x-model="formData.custom_fields.condition"
+                                        class="wizard-input" :class="errors.condition ? 'has-error' : ''">
+                                    <option value="">اختر حالة السيارة</option>
+                                    <template x-for="opt in carConditionOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                                <p x-show="errors.condition" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.condition"></p>
+                            </div>
+
+                            {{-- Mileage (عداد الكيلومترات) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">عداد الكيلومترات</label>
+                                <div class="relative">
+                                    <input type="number" x-model="formData.custom_fields.mileage" min="0" step="1"
+                                           class="wizard-input pe-12" placeholder="مثال: 85000">
+                                    <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">كم</span>
+                                </div>
+                            </div>
+
+                            {{-- Color (لون السيارة) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">لون السيارة</label>
+                                <input type="text" x-model="formData.custom_fields.color" maxlength="50"
+                                       class="wizard-input" placeholder="مثال: أبيض، أسود...">
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ────────────────────────────────────────
+                         🏠 مواصفات العقار (قسم العقارات فقط)
+                         يطابق RealEstateFields في لوحة الأدمن
+                    ──────────────────────────────────────── --}}
+                    <div x-show="isRealEstateCategory" x-cloak class="pt-2 border-t border-gray-100">
+                        <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
+                            <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
+                            مواصفات العقار
+                        </h3>
+                        <div class="space-y-4">
+                            {{-- Property type (نوع العقار) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">نوع العقار <span class="text-red-500">*</span></label>
+                                <select x-model="formData.custom_fields.property_type"
+                                        class="wizard-input" :class="errors.property_type ? 'has-error' : ''">
+                                    <option value="">اختر نوع العقار</option>
+                                    <template x-for="opt in propertyTypeOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                                <p x-show="errors.property_type" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.property_type"></p>
+                            </div>
+
+                            {{-- Listing type (نوع العرض) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">نوع العرض <span class="text-red-500">*</span></label>
+                                <select x-model="formData.custom_fields.listing_type"
+                                        class="wizard-input" :class="errors.listing_type ? 'has-error' : ''">
+                                    <option value="">اختر نوع العرض</option>
+                                    <template x-for="opt in listingTypeOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                                <p x-show="errors.listing_type" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.listing_type"></p>
+                            </div>
+
+                            {{-- Rooms (عدد الغرف) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">عدد الغرف</label>
+                                <select x-model="formData.custom_fields.rooms" class="wizard-input">
+                                    <option value="">اختر عدد الغرف</option>
+                                    <template x-for="opt in roomsOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            {{-- Bathrooms (عدد الحمامات) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">عدد الحمامات</label>
+                                <select x-model="formData.custom_fields.bathrooms" class="wizard-input">
+                                    <option value="">اختر عدد الحمامات</option>
+                                    <template x-for="opt in bathroomsOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            {{-- Floor (الدور) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">الدور</label>
+                                <select x-model="formData.custom_fields.floor" class="wizard-input">
+                                    <option value="">اختر الدور</option>
+                                    <template x-for="opt in floorOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            {{-- Finishing (نوع التشطيب) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">نوع التشطيب</label>
+                                <select x-model="formData.custom_fields.finishing" class="wizard-input">
+                                    <option value="">اختر نوع التشطيب</option>
+                                    <template x-for="opt in finishingOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            {{-- Area (المساحة) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">المساحة</label>
+                                <div class="relative">
+                                    <input type="number" x-model="formData.custom_fields.area" min="0" step="1"
+                                           class="wizard-input pe-12" placeholder="مثال: 120">
+                                    <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">م²</span>
+                                </div>
+                            </div>
+
+                            {{-- Compound (هل في كمباوند؟) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">هل في كمباوند؟</label>
+                                <select x-model="formData.custom_fields.compound" class="wizard-input">
+                                    <option value="">اختر...</option>
+                                    <template x-for="opt in compoundOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -720,6 +866,68 @@
                 { value: 'automatic', label: 'أوتوماتيك' },
                 { value: 'manual',    label: 'مانيوال' },
             ],
+            // 🚗 حالة السيارة — قائمة منسدلة (يخزّن نص عربي في custom_fields.condition)
+            carConditionOptions: [
+                { value: 'فابريكا (لم تُدهن)', label: 'فابريكا (لم تُدهن)' },
+                { value: 'حالة ممتازة',        label: 'حالة ممتازة' },
+                { value: 'حالة جيدة',          label: 'حالة جيدة' },
+                { value: 'حالة مقبولة',        label: 'حالة مقبولة' },
+                { value: 'تحتاج صيانة',        label: 'تحتاج صيانة' },
+            ],
+
+            // 🏠 خيارات العقار — يجب أن تطابق لوحة الأدمن (RealEstateFields)
+            propertyTypeOptions: [
+                { value: 'apartment', label: 'شقة' },
+                { value: 'villa',     label: 'فيلا' },
+                { value: 'duplex',    label: 'دوبليكس' },
+                { value: 'studio',    label: 'استوديو' },
+                { value: 'chalet',    label: 'شاليه' },
+                { value: 'office',    label: 'مكتب' },
+                { value: 'shop',      label: 'محل تجاري' },
+                { value: 'warehouse', label: 'مخزن' },
+                { value: 'land',      label: 'أرض' },
+                { value: 'building',  label: 'عمارة' },
+            ],
+            listingTypeOptions: [
+                { value: 'sale', label: 'للبيع' },
+                { value: 'rent', label: 'للإيجار' },
+            ],
+            roomsOptions: [
+                { value: '1',  label: 'غرفة واحدة' },
+                { value: '2',  label: 'غرفتان' },
+                { value: '3',  label: '3 غرف' },
+                { value: '4',  label: '4 غرف' },
+                { value: '5',  label: '5 غرف' },
+                { value: '6+', label: '6 غرف أو أكثر' },
+            ],
+            bathroomsOptions: [
+                { value: '1',  label: 'حمام واحد' },
+                { value: '2',  label: 'حمامان' },
+                { value: '3',  label: '3 حمامات' },
+                { value: '4+', label: '4 أو أكثر' },
+            ],
+            floorOptions: [
+                { value: 'ground',  label: 'أرضي' },
+                { value: '1',       label: 'الأول' },
+                { value: '2',       label: 'الثاني' },
+                { value: '3',       label: 'الثالث' },
+                { value: '4',       label: 'الرابع' },
+                { value: '5',       label: 'الخامس' },
+                { value: '6+',      label: 'السادس فأكثر' },
+                { value: 'rooftop', label: 'روف' },
+            ],
+            finishingOptions: [
+                { value: 'super_lux',  label: 'سوبر لوكس' },
+                { value: 'lux',        label: 'لوكس' },
+                { value: 'semi_lux',   label: 'نص لوكس' },
+                { value: 'core_shell', label: 'كور وشل' },
+                { value: 'unfinished', label: 'تشطيب عادي' },
+                { value: 'furnished',  label: 'مفروش' },
+            ],
+            compoundOptions: [
+                { value: 'yes', label: 'نعم' },
+                { value: 'no',  label: 'لا' },
+            ],
 
             errors: {},
             images: [],
@@ -784,6 +992,19 @@
             get isCarCategory() {
                 const cat = this.activeCategory;
                 return !!(cat && cat.slug === 'cars');
+            },
+            // 🏠 قسم العقارات — يعتمد على slug القسم النشط
+            get isRealEstateCategory() {
+                const cat = this.activeCategory;
+                return !!(cat && cat.slug === 'real-estate');
+            },
+            // سنوات الصنع — من السنة الحالية وحتى 1970 (يطابق لوحة الأدمن)
+            get yearOptions() {
+                const years = [];
+                for (let y = new Date().getFullYear(); y >= 1970; y--) {
+                    years.push(String(y));
+                }
+                return years;
             },
             // Models of the currently selected brand (dependent dropdown).
             get carModels() {
@@ -936,6 +1157,26 @@
                         }
                         if (!this.formData.custom_fields.transmission) {
                             this.errors.transmission = 'ناقل الحركة مطلوب';
+                            ok = false;
+                        }
+                        if (!this.formData.custom_fields.year) {
+                            this.errors.year = 'سنة الصنع مطلوبة';
+                            ok = false;
+                        }
+                        if (!this.formData.custom_fields.condition) {
+                            this.errors.condition = 'حالة السيارة مطلوبة';
+                            ok = false;
+                        }
+                    }
+
+                    // 🏠 حقول العقار المطلوبة (قسم العقارات فقط)
+                    if (this.isRealEstateCategory) {
+                        if (!this.formData.custom_fields.property_type) {
+                            this.errors.property_type = 'نوع العقار مطلوب';
+                            ok = false;
+                        }
+                        if (!this.formData.custom_fields.listing_type) {
+                            this.errors.listing_type = 'نوع العرض مطلوب';
                             ok = false;
                         }
                     }
@@ -1125,8 +1366,8 @@
                         targetStep = 1;
                     } else if (key.startsWith('custom_fields_values.')) {
                         const cfName = key.substring('custom_fields_values.'.length);
-                        // car-specific JSON keys bind to bare error keys in the wizard
-                        if (['fuel', 'transmission', 'car_brand_other'].includes(cfName)) {
+                        // car/real-estate-specific JSON keys bind to bare error keys in the wizard
+                        if (['fuel', 'transmission', 'car_brand_other', 'year', 'condition', 'property_type', 'listing_type'].includes(cfName)) {
                             this.errors[cfName] = msg;
                         } else {
                             this.errors['cf_' + cfName] = msg;

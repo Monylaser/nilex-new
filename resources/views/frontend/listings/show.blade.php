@@ -28,15 +28,58 @@
 @php
     $media     = $listing->getMedia('images');
     $fullUrls  = $media->map(fn($m) => $m->getUrl('full_hd'))->values()->toJson();
+    // Human-readable labels for the hardcoded car/real-estate custom fields
+    // (their categories have no custom_fields_schema, so we map them here so that
+    // both admin- and user-created listings render readable Arabic instead of raw keys).
+    $cfLabels = [
+        'year'           => 'سنة الصنع',
+        'transmission'   => 'ناقل الحركة',
+        'fuel'           => 'نوع الوقود',
+        'condition'      => 'حالة السيارة',
+        'mileage'        => 'عداد الكيلومترات',
+        'color'          => 'اللون',
+        'car_brand_other'=> 'الماركة',
+        'property_type'  => 'نوع العقار',
+        'listing_type'   => 'نوع العرض',
+        'rooms'          => 'عدد الغرف',
+        'bathrooms'      => 'عدد الحمامات',
+        'floor'          => 'الدور',
+        'finishing'      => 'نوع التشطيب',
+        'area'           => 'المساحة',
+        'compound'       => 'كمباوند',
+    ];
+    // Coded select values → Arabic labels (must match the wizard / admin option lists).
+    $cfValueMaps = [
+        'transmission'  => ['automatic' => 'أوتوماتيك', 'manual' => 'مانيوال'],
+        'fuel'          => ['petrol' => 'بنزين', 'diesel' => 'ديزل', 'electric' => 'كهربائي', 'hybrid' => 'هجين', 'gas' => 'غاز (CNG/LPG)'],
+        'property_type' => ['apartment' => 'شقة', 'villa' => 'فيلا', 'duplex' => 'دوبليكس', 'studio' => 'استوديو', 'chalet' => 'شاليه', 'office' => 'مكتب', 'shop' => 'محل تجاري', 'warehouse' => 'مخزن', 'land' => 'أرض', 'building' => 'عمارة'],
+        'listing_type'  => ['sale' => 'للبيع', 'rent' => 'للإيجار'],
+        'rooms'         => ['1' => 'غرفة واحدة', '2' => 'غرفتان', '3' => '3 غرف', '4' => '4 غرف', '5' => '5 غرف', '6+' => '6 غرف أو أكثر'],
+        'bathrooms'     => ['1' => 'حمام واحد', '2' => 'حمامان', '3' => '3 حمامات', '4+' => '4 أو أكثر'],
+        'floor'         => ['ground' => 'أرضي', '1' => 'الأول', '2' => 'الثاني', '3' => 'الثالث', '4' => 'الرابع', '5' => 'الخامس', '6+' => 'السادس فأكثر', 'rooftop' => 'روف'],
+        'finishing'     => ['super_lux' => 'سوبر لوكس', 'lux' => 'لوكس', 'semi_lux' => 'نص لوكس', 'core_shell' => 'كور وشل', 'unfinished' => 'تشطيب عادي', 'furnished' => 'مفروش'],
+        'compound'      => ['yes' => 'نعم', 'no' => 'لا'],
+    ];
+    // Numeric fields that read better with a unit suffix.
+    $cfSuffix = ['mileage' => ' كم', 'area' => ' م²'];
+
     $displayFields = [];
-    if ($listing->carBrand)  $displayFields[] = ['label' => 'الماركة',  'value' => $listing->carBrand->name_ar];
-    if ($listing->carModel)  $displayFields[] = ['label' => 'الموديل', 'value' => $listing->carModel->name_ar];
+    // Hide the generic "أخرى" brand row when a manual brand name was supplied.
+    $brandIsOther = $listing->carBrand && $listing->carBrand->slug === 'other'
+        && !empty($listing->custom_fields_values['car_brand_other'] ?? null);
+    if ($listing->carBrand && ! $brandIsOther) $displayFields[] = ['label' => 'الماركة',  'value' => $listing->carBrand->name_ar];
+    if ($listing->carModel)                    $displayFields[] = ['label' => 'الموديل', 'value' => $listing->carModel->name_ar];
     if (!empty($listing->custom_fields_values)) {
         $schema   = $listing->category?->custom_fields_schema ?? [];
         $labelMap = collect($schema)->keyBy('name')->map(fn($f) => $f['label_ar'] ?? $f['name']);
         foreach ($listing->custom_fields_values as $key => $val) {
             if ($val !== null && $val !== '') {
-                $displayFields[] = ['label' => $labelMap[$key] ?? $key, 'value' => $val];
+                $label = $labelMap[$key] ?? ($cfLabels[$key] ?? $key);
+                $value = $cfValueMaps[$key][$val] ?? $val;
+                if (isset($cfSuffix[$key])) {
+                    $value .= $cfSuffix[$key];
+                }
+                $displayFields[] = ['label' => $label, 'value' => $value];
             }
         }
     }

@@ -11,11 +11,10 @@ use Filament\Schemas\Components\Section as FormSection;
 
 class DynamicFields
 {
-    // IDs الأقسام التي لها حقول ثابتة
+    // IDs الأقسام التي لها حقول ثابتة (RealEstateFields / CarFields)
     private const STATIC_CATEGORY_IDS = [
-        1,  // عقارات
-        12, // سيارات
-        20, // إلكترونيات وأجهزة (موبايلات)
+        1, // عقارات (real-estate) — RealEstateFields
+        2, // سيارات (cars) — CarFields
     ];
 
     public static function make(): FormSection

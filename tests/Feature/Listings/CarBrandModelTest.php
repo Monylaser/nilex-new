@@ -64,6 +64,8 @@ it('creates a car listing storing brand & model in FK columns', function () {
             'custom_fields_values' => [
                 'fuel'         => 'petrol',
                 'transmission' => 'automatic',
+                'year'         => '2023',
+                'condition'    => 'حالة ممتازة',
             ],
         ])
         ->assertRedirect(route('dashboard'));
@@ -93,6 +95,8 @@ it('fails when required car fields are missing', function () {
             'car_model_id',
             'custom_fields_values.fuel',
             'custom_fields_values.transmission',
+            'custom_fields_values.year',
+            'custom_fields_values.condition',
         ]);
 
     $this->assertDatabaseEmpty('listings');
@@ -135,6 +139,8 @@ it('requires a manual brand name when the Other brand is selected', function () 
             'custom_fields_values' => [
                 'fuel'         => 'diesel',
                 'transmission' => 'manual',
+                'year'         => '2022',
+                'condition'    => 'حالة جيدة',
                 // car_brand_other intentionally missing
             ],
         ])
@@ -158,6 +164,8 @@ it('stores the manual brand name when the Other brand is selected', function () 
             'custom_fields_values' => [
                 'fuel'            => 'petrol',
                 'transmission'    => 'automatic',
+                'year'            => '2024',
+                'condition'       => 'فابريكا (لم تُدهن)',
                 'car_brand_other' => 'MG',
             ],
         ])
