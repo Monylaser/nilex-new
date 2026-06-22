@@ -26,7 +26,7 @@
 @section('content')
 
 @php
-    $media     = $listing->getMedia('listings');
+    $media     = $listing->getMedia('images');
     $fullUrls  = $media->map(fn($m) => $m->getUrl('full_hd'))->values()->toJson();
     $displayFields = [];
     if ($listing->carBrand)  $displayFields[] = ['label' => 'الماركة',  'value' => $listing->carBrand->name_ar];

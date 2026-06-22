@@ -1,10 +1,11 @@
 {{-- Reusable listing card partial
      Props: $listing (required), $isFeatured (optional, default false)
 --}}
-<div class="bg-white rounded-2xl border border-zinc-100 overflow-hidden transition-all duration-200 group"
-     style="box-shadow:0 1px 3px rgba(0,0,0,0.05);"
-     onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)'"
-     onmouseleave="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'">
+<a href="{{ route('listings.show', $listing->id) }}"
+   class="block bg-white rounded-2xl border border-zinc-100 overflow-hidden transition-all duration-200 group"
+   style="box-shadow:0 1px 3px rgba(0,0,0,0.05);"
+   onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)'"
+   onmouseleave="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'">
 
     {{-- Image area --}}
     <div class="relative bg-zinc-50 overflow-hidden" style="height:180px;">
@@ -45,9 +46,7 @@
 
         {{-- Title --}}
         <h3 class="font-bold text-zinc-900 text-sm mb-2 line-clamp-1 group-hover:text-nilex transition-colors duration-200">
-            <a href="{{ route('listings.show', $listing->id) }}">
-                {{ $listing->title }}
-            </a>
+            {{ $listing->title }}
         </h3>
 
         @if($listing->relationLoaded('user') ? $listing->user : $listing->user()->first())
@@ -69,4 +68,4 @@
             </span>
         </div>
     </div>
-</div>
+</a>
