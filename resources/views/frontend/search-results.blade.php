@@ -167,8 +167,8 @@
 
                         {{-- Image --}}
                         <div class="relative bg-zinc-100 rounded-xl overflow-hidden" style="aspect-ratio:4/3;">
-                            @if($listing->getFirstMediaUrl('images'))
-                                <img src="{{ $listing->getFirstMediaUrl('images') }}"
+                            @if($listing->getFirstMediaUrl('images', 'card'))
+                                <img src="{{ $listing->getFirstMediaUrl('images', 'card') }}"
                                      alt="{{ $listing->title }}"
                                      class="card-image"
                                      loading="lazy">

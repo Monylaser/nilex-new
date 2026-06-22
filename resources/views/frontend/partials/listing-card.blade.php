@@ -10,7 +10,7 @@
     {{-- Image area --}}
     <div class="relative bg-zinc-50 overflow-hidden" style="height:180px;">
         @if($listing->hasMedia('images'))
-            <img src="{{ $listing->getFirstMediaUrl('images') }}"
+            <img src="{{ $listing->getFirstMediaUrl('images', 'card') }}"
                  alt="{{ $listing->title }}"
                  class="w-full h-full object-cover"
                  loading="lazy">

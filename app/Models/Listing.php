@@ -107,13 +107,47 @@ class Listing extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        // 1. الصورة المصغرة (للسرعة - بدون علامة مائية)
+        // 1. الصورة المصغرة (لوحة التحكم + شريط المعرض) — مع علامة مائية خفيفة
+        // كل نسخة تُعرض للجمهور تحمل العلامة المائية: لا توجد صورة نظيفة معروضة.
         $this->addMediaConversion('thumb')
             ->fit(Fit::Contain, 300, 300)
+            ->watermark(
+                public_path('images/watermark.png'),
+                AlignPosition::BottomRight,
+                8,           // paddingX
+                8,           // paddingY
+                Unit::Pixel,
+                80,          // width
+                Unit::Pixel,
+                0,           // height (auto)
+                Unit::Pixel,
+                Fit::Contain,
+                40,          // alpha / opacity (0–100)
+            )
             ->format('webp')
             ->nonQueued();
 
-        // 2. الصورة الكاملة (مع إضافة العلامة المائية)
+        // 2. صورة الكروت (الرئيسية / الكروت / نتائج البحث) — مع علامة مائية
+        $this->addMediaConversion('card')
+            ->fit(Fit::Crop, 600, 450)
+            ->watermark(
+                public_path('images/watermark.png'),
+                AlignPosition::BottomRight,
+                14,          // paddingX
+                14,          // paddingY
+                Unit::Pixel,
+                120,         // width
+                Unit::Pixel,
+                0,           // height (auto)
+                Unit::Pixel,
+                Fit::Contain,
+                40,          // alpha / opacity (0–100)
+            )
+            ->format('webp')
+            ->quality(80)
+            ->nonQueued();
+
+        // 3. الصورة الكاملة (صفحة التفاصيل) — مع علامة مائية
         $this->addMediaConversion('full_hd')
             ->fit(Fit::Max, 1920, 1080)
             ->watermark(
