@@ -48,6 +48,18 @@
      x-data="{
          activeIdx: 0,
          images: {{ $fullUrls }},
+         lightboxOpen: false,
+         touchStartX: 0,
+         openLightbox(i = null) { if (i !== null) this.activeIdx = i; this.lightboxOpen = true; },
+         closeLightbox() { this.lightboxOpen = false; },
+         nextImg() { this.activeIdx = (this.activeIdx + 1) % this.images.length; },
+         prevImg() { this.activeIdx = (this.activeIdx - 1 + this.images.length) % this.images.length; },
+         lightboxTouchStart(e) { this.touchStartX = e.changedTouches[0].clientX; },
+         lightboxTouchEnd(e) {
+             if (this.images.length < 2) return;
+             const dx = e.changedTouches[0].clientX - this.touchStartX;
+             if (Math.abs(dx) > 40) { dx < 0 ? this.nextImg() : this.prevImg(); }
+         },
          revealed: false,
          phone: '',
          whatsappUrl: '',
@@ -124,7 +136,8 @@
                         @if($media->isNotEmpty())
                             <img :src="images[activeIdx] || '{{ $media->first()->getUrl('full_hd') }}'"
                                  alt="{{ $listing->title }}"
-                                 class="w-full h-full object-cover"
+                                 @click="openLightbox()"
+                                 class="w-full h-full object-cover cursor-zoom-in"
                                  loading="eager">
 
                             {{-- Counter badge --}}
@@ -163,7 +176,7 @@
                     @if($media->count() > 1)
                         <div class="flex gap-2 p-3 overflow-x-auto custom-scrollbar bg-zinc-50 border-t border-zinc-100">
                             @foreach($media as $i => $img)
-                                <button @click="activeIdx = {{ $i }}"
+                                <button @click="openLightbox({{ $i }})"
                                         :class="activeIdx === {{ $i }}
                                             ? 'border-[#1D9E75] ring-2 ring-[#1D9E75]/20 opacity-100'
                                             : 'border-transparent opacity-50 hover:opacity-80'"
@@ -380,6 +393,52 @@
             </div>
         </div>
     </div>
+
+    {{-- ── IMAGE LIGHTBOX ──────────────────────────────────────────────────── --}}
+    @if($media->isNotEmpty())
+        <div x-show="lightboxOpen" style="display:none;"
+             class="fixed inset-0 z-[120] flex items-center justify-center bg-black/90"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             @keydown.escape.window="closeLightbox()"
+             @keydown.arrow-left.window="lightboxOpen && prevImg()"
+             @keydown.arrow-right.window="lightboxOpen && nextImg()">
+
+            {{-- Backdrop (click to close) --}}
+            <div class="absolute inset-0" @click="closeLightbox()"></div>
+
+            {{-- Close button --}}
+            <button @click="closeLightbox()"
+                    class="absolute top-4 end-4 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-sm transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            {{-- Counter --}}
+            @if($media->count() > 1)
+                <div class="absolute top-6 left-1/2 -translate-x-1/2 z-10 text-white/80 text-sm font-bold">
+                    <span x-text="activeIdx + 1"></span> / {{ $media->count() }}
+                </div>
+            @endif
+
+            {{-- Image --}}
+            <img :src="images[activeIdx]" alt="{{ $listing->title }}"
+                 class="relative max-w-[92vw] max-h-[86vh] object-contain select-none"
+                 @click.stop
+                 @touchstart="lightboxTouchStart($event)" @touchend="lightboxTouchEnd($event)">
+
+            {{-- Nav arrows --}}
+            @if($media->count() > 1)
+                <button @click.stop="prevImg()"
+                        class="absolute top-1/2 left-4 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-sm transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button @click.stop="nextImg()"
+                        class="absolute top-1/2 right-4 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-sm transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            @endif
+        </div>
+    @endif
 
     {{-- ── OFFER MODAL ─────────────────────────────────────────────────────── --}}
     @if(Route::has('listings.offer') && auth()->id() !== $listing->user_id)

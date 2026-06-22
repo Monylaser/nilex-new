@@ -173,6 +173,7 @@ These values are authoritative. Any view displaying points must match them — n
 - Listing media is stored under the Spatie collection **`images`** (in `HomeController::store()`). Always read it back with `getMedia('images')` / `getFirstMediaUrl('images')`.
 - Fixed: listing detail page showed "لا توجد صور" because `show.blade.php` read `getMedia('listings')` (wrong collection) — corrected to `getMedia('images')`.
 - The reusable `partials/listing-card.blade.php` is fully clickable: the whole card is wrapped in a single `<a>` to `listings.show` (no nested title anchor).
+- The detail page has a native Alpine.js image lightbox (no new JS dependency). Clicking the main image or any thumbnail opens a fullscreen `full_hd` overlay that reuses the existing `activeIdx`/`images` state. Supports prev/next arrows + counter (when >1 image), touch swipe, click-backdrop/X to close, and keyboard Escape/←/→.
 
 ### Image Watermarking
 
