@@ -220,10 +220,10 @@ class ListingTable
                             Select::make('days')
                                 ->label('مدة التمييز')
                                 ->options([
+                                    1  => '1 يوم   — ' . Listing::featureCost(1)  . ' نقطة',
                                     3  => '3 أيام  — ' . Listing::featureCost(3)  . ' نقطة',
                                     7  => '7 أيام  — ' . Listing::featureCost(7)  . ' نقطة',
                                     14 => '14 يوم  — ' . Listing::featureCost(14) . ' نقطة',
-                                    30 => '30 يوم  — ' . Listing::featureCost(30) . ' نقطة',
                                 ])
                                 ->required()
                                 ->helperText(fn ($record) =>
@@ -232,7 +232,7 @@ class ListingTable
                         ])
                         ->action(function (array $data, $record): void {
                             $days = (int) $data['days'];
-                            $cost = Listing::featureCost($days);
+                            $cost = Listing::featureCostStrict($days);
 
                             try {
                                 $record->featureWithPoints($days);

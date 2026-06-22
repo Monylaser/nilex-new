@@ -253,9 +253,17 @@ class Listing extends Model implements HasMedia
     // ── Feature Helpers ───────────────────────────────────────────────────────
 
     /**
-     * حساب تكلفة التمييز
+     * تكلفة التمييز — ترجع null للمدد غير المدعومة (آمنة للـ UI)
      */
-    public static function featureCost(int $days): int
+    public static function featureCost(int $days): ?int
+    {
+        return self::FEATURE_COSTS[$days] ?? null;
+    }
+
+    /**
+     * تكلفة التمييز — ترمي Exception للمدد غير المدعومة (للكود البرمجي)
+     */
+    public static function featureCostStrict(int $days): int
     {
         if (! array_key_exists($days, self::FEATURE_COSTS)) {
             throw new \InvalidArgumentException("مدة التمييز غير مدعومة: {$days} أيام. القيم المتاحة: " . implode(', ', array_keys(self::FEATURE_COSTS)));
@@ -267,11 +275,11 @@ class Listing extends Model implements HasMedia
     /**
      * تمييز الإعلان بخصم نقاط من المعلن
      *
-     * @throws \Exception لو النقاط مش كافية
+     * @throws \Exception لو النقاط مش كافية أو المدة غير مدعومة
      */
     public function featureWithPoints(int $days): void
     {
-        $cost = self::featureCost($days);
+        $cost = self::featureCostStrict($days);
         $this->loadMissing('user');
         $user = $this->user;
 
