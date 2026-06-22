@@ -149,16 +149,24 @@ These values are authoritative. Any view displaying points must match them — n
 | 7 days | 120 pts | ✅ |
 | 14 days | 220 pts | ✅ |
 
-- Use `Listing::featureCost(int $days)` to get cost — throws `InvalidArgumentException` for unsupported durations
-- Use `$listing->featureWithPoints(int $days)` to feature (deducts points + checks entitlement limits)
+- Use `Listing::featureCost(int $days)` to get cost — returns `null` for unsupported durations (safe for UI rendering)
+- Use `Listing::featureCostStrict(int $days)` to get cost — throws `InvalidArgumentException` for unsupported durations (use in programmatic flows)
+- Use `$listing->featureWithPoints(int $days)` to feature (deducts points + checks entitlement limits; uses `featureCostStrict` internally)
 - Featuring is best-effort after listing creation: failure is silent and does not block the listing
 
 ## Current Project Status (as of June 2026)
 
-- **Tests:** 257 passing, 0 failures
+- **Tests:** 263 passing, 0 failures
 - **SMS OTP:** Routed to `log` driver — no real SMS provider connected yet; OTPs appear in `storage/logs/laravel.log` during development
 - **Payments:** Paymob integration is in **test mode** only — no live transactions
 - **Deployment:** Not yet deployed to a production server; running locally only
+
+### Car Listings (cars category)
+
+- Public listing wizard renders dependent dropdowns for the `cars` category: Brand → Model (filtered by brand) → Fuel → Transmission (Alpine, mirrors the governorate→city pattern). Selecting the "أخرى/Other" brand reveals a free-text field for the brand name.
+- Brand & Model persist to the `listings.car_brand_id` / `car_model_id` FK columns; Fuel/Transmission (and the manual `car_brand_other`) persist in `custom_fields_values`. `HomeController::store()` enforces these only when `category->slug === 'cars'` (model must belong to brand).
+- Brand/model data lives in `car_brands` / `car_models` (25 brands, ~209 models) via `CarBrandSeeder`, now registered in `DatabaseSeeder`.
+- Fixed: `/category/{slug}` 500 (LazyLoadingViolationException) by eager-loading `['category','location','user']` in `CategoryController::show()`.
 
 ## Ad Campaign System
 

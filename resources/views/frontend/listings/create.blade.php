@@ -272,6 +272,82 @@
                         </div>
                     </div>
 
+                    {{-- ────────────────────────────────────────
+                         🚗 مواصفات السيارة (قسم السيارات فقط)
+                         Brand → Model → Fuel → Transmission
+                         dependent dropdowns بنفس نمط المحافظة → المدينة
+                    ──────────────────────────────────────── --}}
+                    <div x-show="isCarCategory" x-cloak class="pt-2 border-t border-gray-100">
+                        <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
+                            <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
+                            مواصفات السيارة
+                        </h3>
+                        <div class="space-y-4">
+                            {{-- Brand (الماركة) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">الماركة <span class="text-red-500">*</span></label>
+                                <select x-model="formData.car_brand_id" @change="onCarBrandChange()"
+                                        class="wizard-input" :class="errors.car_brand_id ? 'has-error' : ''">
+                                    <option value="">اختر الماركة</option>
+                                    <template x-for="brand in carBrands" :key="brand.id">
+                                        <option :value="brand.id" x-text="brand.name_ar"></option>
+                                    </template>
+                                </select>
+                                <p x-show="errors.car_brand_id" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.car_brand_id"></p>
+                            </div>
+
+                            {{-- Other brand free-text (يظهر عند اختيار "أخرى") --}}
+                            <div x-show="selectedBrandIsOther" x-cloak>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">اكتب اسم الماركة <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="formData.custom_fields.car_brand_other" maxlength="255"
+                                       class="wizard-input" :class="errors.car_brand_other ? 'has-error' : ''"
+                                       placeholder="مثال: MG، BYD، أوبل...">
+                                <p x-show="errors.car_brand_other" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.car_brand_other"></p>
+                            </div>
+
+                            {{-- Model (الموديل) — filtered by brand --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">الموديل <span class="text-red-500">*</span></label>
+                                <select x-model="formData.car_model_id"
+                                        :disabled="!formData.car_brand_id"
+                                        class="wizard-input disabled:bg-gray-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
+                                        :class="errors.car_model_id ? 'has-error' : ''">
+                                    <option value="" x-text="formData.car_brand_id ? 'اختر الموديل' : 'اختر الماركة أولاً'"></option>
+                                    <template x-for="model in carModels" :key="model.id">
+                                        <option :value="model.id" x-text="model.name_ar"></option>
+                                    </template>
+                                </select>
+                                <p x-show="errors.car_model_id" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.car_model_id"></p>
+                            </div>
+
+                            {{-- Fuel (نوع الوقود) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">نوع الوقود <span class="text-red-500">*</span></label>
+                                <select x-model="formData.custom_fields.fuel"
+                                        class="wizard-input" :class="errors.fuel ? 'has-error' : ''">
+                                    <option value="">اختر نوع الوقود</option>
+                                    <template x-for="opt in fuelOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                                <p x-show="errors.fuel" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.fuel"></p>
+                            </div>
+
+                            {{-- Transmission (ناقل الحركة) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">ناقل الحركة <span class="text-red-500">*</span></label>
+                                <select x-model="formData.custom_fields.transmission"
+                                        class="wizard-input" :class="errors.transmission ? 'has-error' : ''">
+                                    <option value="">اختر ناقل الحركة</option>
+                                    <template x-for="opt in transmissionOptions" :key="opt.value">
+                                        <option :value="opt.value" x-text="opt.label"></option>
+                                    </template>
+                                </select>
+                                <p x-show="errors.transmission" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.transmission"></p>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Dynamic custom fields --}}
                     <div x-show="customFieldsSchema.length > 0" x-cloak class="pt-2 border-t border-gray-100">
                         <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
@@ -596,6 +672,7 @@
 <script>
     const NILEX_CATEGORIES    = @json($categories);
     const NILEX_LOCATIONS     = @json($governorates);
+    const NILEX_CAR_BRANDS    = @json($carBrands);
     const NILEX_STORAGE_BASE  = "{{ asset('storage') }}";
     const NILEX_STORE_URL     = "{{ route('listings.store') }}";
     const NILEX_AI_URL        = "{{ route('listings.ai-generate') }}";
@@ -612,6 +689,7 @@
             totalSteps: 4,
             categories: NILEX_CATEGORIES,
             governorates: NILEX_LOCATIONS,
+            carBrands: NILEX_CAR_BRANDS,
             selectedRootId: null,
 
             formData: {
@@ -622,11 +700,26 @@
                 price: '',
                 price_type: 'fixed',
                 custom_fields: {},
+                car_brand_id: '',
+                car_model_id: '',
                 phone: '',
                 governorate_id: '',
                 location_id: '',
                 feature_days: 0,
             },
+
+            // 🚗 خيارات الوقود وناقل الحركة — يجب أن تطابق لوحة الأدمن (CarFields)
+            fuelOptions: [
+                { value: 'petrol',   label: 'بنزين' },
+                { value: 'diesel',   label: 'ديزل' },
+                { value: 'electric', label: 'كهربائي' },
+                { value: 'hybrid',   label: 'هجين' },
+                { value: 'gas',      label: 'غاز (CNG/LPG)' },
+            ],
+            transmissionOptions: [
+                { value: 'automatic', label: 'أوتوماتيك' },
+                { value: 'manual',    label: 'مانيوال' },
+            ],
 
             errors: {},
             images: [],
@@ -687,6 +780,21 @@
                 const cat = this.activeCategory;
                 return (cat && Array.isArray(cat.custom_fields_schema)) ? cat.custom_fields_schema : [];
             },
+            // 🚗 قسم السيارات — يعتمد على slug القسم النشط
+            get isCarCategory() {
+                const cat = this.activeCategory;
+                return !!(cat && cat.slug === 'cars');
+            },
+            // Models of the currently selected brand (dependent dropdown).
+            get carModels() {
+                const brand = this.carBrands.find(b => b.id == this.formData.car_brand_id);
+                return (brand && Array.isArray(brand.models)) ? brand.models : [];
+            },
+            // Whether the selected brand is the "أخرى/Other" entry (slug === 'other').
+            get selectedBrandIsOther() {
+                const brand = this.carBrands.find(b => b.id == this.formData.car_brand_id);
+                return !!(brand && brand.slug === 'other');
+            },
             // Child cities of the currently selected governorate (dependent dropdown).
             get cities() {
                 const gov = this.governorates.find(g => g.id == this.formData.governorate_id);
@@ -708,12 +816,29 @@
                 this.selectedRootId = cat.id;
                 this.formData.category_id = cat.id;
                 this.formData.custom_fields = {};
+                this.resetCarFields();
                 delete this.errors.category_id;
             },
             selectSub(sub) {
                 this.formData.category_id = sub.id;
                 this.formData.custom_fields = {};
+                this.resetCarFields();
                 delete this.errors.category_id;
+            },
+            // ── Car selection ──────────────────────────────────────────
+            // Reset the chosen model (and manual brand text) whenever the brand
+            // changes so the stored model always belongs to the selected brand.
+            onCarBrandChange() {
+                this.formData.car_model_id = '';
+                if (this.formData.custom_fields) {
+                    delete this.formData.custom_fields.car_brand_other;
+                }
+                delete this.errors.car_model_id;
+                delete this.errors.car_brand_other;
+            },
+            resetCarFields() {
+                this.formData.car_brand_id = '';
+                this.formData.car_model_id = '';
             },
             categoryIconUrl(cat) {
                 return cat.icon ? (NILEX_STORAGE_BASE + '/' + cat.icon) : null;
@@ -788,6 +913,30 @@
                                 this.errors['cf_' + field.name] = (field.label_ar || field.name) + ' مطلوب';
                                 ok = false;
                             }
+                        }
+                    }
+
+                    // 🚗 حقول السيارة المطلوبة (قسم السيارات فقط)
+                    if (this.isCarCategory) {
+                        if (!this.formData.car_brand_id) {
+                            this.errors.car_brand_id = 'الماركة مطلوبة';
+                            ok = false;
+                        }
+                        if (this.selectedBrandIsOther && !(this.formData.custom_fields.car_brand_other || '').trim()) {
+                            this.errors.car_brand_other = 'اكتب اسم الماركة';
+                            ok = false;
+                        }
+                        if (!this.formData.car_model_id) {
+                            this.errors.car_model_id = 'الموديل مطلوب';
+                            ok = false;
+                        }
+                        if (!this.formData.custom_fields.fuel) {
+                            this.errors.fuel = 'نوع الوقود مطلوب';
+                            ok = false;
+                        }
+                        if (!this.formData.custom_fields.transmission) {
+                            this.errors.transmission = 'ناقل الحركة مطلوب';
+                            ok = false;
                         }
                     }
                 }
@@ -920,6 +1069,12 @@
                 fd.append('location_id', this.formData.location_id);
                 fd.append('feature_days', this.formData.feature_days);
 
+                // 🚗 حقول السيارة (FK columns) — تُرسل فقط لقسم السيارات
+                if (this.isCarCategory) {
+                    fd.append('car_brand_id', this.formData.car_brand_id);
+                    fd.append('car_model_id', this.formData.car_model_id);
+                }
+
                 for (const [key, value] of Object.entries(this.formData.custom_fields)) {
                     fd.append('custom_fields_values[' + key + ']', value === true ? '1' : (value === false ? '0' : value));
                 }
@@ -962,14 +1117,20 @@
                 let targetStep = this.currentStep;
                 for (const key in errs) {
                     const msg = Array.isArray(errs[key]) ? errs[key][0] : errs[key];
-                    if (['title', 'description', 'price'].includes(key)) {
+                    if (['title', 'description', 'price', 'car_brand_id', 'car_model_id'].includes(key)) {
                         this.errors[key] = msg;
                         targetStep = 2;
                     } else if (key === 'category_id') {
                         this.errors.category_id = msg;
                         targetStep = 1;
                     } else if (key.startsWith('custom_fields_values.')) {
-                        this.errors['cf_' + key.substring('custom_fields_values.'.length)] = msg;
+                        const cfName = key.substring('custom_fields_values.'.length);
+                        // car-specific JSON keys bind to bare error keys in the wizard
+                        if (['fuel', 'transmission', 'car_brand_other'].includes(cfName)) {
+                            this.errors[cfName] = msg;
+                        } else {
+                            this.errors['cf_' + cfName] = msg;
+                        }
                         targetStep = 2;
                     } else if (key === 'phone' || key === 'location_id') {
                         this.errors[key] = msg;

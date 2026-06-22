@@ -13,8 +13,13 @@ class CategoryController extends Controller
         // الضربة القاضية: زيادة العداد تلقائياً عند الدخول
         $category->increment('views_count');
 
-        // جلب الإعلانات التابعة للقسم (مع الأقسام الفرعية لو حبيت)
-        $listings = $category->listings()->where('status', 'published')->latest()->paginate(12);
+        // جلب الإعلانات التابعة للقسم مع الـ eager loading لتفادي LazyLoadingViolationException
+        // (نفس نمط HomeController::index — البطاقة تستخدم category و user)
+        $listings = $category->listings()
+            ->with(['category', 'location', 'user'])
+            ->where('status', 'published')
+            ->latest()
+            ->paginate(12);
 
         return view('frontend.category', compact('category', 'listings'));
     }

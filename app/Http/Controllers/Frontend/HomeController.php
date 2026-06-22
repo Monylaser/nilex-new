@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\CarBrand;
 use App\Models\Category;
 use App\Models\Listing;
 use App\Models\Location;
@@ -68,11 +69,21 @@ class HomeController extends Controller
             }])
             ->get(['id', 'name_ar', 'parent_id', 'level', 'sort_order']);
 
+        // Car brands eager-loaded with their active models for the dependent
+        // brand → model dropdowns in the listing wizard (cars category only).
+        $carBrands = CarBrand::active()
+            ->orderBy('sort_order')
+            ->orderBy('name_ar')
+            ->with(['models' => function ($query) {
+                $query->where('is_active', true)->orderBy('name_ar');
+            }])
+            ->get(['id', 'name_ar', 'name_en', 'slug']);
+
         $user             = Auth::user();
         $isPhoneVerified  = (bool) $user->is_phone_verified;
         $userPoints       = (int)  $user->points;
 
-        return view('frontend.listings.create', compact('categories', 'governorates', 'isPhoneVerified', 'userPoints'));
+        return view('frontend.listings.create', compact('categories', 'governorates', 'carBrands', 'isPhoneVerified', 'userPoints'));
     }
 
     /**
@@ -91,11 +102,46 @@ class HomeController extends Controller
             'phone'        => 'required|string|max:20',
             // location is reused via the existing location_id relationship
             'location_id'  => 'nullable|exists:locations,id',
+            // car listings store brand/model in dedicated FK columns (cars category only)
+            'car_brand_id' => 'nullable|exists:car_brands,id',
+            'car_model_id' => 'nullable|exists:car_models,id',
             // optional featuring after creation (0 = none)
             'feature_days' => 'nullable|integer|in:0,1,3,7,14',
         ]);
 
         $category = Category::findOrFail($validated['category_id']);
+
+        // ── Car-specific validation (cars category only) ──
+        // Brand & Model are stored as FK columns; fuel & transmission live in
+        // custom_fields_values. When the "أخرى/Other" brand is chosen, a manual
+        // brand name (car_brand_other) becomes required.
+        if ($category->slug === 'cars') {
+            $request->validate([
+                'car_brand_id'                      => 'required|exists:car_brands,id',
+                'car_model_id'                      => [
+                    'required',
+                    \Illuminate\Validation\Rule::exists('car_models', 'id')
+                        ->where('car_brand_id', $request->input('car_brand_id')),
+                ],
+                'custom_fields_values.fuel'         => 'required|string',
+                'custom_fields_values.transmission' => 'required|string',
+            ], [
+                'car_brand_id.required'                      => 'الماركة مطلوبة',
+                'car_model_id.required'                      => 'الموديل مطلوب',
+                'car_model_id.exists'                        => 'الموديل المختار لا يتبع هذه الماركة',
+                'custom_fields_values.fuel.required'         => 'نوع الوقود مطلوب',
+                'custom_fields_values.transmission.required' => 'ناقل الحركة مطلوب',
+            ]);
+
+            $brand = CarBrand::find($validated['car_brand_id'] ?? $request->input('car_brand_id'));
+            if ($brand && $brand->slug === 'other') {
+                $request->validate([
+                    'custom_fields_values.car_brand_other' => 'required|string|max:255',
+                ], [
+                    'custom_fields_values.car_brand_other.required' => 'اكتب اسم الماركة',
+                ]);
+            }
+        }
 
         if (!empty($category->custom_fields_schema)) {
             $customRules    = [];
@@ -130,6 +176,8 @@ class HomeController extends Controller
             $listing->price_type           = $validated['price_type'];
             $listing->phone                = $phone;
             $listing->location_id          = $validated['location_id'] ?? null;
+            $listing->car_brand_id         = $validated['car_brand_id'] ?? null;
+            $listing->car_model_id         = $validated['car_model_id'] ?? null;
             $listing->custom_fields_values = $request->input('custom_fields_values', []);
             $listing->save();
 

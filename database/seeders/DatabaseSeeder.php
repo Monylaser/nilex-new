@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LocationSeeder::class,
             CategorySeeder::class,
+            CarBrandSeeder::class,
             LegalPageSeeder::class,
             SeoGovernoratesSeeder::class,
         ]);
