@@ -73,7 +73,25 @@
         {{-- ════════════════════════════════════════════
              SECTION 2 — PRICING PLANS (enhanced cards)
         ════════════════════════════════════════════ --}}
-        <section id="plans">
+        <section id="plans" x-data="{ refundAccepted: false }">
+            @auth
+                @if($plans->isNotEmpty())
+                    <div class="mb-5 sm:mb-6 bg-[#1D9E75]/[0.05] border border-[#1D9E75]/20 rounded-2xl px-4 py-3.5 sm:px-5 sm:py-4">
+                        <label class="flex items-start gap-3 cursor-pointer select-none">
+                            <input type="checkbox"
+                                   x-model="refundAccepted"
+                                   class="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-[#1D9E75] focus:ring-[#1D9E75]">
+                            <span class="text-xs sm:text-sm text-zinc-700 leading-relaxed">
+                                أوافق على
+                                <a href="{{ route('legal.show', 'refund-policy') }}"
+                                   target="_blank" rel="noopener"
+                                   class="font-semibold text-[#1D9E75] underline hover:text-[#178a64]">سياسة الاسترجاع والاسترداد</a>
+                            </span>
+                        </label>
+                    </div>
+                @endif
+            @endauth
+
             @if($plans->isEmpty())
                 <div class="flex flex-col items-center justify-center py-12 text-center bg-white rounded-3xl border border-zinc-200 shadow-sm">
                     <div class="w-10 h-10 rounded-xl bg-[#1D9E75]/10 flex items-center justify-center mb-3">
@@ -134,7 +152,10 @@
                             <div class="mt-auto">
                                 @auth
                                     <button
-                                        onclick="document.getElementById('checkout-{{ $plan->id }}').submit()"
+                                        type="button"
+                                        x-bind:disabled="!refundAccepted"
+                                        x-on:click="refundAccepted && document.getElementById('checkout-{{ $plan->id }}').submit()"
+                                        x-bind:class="{ 'opacity-50 cursor-not-allowed': !refundAccepted }"
                                         class="{{ $btnClass }}">
                                         {{ __('ui.pricing.cta_topup') }}
                                     </button>
@@ -143,6 +164,7 @@
                                           method="POST" class="hidden">
                                         @csrf
                                         <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                                        <input type="hidden" name="refund_policy_accepted" value="1">
                                     </form>
                                 @else
                                     <a href="{{ route('register') }}" class="block {{ $btnClass }}">
