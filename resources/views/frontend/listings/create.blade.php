@@ -129,13 +129,13 @@
                                 : 'border-gray-100 bg-white hover:border-gray-200'">
                             <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 overflow-hidden">
                                 <template x-if="categoryIconUrl(cat)">
-                                    <img :src="categoryIconUrl(cat)" :alt="cat.name_ar" class="w-8 h-8 object-contain">
+                                    <img :src="categoryIconUrl(cat)" :alt="cat.name" class="w-8 h-8 object-contain">
                                 </template>
                                 <template x-if="!categoryIconUrl(cat)">
-                                    <span class="text-lg font-black text-[#1D9E75]" x-text="cat.name_ar ? cat.name_ar.charAt(0) : '؟'"></span>
+                                    <span class="text-lg font-black text-[#1D9E75]" x-text="cat.name ? cat.name.charAt(0) : '؟'"></span>
                                 </template>
                             </div>
-                            <span class="text-[13px] font-bold text-zinc-800 leading-tight" x-text="cat.name_ar"></span>
+                            <span class="text-[13px] font-bold text-zinc-800 leading-tight" x-text="cat.name"></span>
                         </div>
                     </template>
                 </div>
@@ -153,7 +153,7 @@
                                     :class="(formData.category_id == sub.id)
                                         ? 'border-[#1D9E75] bg-green-50 text-[#1D9E75] ring-2 ring-green-300'
                                         : 'border-gray-200 text-zinc-600 hover:border-[#1D9E75]'">
-                                <span x-text="sub.name_ar"></span>
+                                <span x-text="sub.name"></span>
                             </button>
                         </template>
                     </div>
@@ -691,7 +691,7 @@
                     <div class="border border-gray-100 rounded-2xl p-4 flex items-start justify-between gap-3">
                         <div>
                             <p class="text-[11px] font-bold text-zinc-400 mb-1">القسم</p>
-                            <p class="text-sm font-semibold text-zinc-800" x-text="activeCategory ? activeCategory.name_ar : '—'"></p>
+                            <p class="text-sm font-semibold text-zinc-800" x-text="activeCategory ? activeCategory.name : '—'"></p>
                         </div>
                         <button type="button" @click="goToStep(1)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">تعديل</button>
                     </div>

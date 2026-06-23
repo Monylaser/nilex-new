@@ -60,6 +60,14 @@ class HomeController extends Controller
             }])
             ->get();
 
+        // Expose the locale-aware `name` accessor in the JSON payload the wizard
+        // consumes (Alpine reads `cat.name` / `sub.name`) so category labels follow
+        // the active locale instead of always rendering Arabic.
+        $categories->each(function (Category $category) {
+            $category->append('name');
+            $category->children->each->append('name');
+        });
+
         // Governorates (level 0) eager-loaded with their active child cities (level 1)
         // for the dependent location dropdowns in the listing wizard.
         $governorates = Location::governorates()

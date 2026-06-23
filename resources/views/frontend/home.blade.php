@@ -128,19 +128,19 @@
                    class="flex flex-col items-center gap-1 group shrink-0 py-1">
                     <div class="w-7 h-7 flex items-center justify-center">
                         @if($cat->icon)
-                            <img src="{{ asset('storage/'.$cat->icon) }}" alt="{{ $cat->name_ar }}"
+                            <img src="{{ asset('storage/'.$cat->icon) }}" alt="{{ $cat->name }}"
                                  class="w-6 h-6 object-contain">
                         @elseif($ico)
-                            <img src="{{ asset('images/categories/'.$ico) }}" alt="{{ $cat->name_ar }}"
+                            <img src="{{ asset('images/categories/'.$ico) }}" alt="{{ $cat->name }}"
                                  class="w-6 h-6 object-contain">
                         @else
                             <span class="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-[11px] font-black text-zinc-500 group-hover:bg-[#1D9E75]/10 group-hover:text-[#1D9E75]">
-                                {{ mb_substr($cat->name_ar, 0, 1) }}
+                                {{ mb_substr($cat->name, 0, 1) }}
                             </span>
                         @endif
                     </div>
                     <span class="text-[10px] font-semibold text-zinc-500 group-hover:text-[#1D9E75] line-clamp-1" style="max-width:48px;">
-                        {{ $cat->name_ar }}
+                        {{ $cat->name }}
                     </span>
                 </a>
             @endforeach
@@ -175,11 +175,11 @@
                             <img src="{{ asset('images/categories/'.$catIco) }}" alt=""
                                  class="w-7 h-7 object-contain">
                         @else
-                            <span class="text-base font-black text-zinc-400">{{ mb_substr($cat->name_ar, 0, 1) }}</span>
+                            <span class="text-base font-black text-zinc-400">{{ mb_substr($cat->name, 0, 1) }}</span>
                         @endif
                     </div>
                     <span class="text-[11px] font-semibold text-zinc-700 line-clamp-2 leading-tight w-full text-center">
-                        {{ $cat->name_ar }}
+                        {{ $cat->name }}
                     </span>
                 </a>
             @endforeach
@@ -245,7 +245,7 @@
                                 </h3>
                                 @if($listing->category)
                                     <span class="text-[10px] font-semibold text-zinc-400 shrink-0 line-clamp-1" style="max-width:70px;">
-                                        {{ $listing->category->name_ar }}
+                                        {{ $listing->category->name }}
                                     </span>
                                 @endif
                             </div>
@@ -435,7 +435,7 @@
                         @foreach($categories->take(8) as $cat)
                             <a href="{{ route('category.show', $cat) }}"
                                class="text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-[#1D9E75]/8 hover:text-[#1D9E75] border border-zinc-200 hover:border-[#1D9E75]/20 px-3 py-1.5 rounded-lg">
-                                {{ $cat->name_ar }}
+                                {{ $cat->name }}
                             </a>
                         @endforeach
                     </div>

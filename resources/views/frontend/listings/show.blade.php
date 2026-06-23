@@ -157,7 +157,7 @@
                 <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">الرئيسية</a>
                 @if($listing->category)
                     <svg class="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    <a href="{{ route('category.show', $listing->category->slug) }}" class="hover:text-[#1D9E75] transition-colors">{{ $listing->category->name_ar }}</a>
+                    <a href="{{ route('category.show', $listing->category->slug) }}" class="hover:text-[#1D9E75] transition-colors">{{ $listing->category->name }}</a>
                 @endif
                 <svg class="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 <span class="text-zinc-600 truncate max-w-[200px] sm:max-w-xs">{{ Str::limit($listing->title, 45) }}</span>
@@ -372,7 +372,7 @@
                         @if($listing->category)
                             <div class="flex justify-between items-center py-2.5 border-b border-zinc-50">
                                 <span class="text-zinc-400 font-semibold">القسم</span>
-                                <a href="{{ route('category.show', $listing->category->slug) }}" class="font-bold text-zinc-800 hover:text-[#1D9E75] transition-colors">{{ $listing->category->name_ar }}</a>
+                                <a href="{{ route('category.show', $listing->category->slug) }}" class="font-bold text-zinc-800 hover:text-[#1D9E75] transition-colors">{{ $listing->category->name }}</a>
                             </div>
                         @endif
                         @if($listing->province || $listing->location)

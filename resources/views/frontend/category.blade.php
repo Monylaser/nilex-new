@@ -2,10 +2,10 @@
 
 @extends('layouts.frontend')
 
-@section('title', $category->name_ar . ' — إعلانات ' . $category->name_ar . ' في مصر | نايلكس')
+@section('title', $category->name . ' — إعلانات ' . $category->name . ' في مصر | نايلكس')
 
 @push('meta')
-    <meta name="description" content="تصفح {{ number_format($listings->total()) }} إعلان في قسم {{ $category->name_ar }} على منصة نايلكس. بيع واشتري بسهولة وأمان.">
+    <meta name="description" content="تصفح {{ number_format($listings->total()) }} إعلان في قسم {{ $category->name }} على منصة نايلكس. بيع واشتري بسهولة وأمان.">
 @endpush
 
 @push('styles')
@@ -27,11 +27,11 @@
                 <svg class="w-3 h-3 rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 @if($category->parent)
                     <a href="{{ route('category.show', $category->parent->slug) }}" class="hover:text-[#1D9E75] transition-colors">
-                        {{ $category->parent->name_ar }}
+                        {{ $category->parent->name }}
                     </a>
                     <svg class="w-3 h-3 rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 @endif
-                <span class="text-[#1D9E75] font-semibold">{{ $category->name_ar }}</span>
+                <span class="text-[#1D9E75] font-semibold">{{ $category->name }}</span>
             </nav>
         </div>
     </div>
@@ -47,9 +47,10 @@
                     </div>
                 @endif
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-black text-zinc-900 leading-tight">{{ $category->name_ar }}</h1>
-                    @if($category->name_en)
-                        <p class="text-xs text-zinc-400 font-medium mt-1">{{ $category->name_en }}</p>
+                    <h1 class="text-xl sm:text-2xl font-black text-zinc-900 leading-tight">{{ $category->name }}</h1>
+                    @php $categoryAltName = app()->getLocale() === 'ar' ? $category->name_en : $category->name_ar; @endphp
+                    @if($categoryAltName && $categoryAltName !== $category->name)
+                        <p class="text-xs text-zinc-400 font-medium mt-1">{{ $categoryAltName }}</p>
                     @endif
                 </div>
             </div>
@@ -66,7 +67,7 @@
                     <a href="{{ route('category.show', $sub->slug) }}"
                        class="shrink-0 flex items-center gap-1.5 bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-600 hover:text-[#1D9E75] px-3.5 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors">
                         @if($sub->icon)<span>{{ $sub->icon }}</span>@endif
-                        {{ $sub->name_ar }}
+                        {{ $sub->name }}
                     </a>
                 @endforeach
             </div>
@@ -78,7 +79,7 @@
                 <input type="hidden" name="category_id" value="{{ $category->id }}">
                 <div class="relative flex-1">
                     <input type="text" name="q" value="{{ request('q') }}"
-                           placeholder="ابحث داخل {{ $category->name_ar }}..."
+                           placeholder="ابحث داخل {{ $category->name }}..."
                            class="w-full bg-white border border-zinc-200 rounded-xl py-2.5 px-4 pe-10 text-sm font-medium text-zinc-800 focus:outline-none focus:border-zinc-400"
                            style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                     <svg class="w-4 h-4 absolute end-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,7 +123,7 @@
                 </div>
                 <h2 class="text-base font-bold text-zinc-800 mb-1.5">لا توجد إعلانات هنا حالياً</h2>
                 <p class="text-zinc-400 text-sm max-w-xs mx-auto mb-6">
-                    كن أول من ينشر إعلاناً في قسم {{ $category->name_ar }}
+                    كن أول من ينشر إعلاناً في قسم {{ $category->name }}
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <a href="{{ route('listings.create') }}"
