@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="rtl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
@@ -44,9 +44,21 @@
                     <div class="flex justify-between items-center h-16">
                         @include('layouts.navigation')
 
+                        <div class="flex items-center gap-2">
+
+                        {{-- 🌐 مبدّل اللغة --}}
+                        @php $nextLocale = app()->getLocale() === 'ar' ? 'en' : 'ar'; @endphp
+                        <form method="POST" action="{{ route('language.switch', $nextLocale) }}">
+                            @csrf
+                            <button type="submit"
+                                    class="text-xs font-bold text-zinc-500 border border-zinc-200 px-2.5 py-1 rounded-lg hover:border-zinc-400">
+                                {{ app()->getLocale() === 'ar' ? 'EN' : 'ع' }}
+                            </button>
+                        </form>
+
                         {{-- 🔔 جرس الإشعارات اللحظي --}}
                         @auth
-                        <div class="relative mr-4" x-data="{ open: false }">
+                        <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="relative p-2 text-gray-400 hover:text-blue-600 transition-colors focus:outline-none">
                                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
@@ -72,6 +84,7 @@
                             </div>
                         </div>
                         @endauth
+                        </div>
                     </div>
                 </div>
             </nav>

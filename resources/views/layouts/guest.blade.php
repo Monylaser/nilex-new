@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
@@ -113,6 +113,17 @@
     </style>
 </head>
 <body style="margin:0; background:#f4f4f5; min-height:100vh; -webkit-font-smoothing:antialiased;" class="font-sans">
+
+{{-- 🌐 مبدّل اللغة --}}
+@php $nextLocale = app()->getLocale() === 'ar' ? 'en' : 'ar'; @endphp
+<form method="POST" action="{{ route('language.switch', $nextLocale) }}"
+      style="position:fixed; top:16px; inset-inline-end:16px; z-index:50;">
+    @csrf
+    <button type="submit"
+            style="font-size:12px; font-weight:700; color:#6b7280; background:#fff; border:1px solid #e5e7eb; padding:5px 10px; border-radius:8px; cursor:pointer;">
+        {{ app()->getLocale() === 'ar' ? 'EN' : 'ع' }}
+    </button>
+</form>
 
 @php
     use Illuminate\Support\Facades\Storage;

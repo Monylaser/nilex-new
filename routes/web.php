@@ -28,6 +28,11 @@ Route::post('/language/{locale}', function (string $locale) {
     $available = config('app.available_locales', ['ar', 'en']);
     if (in_array($locale, $available)) {
         session(['locale' => $locale]);
+
+        // Persist to the user record so the choice follows them across devices.
+        if (Auth::check()) {
+            Auth::user()->forceFill(['locale' => $locale])->save();
+        }
     }
     return redirect()->back();
 })->name('language.switch');

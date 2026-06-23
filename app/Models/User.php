@@ -50,6 +50,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'provider_id',
         'plan_tier',
         'plan_type',
+        'locale',
     ];
 
     protected $hidden = [
