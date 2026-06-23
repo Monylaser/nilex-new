@@ -9,6 +9,11 @@ return [
         'my_account'         => 'حسابي',
         'login'              => 'دخول',
         'add_listing'        => 'أضف إعلان',
+        'add_short'          => 'أضف',
+    ],
+
+    'misc' => [
+        'in' => 'في',
     ],
 
     'hero' => [
@@ -47,6 +52,18 @@ return [
         'condition_new'       => 'جديد',
         'condition_used'      => 'مستعمل',
         'currency'            => 'ج.م',
+        'featured_plain'      => 'مميز',
+        'verified'            => 'موثق',
+        'search_in'           => 'ابحث في',
+    ],
+
+    'category' => [
+        'title'              => ':name — إعلانات :name في مصر | نايلكس',
+        'meta'               => 'تصفح :count إعلان في قسم :name على منصة نايلكس. بيع واشتري بسهولة وأمان.',
+        'search_placeholder' => 'ابحث داخل :name...',
+        'empty_title'        => 'لا توجد إعلانات هنا حالياً',
+        'empty_subtitle'     => 'كن أول من ينشر إعلاناً في قسم :name',
+        'browse_other'       => 'تصفح أقسام أخرى',
     ],
 
     'trust' => [

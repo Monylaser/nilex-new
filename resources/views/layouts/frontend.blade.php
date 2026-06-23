@@ -60,7 +60,7 @@
                     <input type="text" name="q"
                            placeholder="{{ __('ui.nav.search_placeholder') ?? 'ابحث...' }}"
                            class="flex-1 bg-transparent text-zinc-800 placeholder-zinc-400 py-2.5 px-5 text-sm focus:outline-none"
-                           style="direction:rtl; min-width:0;">
+                           style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}; min-width:0;">
                     <button type="submit"
                             class="w-8 h-8 me-1 rounded-full bg-[#1D9E75] flex items-center justify-center shrink-0">
                         <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,7 +109,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                     </svg>
                     <span class="hidden sm:inline">{{ __('ui.nav.add_listing') ?? 'أضف إعلان' }}</span>
-                    <span class="sm:hidden">أضف</span>
+                    <span class="sm:hidden">{{ __('ui.nav.add_short') }}</span>
                 </a>
 
                 {{-- Mobile menu toggle --}}
@@ -136,7 +136,7 @@
                     <input type="text" name="q"
                            placeholder="{{ __('ui.nav.search_placeholder') ?? 'ابحث...' }}"
                            class="flex-1 bg-transparent py-2.5 px-4 text-sm focus:outline-none placeholder-zinc-400 text-zinc-800"
-                           style="direction:rtl;">
+                           style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                     <button type="submit"
                             class="w-8 h-8 me-1 rounded-full bg-[#1D9E75] flex items-center justify-center shrink-0">
                         <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

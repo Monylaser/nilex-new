@@ -29,7 +29,7 @@
             <div class="absolute top-2 end-2">
                 <span class="text-[10px] font-black px-2.5 py-1 rounded-full"
                       style="background:#f59e0b; color:#451a03;">
-                    مميز
+                    {{ __('ui.sections.featured_plain') }}
                 </span>
             </div>
         @endif
@@ -40,7 +40,7 @@
         {{-- Category --}}
         @if($listing->category)
             <span class="text-[11px] font-semibold text-nilex bg-nilex/8 px-2 py-0.5 rounded-full inline-block mb-2">
-                {{ $listing->category->name_ar }}
+                {{ $listing->category->name }}
             </span>
         @endif
 
@@ -58,9 +58,9 @@
             <span class="font-black text-nilex text-sm">
                 @if($listing->price > 0)
                     {{ number_format($listing->price) }}
-                    <span class="text-zinc-400 font-semibold text-[10px] ms-0.5">ج.م</span>
+                    <span class="text-zinc-400 font-semibold text-[10px] ms-0.5">{{ __('ui.sections.currency') }}</span>
                 @else
-                    <span class="text-zinc-400 font-semibold text-xs">تواصل للسعر</span>
+                    <span class="text-zinc-400 font-semibold text-xs">{{ __('ui.sections.price_on_contact') }}</span>
                 @endif
             </span>
             <span class="text-[10px] text-zinc-400">

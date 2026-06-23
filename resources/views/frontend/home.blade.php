@@ -252,7 +252,7 @@
 
                             <div class="flex items-center gap-1 mt-0.5 text-[12px] text-zinc-400">
                                 @if($listing->location)
-                                    <span class="line-clamp-1">{{ $listing->location->name_ar ?? '' }}</span>
+                                    <span class="line-clamp-1">{{ $listing->location->name ?? '' }}</span>
                                     <span>·</span>
                                 @endif
                                 <span class="shrink-0">{{ $listing->created_at->locale(app()->getLocale())->diffForHumans() }}</span>
@@ -278,8 +278,8 @@
 
                                 @if($listing->user?->email_verified_at)
                                     <span class="inline-flex items-center gap-1 ms-2">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#1D9E75] shrink-0"></span>
-                                        <span class="text-[10px] text-zinc-400 font-medium">موثق</span>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#1D9E75] shrink-0"></span>
+                                    <span class="text-[10px] text-zinc-400 font-medium">{{ __('ui.sections.verified') }}</span>
                                     </span>
                                 @endif
                             </div>
@@ -355,7 +355,7 @@
 
                                 <div class="flex items-center gap-1 mt-0.5 text-[11px] text-zinc-400">
                                     @if($listing->location)
-                                        <span class="line-clamp-1" style="max-width:56px;">{{ $listing->location->name_ar ?? '' }}</span>
+                                        <span class="line-clamp-1" style="max-width:56px;">{{ $listing->location->name ?? '' }}</span>
                                         <span>·</span>
                                     @endif
                                     <span class="shrink-0">{{ $listing->created_at->locale(app()->getLocale())->diffForHumans() }}</span>
@@ -375,7 +375,7 @@
                                     @endif
 
                                     @if($listing->user?->email_verified_at)
-                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#1D9E75] ms-1 align-middle" title="موثق"></span>
+                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#1D9E75] ms-1 align-middle" title="{{ __('ui.sections.verified') }}"></span>
                                     @endif
                                 </div>
                             </div>
@@ -430,7 +430,7 @@
                     </a>
                 </div>
                 <div class="px-6 py-4">
-                    <p class="text-[10px] font-semibold text-zinc-400 mb-3 uppercase tracking-wide">تصفح حسب الفئة</p>
+                    <p class="text-[10px] font-semibold text-zinc-400 mb-3 uppercase tracking-wide">{{ __('ui.sections.browse_by_category') }}</p>
                     <div class="flex flex-wrap gap-2 mb-4">
                         @foreach($categories->take(8) as $cat)
                             <a href="{{ route('category.show', $cat) }}"
@@ -439,12 +439,12 @@
                             </a>
                         @endforeach
                     </div>
-                    <p class="text-[10px] font-semibold text-zinc-400 mb-2 uppercase tracking-wide">ابحث في</p>
+                    <p class="text-[10px] font-semibold text-zinc-400 mb-2 uppercase tracking-wide">{{ __('ui.sections.search_in') }}</p>
                     <div class="flex flex-wrap gap-1.5">
                         @foreach([['q'=>'شقق', 'loc'=>'القاهرة'], ['q'=>'سيارات', 'loc'=>'القاهرة'], ['q'=>'موبايل', 'loc'=>'الإسكندرية'], ['q'=>'أثاث', 'loc'=>null]] as $trend)
                             <a href="{{ route('listings.search', array_filter(['q' => $trend['q']])) }}"
                                class="text-[10px] font-medium text-zinc-500 hover:text-[#1D9E75] bg-zinc-50 border border-zinc-100 px-2.5 py-1 rounded-lg">
-                                {{ $trend['q'] }}{{ $trend['loc'] ? ' في ' . $trend['loc'] : '' }}
+                                {{ $trend['q'] }}{{ $trend['loc'] ? ' ' . __('ui.misc.in') . ' ' . $trend['loc'] : '' }}
                             </a>
                         @endforeach
                     </div>

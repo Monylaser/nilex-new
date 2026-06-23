@@ -9,6 +9,11 @@ return [
         'my_account'         => 'My Account',
         'login'              => 'Login',
         'add_listing'        => 'Add Listing',
+        'add_short'          => 'Add',
+    ],
+
+    'misc' => [
+        'in' => 'in',
     ],
 
     'hero' => [
@@ -47,6 +52,18 @@ return [
         'condition_new'       => 'New',
         'condition_used'      => 'Used',
         'currency'            => 'EGP',
+        'featured_plain'      => 'Featured',
+        'verified'            => 'Verified',
+        'search_in'           => 'Search in',
+    ],
+
+    'category' => [
+        'title'              => ':name — :name Listings in Egypt | Nilex',
+        'meta'               => 'Browse :count listings in :name on Nilex. Buy and sell easily and safely.',
+        'search_placeholder' => 'Search within :name...',
+        'empty_title'        => 'No listings here yet',
+        'empty_subtitle'     => 'Be the first to post a listing in :name',
+        'browse_other'       => 'Browse other categories',
     ],
 
     'trust' => [

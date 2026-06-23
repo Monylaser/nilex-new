@@ -2,10 +2,10 @@
 
 @extends('layouts.frontend')
 
-@section('title', $category->name . ' — إعلانات ' . $category->name . ' في مصر | نايلكس')
+@section('title', __('ui.category.title', ['name' => $category->name]))
 
 @push('meta')
-    <meta name="description" content="تصفح {{ number_format($listings->total()) }} إعلان في قسم {{ $category->name }} على منصة نايلكس. بيع واشتري بسهولة وأمان.">
+    <meta name="description" content="{{ __('ui.category.meta', ['count' => number_format($listings->total()), 'name' => $category->name]) }}">
 @endpush
 
 @push('styles')
@@ -17,13 +17,13 @@
 
 @section('content')
 
-<main class="bg-white min-h-screen" style="padding-top:64px;" dir="rtl">
+<main class="bg-white min-h-screen" style="padding-top:64px;" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 
     {{-- ── BREADCRUMB ─────────────────────────────────────────────────────── --}}
     <div class="border-b border-zinc-100 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 py-2.5 text-xs text-zinc-400 font-medium flex-wrap" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
-                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">الرئيسية</a>
+                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">{{ __('ui.footer.link_home') }}</a>
                 <svg class="w-3 h-3 rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 @if($category->parent)
                     <a href="{{ route('category.show', $category->parent->slug) }}" class="hover:text-[#1D9E75] transition-colors">
@@ -56,7 +56,7 @@
             </div>
             <div class="inline-flex items-center gap-1.5 bg-white text-zinc-600 px-3.5 py-1.5 rounded-lg font-semibold text-xs self-start sm:self-auto border border-zinc-200">
                 <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                <span>{{ number_format($listings->total()) }} إعلان</span>
+                <span>{{ number_format($listings->total()) }} {{ __('ui.sections.listing_count_suffix') }}</span>
             </div>
         </div>
 
@@ -79,7 +79,7 @@
                 <input type="hidden" name="category_id" value="{{ $category->id }}">
                 <div class="relative flex-1">
                     <input type="text" name="q" value="{{ request('q') }}"
-                           placeholder="ابحث داخل {{ $category->name }}..."
+                           placeholder="{{ __('ui.category.search_placeholder', ['name' => $category->name]) }}"
                            class="w-full bg-white border border-zinc-200 rounded-xl py-2.5 px-4 pe-10 text-sm font-medium text-zinc-800 focus:outline-none focus:border-zinc-400"
                            style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                     <svg class="w-4 h-4 absolute end-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@
                 </div>
                 <button type="submit"
                         class="bg-[#1D9E75] hover:bg-[#178a64] text-white px-5 py-2.5 rounded-xl font-bold text-sm shrink-0">
-                    بحث
+                    {{ __('ui.hero.search_btn') }}
                 </button>
             </form>
         </div>
@@ -121,19 +121,19 @@
                         </svg>
                     @endif
                 </div>
-                <h2 class="text-base font-bold text-zinc-800 mb-1.5">لا توجد إعلانات هنا حالياً</h2>
+                <h2 class="text-base font-bold text-zinc-800 mb-1.5">{{ __('ui.category.empty_title') }}</h2>
                 <p class="text-zinc-400 text-sm max-w-xs mx-auto mb-6">
-                    كن أول من ينشر إعلاناً في قسم {{ $category->name }}
+                    {{ __('ui.category.empty_subtitle', ['name' => $category->name]) }}
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <a href="{{ route('listings.create') }}"
                        class="inline-flex items-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] text-white px-5 py-2.5 rounded-xl font-bold text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                        أضف إعلانك مجاناً
+                        {{ __('ui.empty.add_free') }}
                     </a>
                     <a href="{{ route('home') }}"
                        class="inline-flex items-center gap-2 border border-zinc-200 hover:border-zinc-300 text-zinc-500 hover:text-zinc-700 px-5 py-2.5 rounded-xl font-semibold text-sm">
-                        تصفح أقسام أخرى
+                        {{ __('ui.category.browse_other') }}
                     </a>
                 </div>
             </div>
