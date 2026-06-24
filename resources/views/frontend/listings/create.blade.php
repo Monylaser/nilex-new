@@ -1,6 +1,6 @@
 @extends('layouts.frontend')
 
-@section('title', 'إضافة إعلان جديد')
+@section('title', __('wizard.page_title'))
 
 @push('styles')
 <style>
@@ -32,7 +32,7 @@
 @endpush
 
 @section('content')
-<div class="bg-gray-50 min-h-screen pt-24 pb-20" dir="rtl" style="font-family:'Cairo',sans-serif;">
+<div class="bg-gray-50 min-h-screen pt-24 pb-20" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}" style="font-family:'Cairo',sans-serif;">
 
     <div class="max-w-3xl mx-4 md:mx-auto"
          x-data="listingWizard()"
@@ -43,8 +43,8 @@
              PAGE HEADER
         ══════════════════════════════════════════ --}}
         <div class="text-center mb-6">
-            <h1 class="text-2xl md:text-3xl font-black text-zinc-900">أضف إعلانك الجديد</h1>
-            <p class="text-sm text-zinc-400 mt-1">أكمل الخطوات الأربع وانشر إعلانك في دقائق</p>
+            <h1 class="text-2xl md:text-3xl font-black text-zinc-900">{{ __('wizard.header_title') }}</h1>
+            <p class="text-sm text-zinc-400 mt-1">{{ __('wizard.header_subtitle') }}</p>
         </div>
 
         {{-- ══════════════════════════════════════════
@@ -54,10 +54,10 @@
             <div class="flex items-center justify-between">
                 @php
                     $stepLabels = [
-                        1 => 'اختار القسم',
-                        2 => 'تفاصيل الإعلان',
-                        3 => 'أضف الصور',
-                        4 => 'التواصل والمراجعة',
+                        1 => __('wizard.steps.category'),
+                        2 => __('wizard.steps.details'),
+                        3 => __('wizard.steps.images'),
+                        4 => __('wizard.steps.review'),
                     ];
                 @endphp
                 @foreach($stepLabels as $num => $label)
@@ -113,8 +113,8 @@
                  x-transition:enter-start="opacity-0 translate-x-8"
                  x-transition:enter-end="opacity-100 translate-x-0">
 
-                <h2 class="text-lg font-bold text-zinc-900 mb-1">اختار القسم</h2>
-                <p class="text-sm text-zinc-400 mb-5">حدد القسم المناسب لإعلانك</p>
+                <h2 class="text-lg font-bold text-zinc-900 mb-1">{{ __('wizard.step1.title') }}</h2>
+                <p class="text-sm text-zinc-400 mb-5">{{ __('wizard.step1.subtitle') }}</p>
 
                 <p x-show="errors.category_id" x-cloak
                    class="mb-4 text-sm text-red-600 font-semibold" x-text="errors.category_id"></p>
@@ -144,7 +144,7 @@
                 <div x-show="subCategories.length > 0" x-cloak class="mt-7">
                     <h3 class="text-sm font-bold text-zinc-700 mb-3 flex items-center gap-2">
                         <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
-                        اختر القسم الفرعي
+                        {{ __('wizard.step1.choose_sub') }}
                     </h3>
                     <div class="flex flex-wrap gap-2">
                         <template x-for="sub in subCategories" :key="sub.id">
@@ -168,8 +168,8 @@
                  x-transition:enter-start="opacity-0 translate-x-8"
                  x-transition:enter-end="opacity-100 translate-x-0">
 
-                <h2 class="text-lg font-bold text-zinc-900 mb-1">تفاصيل الإعلان</h2>
-                <p class="text-sm text-zinc-400 mb-5">اكتب وصفاً واضحاً ليجذب المشترين</p>
+                <h2 class="text-lg font-bold text-zinc-900 mb-1">{{ __('wizard.step2.title') }}</h2>
+                <p class="text-sm text-zinc-400 mb-5">{{ __('wizard.step2.subtitle') }}</p>
 
                 {{-- ────────────────────────────────────────
                      🤖 المساعد الذكي (Gemini) — إضافة فقط
@@ -177,13 +177,13 @@
                 <div class="mb-6 rounded-2xl border border-[#1D9E75]/30 bg-gradient-to-br from-green-50 to-white p-4">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-lg">🤖</span>
-                        <h3 class="text-sm font-bold text-zinc-800">المساعد الذكي</h3>
+                        <h3 class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.ai_title') }}</h3>
                     </div>
-                    <p class="text-xs text-zinc-500 mb-3">اكتب وصفاً مختصراً لمنتجك ودع الذكاء الاصطناعي يكتب العنوان والوصف والسعر المقترح تلقائياً.</p>
+                    <p class="text-xs text-zinc-500 mb-3">{{ __('wizard.step2.ai_desc') }}</p>
                     <div class="flex flex-col sm:flex-row gap-2">
                         <input type="text" x-model="aiPrompt" @keydown.enter.prevent="generateWithAI()"
                                class="wizard-input flex-1"
-                               placeholder="مثال: آيفون 13 مستعمل بحالة ممتازة لون أسود">
+                               placeholder="{{ __('wizard.step2.ai_placeholder') }}">
                         <button type="button" @click="generateWithAI()"
                                 :disabled="aiLoading || aiPrompt.trim().length < 3"
                                 class="inline-flex items-center justify-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-5 py-2.5 rounded-xl text-sm min-h-[44px] shrink-0">
@@ -191,7 +191,7 @@
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
-                            <span x-text="aiLoading ? 'جاري التوليد...' : '✨ ولّد بالـ AI'"></span>
+                            <span x-text="aiLoading ? '{{ __('wizard.step2.ai_generating') }}' : '{{ __('wizard.step2.ai_generate_btn') }}'"></span>
                         </button>
                     </div>
                     <div x-show="aiMessage" x-cloak
@@ -205,10 +205,10 @@
                 <div class="space-y-5">
                     {{-- Title --}}
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">عنوان الإعلان <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.step2.title_label') }} <span class="text-red-500">*</span></label>
                         <input type="text" x-model="formData.title" maxlength="255"
                                class="wizard-input" :class="errors.title ? 'has-error' : ''"
-                               placeholder="مثال: آيفون 15 برو ماكس 256 جيجا">
+                               placeholder="{{ __('wizard.step2.title_placeholder') }}">
                         <div class="flex justify-between mt-1">
                             <p x-show="errors.title" x-cloak class="text-xs text-red-600" x-text="errors.title"></p>
                             <p class="text-[11px] text-zinc-400 ms-auto"><span x-text="formData.title.length"></span>/255</p>
@@ -217,50 +217,50 @@
 
                     {{-- Description --}}
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">وصف تفصيلي <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.step2.desc_label') }} <span class="text-red-500">*</span></label>
                         <textarea x-model="formData.description" rows="5"
                                   class="wizard-input resize-y" :class="errors.description ? 'has-error' : ''"
-                                  placeholder="اكتب تفاصيل المنتج، حالته، سبب البيع، وأي معلومات مهمة (20 حرفاً على الأقل)"></textarea>
+                                  placeholder="{{ __('wizard.step2.desc_placeholder') }}"></textarea>
                         <div class="flex justify-between mt-1">
                             <p x-show="errors.description" x-cloak class="text-xs text-red-600" x-text="errors.description"></p>
-                            <p class="text-[11px] text-zinc-400 ms-auto"><span x-text="formData.description.length"></span> حرف</p>
+                            <p class="text-[11px] text-zinc-400 ms-auto"><span x-text="formData.description.length"></span> {{ __('wizard.step2.char_suffix') }}</p>
                         </div>
                     </div>
 
                     {{-- Condition --}}
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-2">الحالة <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-2">{{ __('wizard.step2.condition_label') }} <span class="text-red-500">*</span></label>
                         <div class="grid grid-cols-2 gap-3">
                             <div @click="formData.condition = 'new'"
                                  class="rounded-2xl border-2 p-4 cursor-pointer text-center transition-all duration-200 min-h-[44px]"
                                  :class="formData.condition === 'new' ? 'border-[#1D9E75] bg-green-50 ring-2 ring-green-300' : 'border-gray-200 hover:border-gray-300'">
                                 <div class="text-2xl mb-1">✨</div>
-                                <span class="text-sm font-bold text-zinc-800">جديد</span>
+                                <span class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.condition_new') }}</span>
                             </div>
                             <div @click="formData.condition = 'used'"
                                  class="rounded-2xl border-2 p-4 cursor-pointer text-center transition-all duration-200 min-h-[44px]"
                                  :class="formData.condition === 'used' ? 'border-[#1D9E75] bg-green-50 ring-2 ring-green-300' : 'border-gray-200 hover:border-gray-300'">
                                 <div class="text-2xl mb-1">🔄</div>
-                                <span class="text-sm font-bold text-zinc-800">مستعمل</span>
+                                <span class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.condition_used') }}</span>
                             </div>
                         </div>
                     </div>
 
                     {{-- Price --}}
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">السعر <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.step2.price_label') }} <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <input type="number" x-model="formData.price" min="0" max="9999999999.99" step="0.01"
                                    class="wizard-input pe-16" :class="errors.price ? 'has-error' : ''"
                                    placeholder="0">
-                            <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">ج.م</span>
+                            <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">{{ __('wizard.common.currency') }}</span>
                         </div>
                         <p x-show="errors.price" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.price"></p>
                     </div>
 
                     {{-- Price type --}}
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-2">نوع السعر</label>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-2">{{ __('wizard.step2.price_type_label') }}</label>
                         <div class="grid grid-cols-3 gap-2">
                             <template x-for="opt in priceTypes" :key="opt.value">
                                 <button type="button" @click="formData.price_type = opt.value"
@@ -280,15 +280,15 @@
                     <div x-show="isCarCategory" x-cloak class="pt-2 border-t border-gray-100">
                         <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
                             <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
-                            مواصفات السيارة
+                            {{ __('wizard.car.section_title') }}
                         </h3>
                         <div class="space-y-4">
                             {{-- Brand (الماركة) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">الماركة <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.brand_label') }} <span class="text-red-500">*</span></label>
                                 <select x-model="formData.car_brand_id" @change="onCarBrandChange()"
                                         class="wizard-input" :class="errors.car_brand_id ? 'has-error' : ''">
-                                    <option value="">اختر الماركة</option>
+                                    <option value="">{{ __('wizard.car.brand_placeholder') }}</option>
                                     <template x-for="brand in carBrands" :key="brand.id">
                                         <option :value="brand.id" x-text="brand.name_ar"></option>
                                     </template>
@@ -298,21 +298,21 @@
 
                             {{-- Other brand free-text (يظهر عند اختيار "أخرى") --}}
                             <div x-show="selectedBrandIsOther" x-cloak>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">اكتب اسم الماركة <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.brand_other_label') }} <span class="text-red-500">*</span></label>
                                 <input type="text" x-model="formData.custom_fields.car_brand_other" maxlength="255"
                                        class="wizard-input" :class="errors.car_brand_other ? 'has-error' : ''"
-                                       placeholder="مثال: MG، BYD، أوبل...">
+                                       placeholder="{{ __('wizard.car.brand_other_placeholder') }}">
                                 <p x-show="errors.car_brand_other" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.car_brand_other"></p>
                             </div>
 
                             {{-- Model (الموديل) — filtered by brand --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">الموديل <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.model_label') }} <span class="text-red-500">*</span></label>
                                 <select x-model="formData.car_model_id"
                                         :disabled="!formData.car_brand_id"
                                         class="wizard-input disabled:bg-gray-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
                                         :class="errors.car_model_id ? 'has-error' : ''">
-                                    <option value="" x-text="formData.car_brand_id ? 'اختر الموديل' : 'اختر الماركة أولاً'"></option>
+                                    <option value="" x-text="formData.car_brand_id ? '{{ __('wizard.car.model_placeholder') }}' : '{{ __('wizard.car.model_placeholder_no_brand') }}'"></option>
                                     <template x-for="model in carModels" :key="model.id">
                                         <option :value="model.id" x-text="model.name_ar"></option>
                                     </template>
@@ -322,10 +322,10 @@
 
                             {{-- Fuel (نوع الوقود) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">نوع الوقود <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.fuel_label') }} <span class="text-red-500">*</span></label>
                                 <select x-model="formData.custom_fields.fuel"
                                         class="wizard-input" :class="errors.fuel ? 'has-error' : ''">
-                                    <option value="">اختر نوع الوقود</option>
+                                    <option value="">{{ __('wizard.car.fuel_placeholder') }}</option>
                                     <template x-for="opt in fuelOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -335,10 +335,10 @@
 
                             {{-- Transmission (ناقل الحركة) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">ناقل الحركة <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.transmission_label') }} <span class="text-red-500">*</span></label>
                                 <select x-model="formData.custom_fields.transmission"
                                         class="wizard-input" :class="errors.transmission ? 'has-error' : ''">
-                                    <option value="">اختر ناقل الحركة</option>
+                                    <option value="">{{ __('wizard.car.transmission_placeholder') }}</option>
                                     <template x-for="opt in transmissionOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -348,10 +348,10 @@
 
                             {{-- Year (سنة الصنع) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">سنة الصنع <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.year_label') }} <span class="text-red-500">*</span></label>
                                 <select x-model="formData.custom_fields.year"
                                         class="wizard-input" :class="errors.year ? 'has-error' : ''">
-                                    <option value="">اختر سنة الصنع</option>
+                                    <option value="">{{ __('wizard.car.year_placeholder') }}</option>
                                     <template x-for="y in yearOptions" :key="y">
                                         <option :value="y" x-text="y"></option>
                                     </template>
@@ -361,10 +361,10 @@
 
                             {{-- Condition (حالة السيارة) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">حالة السيارة <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.condition_label') }} <span class="text-red-500">*</span></label>
                                 <select x-model="formData.custom_fields.condition"
                                         class="wizard-input" :class="errors.condition ? 'has-error' : ''">
-                                    <option value="">اختر حالة السيارة</option>
+                                    <option value="">{{ __('wizard.car.condition_placeholder') }}</option>
                                     <template x-for="opt in carConditionOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -374,19 +374,19 @@
 
                             {{-- Mileage (عداد الكيلومترات) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">عداد الكيلومترات</label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.mileage_label') }}</label>
                                 <div class="relative">
                                     <input type="number" x-model="formData.custom_fields.mileage" min="0" step="1"
-                                           class="wizard-input pe-12" placeholder="مثال: 85000">
-                                    <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">كم</span>
+                                           class="wizard-input pe-12" placeholder="{{ __('wizard.car.mileage_placeholder') }}">
+                                    <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">{{ __('wizard.car.mileage_unit') }}</span>
                                 </div>
                             </div>
 
                             {{-- Color (لون السيارة) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">لون السيارة</label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.car.color_label') }}</label>
                                 <input type="text" x-model="formData.custom_fields.color" maxlength="50"
-                                       class="wizard-input" placeholder="مثال: أبيض، أسود...">
+                                       class="wizard-input" placeholder="{{ __('wizard.car.color_placeholder') }}">
                             </div>
                         </div>
                     </div>
@@ -398,15 +398,15 @@
                     <div x-show="isRealEstateCategory" x-cloak class="pt-2 border-t border-gray-100">
                         <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
                             <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
-                            مواصفات العقار
+                            {{ __('wizard.realestate.section_title') }}
                         </h3>
                         <div class="space-y-4">
                             {{-- Property type (نوع العقار) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">نوع العقار <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.property_type_label') }} <span class="text-red-500">*</span></label>
                                 <select x-model="formData.custom_fields.property_type"
                                         class="wizard-input" :class="errors.property_type ? 'has-error' : ''">
-                                    <option value="">اختر نوع العقار</option>
+                                    <option value="">{{ __('wizard.realestate.property_type_placeholder') }}</option>
                                     <template x-for="opt in propertyTypeOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -416,10 +416,10 @@
 
                             {{-- Listing type (نوع العرض) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">نوع العرض <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.listing_type_label') }} <span class="text-red-500">*</span></label>
                                 <select x-model="formData.custom_fields.listing_type"
                                         class="wizard-input" :class="errors.listing_type ? 'has-error' : ''">
-                                    <option value="">اختر نوع العرض</option>
+                                    <option value="">{{ __('wizard.realestate.listing_type_placeholder') }}</option>
                                     <template x-for="opt in listingTypeOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -429,9 +429,9 @@
 
                             {{-- Rooms (عدد الغرف) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">عدد الغرف</label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.rooms_label') }}</label>
                                 <select x-model="formData.custom_fields.rooms" class="wizard-input">
-                                    <option value="">اختر عدد الغرف</option>
+                                    <option value="">{{ __('wizard.realestate.rooms_placeholder') }}</option>
                                     <template x-for="opt in roomsOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -440,9 +440,9 @@
 
                             {{-- Bathrooms (عدد الحمامات) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">عدد الحمامات</label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.bathrooms_label') }}</label>
                                 <select x-model="formData.custom_fields.bathrooms" class="wizard-input">
-                                    <option value="">اختر عدد الحمامات</option>
+                                    <option value="">{{ __('wizard.realestate.bathrooms_placeholder') }}</option>
                                     <template x-for="opt in bathroomsOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -451,9 +451,9 @@
 
                             {{-- Floor (الدور) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">الدور</label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.floor_label') }}</label>
                                 <select x-model="formData.custom_fields.floor" class="wizard-input">
-                                    <option value="">اختر الدور</option>
+                                    <option value="">{{ __('wizard.realestate.floor_placeholder') }}</option>
                                     <template x-for="opt in floorOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -462,9 +462,9 @@
 
                             {{-- Finishing (نوع التشطيب) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">نوع التشطيب</label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.finishing_label') }}</label>
                                 <select x-model="formData.custom_fields.finishing" class="wizard-input">
-                                    <option value="">اختر نوع التشطيب</option>
+                                    <option value="">{{ __('wizard.realestate.finishing_placeholder') }}</option>
                                     <template x-for="opt in finishingOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -473,19 +473,19 @@
 
                             {{-- Area (المساحة) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">المساحة</label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.area_label') }}</label>
                                 <div class="relative">
                                     <input type="number" x-model="formData.custom_fields.area" min="0" step="1"
-                                           class="wizard-input pe-12" placeholder="مثال: 120">
-                                    <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">م²</span>
+                                           class="wizard-input pe-12" placeholder="{{ __('wizard.realestate.area_placeholder') }}">
+                                    <span class="absolute inset-y-0 end-4 flex items-center text-sm text-zinc-400 font-semibold pointer-events-none">{{ __('wizard.realestate.area_unit') }}</span>
                                 </div>
                             </div>
 
                             {{-- Compound (هل في كمباوند؟) --}}
                             <div>
-                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">هل في كمباوند؟</label>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.compound_label') }}</label>
                                 <select x-model="formData.custom_fields.compound" class="wizard-input">
-                                    <option value="">اختر...</option>
+                                    <option value="">{{ __('wizard.common.select_placeholder') }}</option>
                                     <template x-for="opt in compoundOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
@@ -498,7 +498,7 @@
                     <div x-show="customFieldsSchema.length > 0" x-cloak class="pt-2 border-t border-gray-100">
                         <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
                             <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
-                            مواصفات إضافية
+                            {{ __('wizard.step2.extra_specs') }}
                         </h3>
                         <div class="space-y-4">
                             <template x-for="field in customFieldsSchema" :key="field.name">
@@ -512,7 +512,7 @@
                                     <template x-if="field.type === 'select'">
                                         <select x-model="formData.custom_fields[field.name]"
                                                 class="wizard-input" :class="errors['cf_'+field.name] ? 'has-error' : ''">
-                                            <option value="">اختر...</option>
+                                            <option value="">{{ __('wizard.common.select_placeholder') }}</option>
                                             <template x-for="opt in (field.options || [])" :key="opt.value">
                                                 <option :value="opt.value" x-text="opt.label"></option>
                                             </template>
@@ -530,7 +530,7 @@
                                         <label class="inline-flex items-center gap-2 cursor-pointer">
                                             <input type="checkbox" x-model="formData.custom_fields[field.name]"
                                                    class="w-5 h-5 rounded accent-[#1D9E75]">
-                                            <span class="text-sm text-zinc-600">نعم</span>
+                                            <span class="text-sm text-zinc-600">{{ __('wizard.common.yes') }}</span>
                                         </label>
                                     </template>
 
@@ -557,8 +557,8 @@
                  x-transition:enter-start="opacity-0 translate-x-8"
                  x-transition:enter-end="opacity-100 translate-x-0">
 
-                <h2 class="text-lg font-bold text-zinc-900 mb-1">أضف الصور</h2>
-                <p class="text-sm text-zinc-400 mb-5">صور واضحة ترفع فرص بيع إعلانك (حتى 10 صور، 5 ميجا لكل صورة)</p>
+                <h2 class="text-lg font-bold text-zinc-900 mb-1">{{ __('wizard.step3.title') }}</h2>
+                <p class="text-sm text-zinc-400 mb-5">{{ __('wizard.step3.subtitle') }}</p>
 
                 {{-- Drop zone --}}
                 <div class="drop-zone border-2 border-dashed border-gray-300 rounded-2xl min-h-40 flex flex-col items-center justify-center text-center p-6 cursor-pointer transition-colors"
@@ -572,8 +572,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                     </div>
-                    <p class="text-sm font-bold text-zinc-700">اسحب الصور هنا أو اضغط للاختيار</p>
-                    <p class="text-xs text-zinc-400 mt-1">JPEG، PNG، WEBP — بحد أقصى 5 ميجابايت للصورة</p>
+                    <p class="text-sm font-bold text-zinc-700">{{ __('wizard.step3.drop_text') }}</p>
+                    <p class="text-xs text-zinc-400 mt-1">{{ __('wizard.step3.formats_hint') }}</p>
                     <input type="file" x-ref="fileInput" class="hidden" multiple
                            accept="image/jpeg,image/png,image/webp"
                            @change="addImages($event.target.files); $event.target.value=''">
@@ -585,12 +585,12 @@
                     <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                     </svg>
-                    <span>يُفضّل إضافة صورة واحدة على الأقل لزيادة فرص بيع إعلانك.</span>
+                    <span>{{ __('wizard.step3.warning_no_image') }}</span>
                 </div>
 
                 {{-- Image count --}}
                 <p x-show="images.length > 0" x-cloak class="mt-4 text-xs font-semibold text-zinc-500">
-                    <span x-text="images.length"></span> / 10 صور
+                    <span x-text="images.length"></span> / 10 {{ __('wizard.step3.count_suffix') }}
                 </p>
 
                 {{-- Previews --}}
@@ -606,7 +606,7 @@
                             </button>
                             <span x-show="index === 0"
                                   class="absolute bottom-1.5 start-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#1D9E75] text-white">
-                                الرئيسية
+                                {{ __('wizard.step3.main_badge') }}
                             </span>
                         </div>
                     </template>
@@ -621,30 +621,30 @@
                  x-transition:enter-start="opacity-0 translate-x-8"
                  x-transition:enter-end="opacity-100 translate-x-0">
 
-                <h2 class="text-lg font-bold text-zinc-900 mb-1">معلومات التواصل ومراجعة</h2>
-                <p class="text-sm text-zinc-400 mb-5">راجع بياناتك قبل النشر</p>
+                <h2 class="text-lg font-bold text-zinc-900 mb-1">{{ __('wizard.step4.title') }}</h2>
+                <p class="text-sm text-zinc-400 mb-5">{{ __('wizard.step4.subtitle') }}</p>
 
                 {{-- Contact fields --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">رقم التواصل <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.step4.phone_label') }} <span class="text-red-500">*</span></label>
                         <input type="text" x-model="formData.phone" inputmode="tel"
                                class="wizard-input" :class="errors.phone ? 'has-error' : ''"
                                placeholder="01xxxxxxxxx">
                         <p x-show="errors.phone" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.phone"></p>
                         @if(! $isPhoneVerified)
                         <p class="mt-1.5 flex items-center gap-1 text-xs text-[#1D9E75] font-semibold">
-                            <span>💡</span> وثّق رقم هاتفك واحصل على 50 نقطة
+                            <span>💡</span> {{ __('wizard.step4.verify_phone_hint') }}
                         </p>
                         @endif
                     </div>
 
                     {{-- Governorate (level 0) --}}
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">المحافظة</label>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.step4.governorate_label') }}</label>
                         <select x-model="formData.governorate_id" @change="onGovernorateChange()"
                                 class="wizard-input">
-                            <option value="">اختر المحافظة</option>
+                            <option value="">{{ __('wizard.step4.governorate_placeholder') }}</option>
                             <template x-for="gov in governorates" :key="gov.id">
                                 <option :value="gov.id" x-text="gov.name_ar"></option>
                             </template>
@@ -653,12 +653,12 @@
 
                     {{-- City (level 1, child of selected governorate) --}}
                     <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">المدينة</label>
+                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.step4.city_label') }}</label>
                         <select x-model="formData.location_id"
                                 :disabled="!formData.governorate_id"
                                 class="wizard-input disabled:bg-gray-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
                                 :class="errors.location_id ? 'has-error' : ''">
-                            <option value="" x-text="formData.governorate_id ? 'اختر المدينة' : 'اختر المحافظة أولاً'"></option>
+                            <option value="" x-text="formData.governorate_id ? '{{ __('wizard.step4.city_placeholder') }}' : '{{ __('wizard.step4.city_placeholder_no_gov') }}'"></option>
                             <template x-for="city in cities" :key="city.id">
                                 <option :value="city.id" x-text="city.name_ar"></option>
                             </template>
@@ -669,7 +669,7 @@
 
                 {{-- Completion checklist --}}
                 <div class="bg-green-50 border border-green-100 rounded-2xl p-4 mb-6">
-                    <h3 class="text-sm font-bold text-zinc-800 mb-3">قائمة المراجعة</h3>
+                    <h3 class="text-sm font-bold text-zinc-800 mb-3">{{ __('wizard.step4.checklist_title') }}</h3>
                     <ul class="space-y-2 text-sm">
                         <template x-for="item in checklist" :key="item.label">
                             <li class="flex items-center gap-2">
@@ -690,17 +690,17 @@
                     {{-- Category --}}
                     <div class="border border-gray-100 rounded-2xl p-4 flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-[11px] font-bold text-zinc-400 mb-1">القسم</p>
+                            <p class="text-[11px] font-bold text-zinc-400 mb-1">{{ __('wizard.step4.summary_category') }}</p>
                             <p class="text-sm font-semibold text-zinc-800" x-text="activeCategory ? activeCategory.name : '—'"></p>
                         </div>
-                        <button type="button" @click="goToStep(1)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">تعديل</button>
+                        <button type="button" @click="goToStep(1)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
                     </div>
 
                     {{-- Details --}}
                     <div class="border border-gray-100 rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-3 mb-2">
-                            <p class="text-[11px] font-bold text-zinc-400">تفاصيل الإعلان</p>
-                            <button type="button" @click="goToStep(2)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">تعديل</button>
+                            <p class="text-[11px] font-bold text-zinc-400">{{ __('wizard.step4.summary_details') }}</p>
+                            <button type="button" @click="goToStep(2)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
                         </div>
                         <p class="text-sm font-bold text-zinc-800" x-text="formData.title || '—'"></p>
                         <p class="text-xs text-zinc-500 mt-1 line-clamp-2" x-text="formData.description || ''"></p>
@@ -708,7 +708,7 @@
                             <span class="text-[11px] font-semibold bg-gray-50 text-zinc-600 px-2.5 py-1 rounded-lg" x-text="conditionLabel()"></span>
                             <span class="text-[11px] font-semibold bg-gray-50 text-zinc-600 px-2.5 py-1 rounded-lg" x-text="priceTypeLabel()"></span>
                             <span class="text-[11px] font-bold bg-green-50 text-[#1D9E75] px-2.5 py-1 rounded-lg">
-                                <span x-text="formData.price ? Number(formData.price).toLocaleString('en-US') : '0'"></span> ج.م
+                                <span x-text="formData.price ? Number(formData.price).toLocaleString('en-US') : '0'"></span> {{ __('wizard.common.currency') }}
                             </span>
                         </div>
                     </div>
@@ -716,15 +716,15 @@
                     {{-- Images --}}
                     <div class="border border-gray-100 rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-3 mb-2">
-                            <p class="text-[11px] font-bold text-zinc-400">الصور (<span x-text="images.length"></span>)</p>
-                            <button type="button" @click="goToStep(3)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">تعديل</button>
+                            <p class="text-[11px] font-bold text-zinc-400">{{ __('wizard.step4.summary_images') }} (<span x-text="images.length"></span>)</p>
+                            <button type="button" @click="goToStep(3)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
                         </div>
                         <div x-show="imagePreviews.length > 0" class="flex gap-2 flex-wrap">
                             <template x-for="preview in imagePreviews.slice(0,5)" :key="preview.url">
                                 <img :src="preview.url" class="w-12 h-12 rounded-lg object-cover border border-gray-200">
                             </template>
                         </div>
-                        <p x-show="imagePreviews.length === 0" x-cloak class="text-xs text-zinc-400">لم تتم إضافة صور</p>
+                        <p x-show="imagePreviews.length === 0" x-cloak class="text-xs text-zinc-400">{{ __('wizard.step4.no_images') }}</p>
                     </div>
                 </div>
 
@@ -732,15 +732,15 @@
                 <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                     <div class="flex items-center justify-between gap-2 mb-1">
                         <h3 class="text-sm font-bold text-zinc-800 flex items-center gap-1.5">
-                            <span>⭐</span> هل تريد تمييز إعلانك؟
+                            <span>⭐</span> {{ __('wizard.feature.title') }}
                         </h3>
                         <span class="text-xs font-semibold text-zinc-500">
-                            نقاطك الحالية:
+                            {{ __('wizard.feature.current_points') }}
                             <span class="text-[#1D9E75] font-bold" x-text="userPoints"></span>
-                            نقطة
+                            {{ __('wizard.common.points_unit') }}
                         </span>
                     </div>
-                    <p class="text-xs text-zinc-500 mb-3">الإعلانات المميزة تظهر في المقدمة وتحصل على مشاهدات أكثر.</p>
+                    <p class="text-xs text-zinc-500 mb-3">{{ __('wizard.feature.desc') }}</p>
                     <select x-model.number="formData.feature_days" class="wizard-input">
                         <template x-for="opt in featureOptions" :key="opt.days">
                             <option
@@ -749,16 +749,16 @@
                                 x-text="opt.cost === 0
                                     ? opt.label
                                     : (userPoints >= opt.cost
-                                        ? opt.label + ' — ' + opt.cost + ' نقطة'
-                                        : opt.label + ' — ' + opt.cost + ' نقطة  (نقاط غير كافية)')">
+                                        ? opt.label + ' — ' + opt.cost + ' {{ __('wizard.common.points_unit') }}'
+                                        : opt.label + ' — ' + opt.cost + ' {{ __('wizard.common.points_unit') }}  {{ __('wizard.feature.insufficient') }}')">
                             </option>
                         </template>
                     </select>
                     <p x-show="formData.feature_days > 0" x-cloak
                        class="mt-2 text-xs text-amber-700 font-semibold">
-                        سيتم خصم
+                        {{ __('wizard.feature.deduct_prefix') }}
                         <span x-text="NILEX_FEATURE_COSTS[formData.feature_days] ?? 0"></span>
-                        نقطة بعد نشر الإعلان مباشرةً.
+                        {{ __('wizard.feature.deduct_suffix') }}
                     </p>
                 </div>
             </div>
@@ -773,14 +773,14 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
                     </svg>
-                    السابق
+                    {{ __('wizard.common.prev') }}
                 </button>
                 <div x-show="currentStep === 1"></div>
 
                 {{-- Next --}}
                 <button type="button" @click="nextStep()" x-show="currentStep < totalSteps"
                         class="inline-flex items-center gap-1.5 bg-[#1D9E75] hover:bg-[#178a64] text-white font-bold px-6 py-2.5 rounded-xl text-sm ms-auto min-h-[44px]">
-                    التالي
+                    {{ __('wizard.common.next') }}
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -794,10 +794,10 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
-                        <span x-text="isSubmitting ? 'جاري النشر...' : 'نشر الإعلان الآن 🚀'"></span>
+                        <span x-text="isSubmitting ? '{{ __('wizard.step4.submitting') }}' : '{{ __('wizard.step4.submit_btn') }}'"></span>
                     </button>
                     <p class="text-[11px] text-zinc-400 flex items-center gap-1">
-                        <span>💡</span> ستحصل على 3 نقاط عند نشر هذا الإعلان
+                        <span>💡</span> {{ __('wizard.step4.submit_hint') }}
                     </p>
                 </div>
             </div>
@@ -808,7 +808,7 @@
             <svg class="w-3.5 h-3.5 inline-block -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
-            يتم حفظ بياناتك تلقائياً أثناء الكتابة
+            {{ __('wizard.common.autosave') }}
         </p>
     </div>
 </div>
@@ -819,6 +819,8 @@
     const NILEX_CATEGORIES    = @json($categories);
     const NILEX_LOCATIONS     = @json($governorates);
     const NILEX_CAR_BRANDS    = @json($carBrands);
+    // Wizard UI translations (B.3a). Consumed by the Alpine component in B.3b/B.3c.
+    const NILEX_WIZARD_I18N   = @json(__('wizard'));
     const NILEX_STORAGE_BASE  = "{{ asset('storage') }}";
     const NILEX_STORE_URL     = "{{ route('listings.store') }}";
     const NILEX_AI_URL        = "{{ route('listings.ai-generate') }}";
