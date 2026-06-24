@@ -2,12 +2,12 @@
 
 @extends('layouts.frontend')
 
-@section('title', $listing->title . ' — ' . number_format($listing->price) . ' ج.م | نايلكس')
+@section('title', $listing->title . ' — ' . number_format($listing->price) . ' ' . __('ui.sections.currency') . ' | ' . __('listing.detail.brand'))
 
 @push('meta')
     <meta name="description" content="{{ Str::limit(strip_tags($listing->description), 160) }}">
     <meta property="og:type" content="product">
-    <meta property="og:title" content="{{ $listing->title }} — {{ number_format($listing->price) }} ج.م">
+    <meta property="og:title" content="{{ $listing->title }} — {{ number_format($listing->price) }} {{ __('ui.sections.currency') }}">
     <meta property="og:description" content="{{ Str::limit(strip_tags($listing->description), 100) }}">
     <meta property="og:image" content="{{ $listing->getFirstMediaUrl('images', 'full_hd') }}">
     <meta property="og:url" content="{{ url()->current() }}">
@@ -28,54 +28,59 @@
 @php
     $media     = $listing->getMedia('images');
     $fullUrls  = $media->map(fn($m) => $m->getUrl('full_hd'))->values()->toJson();
-    // Human-readable labels for the hardcoded car/real-estate custom fields
-    // (their categories have no custom_fields_schema, so we map them here so that
-    // both admin- and user-created listings render readable Arabic instead of raw keys).
+    // Locale-aware labels for the hardcoded car/real-estate custom fields (their
+    // categories have no custom_fields_schema). 13 reuse the wizard.car.* /
+    // wizard.realestate.* keys (exact matches); only color/compound have a
+    // dedicated detail-page override (the wizard wording reads wrong as a label).
     $cfLabels = [
-        'year'           => 'سنة الصنع',
-        'transmission'   => 'ناقل الحركة',
-        'fuel'           => 'نوع الوقود',
-        'condition'      => 'حالة السيارة',
-        'mileage'        => 'عداد الكيلومترات',
-        'color'          => 'اللون',
-        'car_brand_other'=> 'الماركة',
-        'property_type'  => 'نوع العقار',
-        'listing_type'   => 'نوع العرض',
-        'rooms'          => 'عدد الغرف',
-        'bathrooms'      => 'عدد الحمامات',
-        'floor'          => 'الدور',
-        'finishing'      => 'نوع التشطيب',
-        'area'           => 'المساحة',
-        'compound'       => 'كمباوند',
+        'year'            => __('wizard.car.year_label'),
+        'transmission'    => __('wizard.car.transmission_label'),
+        'fuel'            => __('wizard.car.fuel_label'),
+        'condition'       => __('wizard.car.condition_label'),
+        'mileage'         => __('wizard.car.mileage_label'),
+        'color'           => __('listing.detail.label_color'),
+        'car_brand_other' => __('wizard.car.brand_label'),
+        'property_type'   => __('wizard.realestate.property_type_label'),
+        'listing_type'    => __('wizard.realestate.listing_type_label'),
+        'rooms'           => __('wizard.realestate.rooms_label'),
+        'bathrooms'       => __('wizard.realestate.bathrooms_label'),
+        'floor'           => __('wizard.realestate.floor_label'),
+        'finishing'       => __('wizard.realestate.finishing_label'),
+        'area'            => __('wizard.realestate.area_label'),
+        'compound'        => __('listing.detail.label_compound'),
     ];
-    // Coded select values → Arabic labels (must match the wizard / admin option lists).
-    $cfValueMaps = [
-        'transmission'  => ['automatic' => 'أوتوماتيك', 'manual' => 'مانيوال'],
-        'fuel'          => ['petrol' => 'بنزين', 'diesel' => 'ديزل', 'electric' => 'كهربائي', 'hybrid' => 'هجين', 'gas' => 'غاز (CNG/LPG)'],
-        'property_type' => ['apartment' => 'شقة', 'villa' => 'فيلا', 'duplex' => 'دوبليكس', 'studio' => 'استوديو', 'chalet' => 'شاليه', 'office' => 'مكتب', 'shop' => 'محل تجاري', 'warehouse' => 'مخزن', 'land' => 'أرض', 'building' => 'عمارة'],
-        'listing_type'  => ['sale' => 'للبيع', 'rent' => 'للإيجار'],
-        'rooms'         => ['1' => 'غرفة واحدة', '2' => 'غرفتان', '3' => '3 غرف', '4' => '4 غرف', '5' => '5 غرف', '6+' => '6 غرف أو أكثر'],
-        'bathrooms'     => ['1' => 'حمام واحد', '2' => 'حمامان', '3' => '3 حمامات', '4+' => '4 أو أكثر'],
-        'floor'         => ['ground' => 'أرضي', '1' => 'الأول', '2' => 'الثاني', '3' => 'الثالث', '4' => 'الرابع', '5' => 'الخامس', '6+' => 'السادس فأكثر', 'rooftop' => 'روف'],
-        'finishing'     => ['super_lux' => 'سوبر لوكس', 'lux' => 'لوكس', 'semi_lux' => 'نص لوكس', 'core_shell' => 'كور وشل', 'unfinished' => 'تشطيب عادي', 'furnished' => 'مفروش'],
-        'compound'      => ['yes' => 'نعم', 'no' => 'لا'],
+    // Coded select values → locale-aware labels reuse the SAME wizard.options.*
+    // keys (B.3b). Numeric/free-text fields fall back to the raw stored value.
+    $cfSuffix = [
+        'mileage' => ' '.__('wizard.car.mileage_unit'),
+        'area'    => ' '.__('wizard.realestate.area_unit'),
     ];
-    // Numeric fields that read better with a unit suffix.
-    $cfSuffix = ['mileage' => ' كم', 'area' => ' م²'];
+    // `condition` is stored as an Arabic literal (B.3b), so it can't key into
+    // wizard.options.condition directly. Flip the AR option list to recover the
+    // neutral key, then render the current-locale label (stored value unchanged).
+    $conditionKeyByAr = array_flip(__('wizard.options.condition', [], 'ar'));
 
     $displayFields = [];
     // Hide the generic "أخرى" brand row when a manual brand name was supplied.
     $brandIsOther = $listing->carBrand && $listing->carBrand->slug === 'other'
         && !empty($listing->custom_fields_values['car_brand_other'] ?? null);
-    if ($listing->carBrand && ! $brandIsOther) $displayFields[] = ['label' => 'الماركة',  'value' => $listing->carBrand->name_ar];
-    if ($listing->carModel)                    $displayFields[] = ['label' => 'الموديل', 'value' => $listing->carModel->name_ar];
+    if ($listing->carBrand && ! $brandIsOther) $displayFields[] = ['label' => __('wizard.car.brand_label'), 'value' => $listing->carBrand->name];
+    if ($listing->carModel)                    $displayFields[] = ['label' => __('wizard.car.model_label'), 'value' => $listing->carModel->name];
     if (!empty($listing->custom_fields_values)) {
         $schema   = $listing->category?->custom_fields_schema ?? [];
-        $labelMap = collect($schema)->keyBy('name')->map(fn($f) => $f['label_ar'] ?? $f['name']);
+        $labelMap = collect($schema)->keyBy('name')->map(fn($f) => app()->getLocale() === 'ar'
+            ? ($f['label_ar'] ?? $f['name'])
+            : ($f['label_en'] ?? $f['label_ar'] ?? $f['name']));
         foreach ($listing->custom_fields_values as $key => $val) {
             if ($val !== null && $val !== '') {
                 $label = $labelMap[$key] ?? ($cfLabels[$key] ?? $key);
-                $value = $cfValueMaps[$key][$val] ?? $val;
+                if ($key === 'condition') {
+                    $optKey = $conditionKeyByAr[$val] ?? null;
+                    $value  = $optKey ? __('wizard.options.condition.'.$optKey) : $val;
+                } else {
+                    $optTrans = __('wizard.options.'.$key.'.'.$val);
+                    $value    = $optTrans === 'wizard.options.'.$key.'.'.$val ? $val : $optTrans;
+                }
                 if (isset($cfSuffix[$key])) {
                     $value .= $cfSuffix[$key];
                 }
@@ -142,7 +147,7 @@
                  headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' },
                  body: JSON.stringify({ amount: this.offerAmount, message: this.offerMsg })
              })
-             .then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error || 'حدث خطأ'); return d; })
+             .then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error || '{{ __('listing.detail.offer_error') }}'); return d; })
              .then(d => { this.offerFeedback = { type: 'success', text: d.success }; setTimeout(() => { this.offerOpen = false; this.offerFeedback = null; this.offerAmount = ''; this.offerMsg = ''; }, 2500); })
              .catch(e => { this.offerFeedback = { type: 'error', text: e.message }; })
              .finally(() => this.offerSubmitting = false);
@@ -154,7 +159,7 @@
     <div class="border-b border-zinc-100 bg-white">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 py-3 text-sm text-zinc-400 font-medium flex-wrap" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
-                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">الرئيسية</a>
+                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">{{ __('ui.footer.link_home') }}</a>
                 @if($listing->category)
                     <svg class="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     <a href="{{ route('category.show', $listing->category->slug) }}" class="hover:text-[#1D9E75] transition-colors">{{ $listing->category->name }}</a>
@@ -210,7 +215,7 @@
                                 <svg class="w-16 h-16 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
-                                <span class="text-sm font-medium text-zinc-400">لا توجد صور</span>
+                                <span class="text-sm font-medium text-zinc-400">{{ __('listing.detail.no_images') }}</span>
                             </div>
                         @endif
                     </div>
@@ -236,7 +241,7 @@
                     @if($listing->is_featured)
                         <span class="inline-flex items-center gap-1.5 text-xs font-bold text-[#1D9E75] bg-[#1D9E75]/8 px-3 py-1 rounded-full mb-3 border border-[#1D9E75]/15">
                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            إعلان مميز
+                            {{ __('listing.detail.featured') }}
                         </span>
                     @endif
                     <h1 class="text-2xl sm:text-3xl font-black text-zinc-900 leading-snug">{{ $listing->title }}</h1>
@@ -244,7 +249,7 @@
                         @if($listing->location)
                             <span class="flex items-center gap-1.5">
                                 <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                {{ $listing->location->name_ar }}@if($listing->province), {{ $listing->province->name_ar }}@endif
+                                {{ $listing->location->name }}@if($listing->province), {{ $listing->province->name }}@endif
                             </span>
                         @endif
                         <span class="flex items-center gap-1.5">
@@ -253,7 +258,7 @@
                         </span>
                         <span class="flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            {{ number_format($listing->views_count) }} مشاهدة
+                            {{ number_format($listing->views_count) }} {{ __('listing.detail.views_suffix') }}
                         </span>
                     </div>
                 </div>
@@ -261,7 +266,7 @@
                 {{-- Custom fields -------------------------------------------------- --}}
                 @if(count($displayFields) > 0)
                     <div class="bg-white rounded-xl border border-zinc-200 p-5">
-                        <h2 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">تفاصيل الإعلان</h2>
+                        <h2 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">{{ __('listing.detail.specs_heading') }}</h2>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             @foreach($displayFields as $field)
                                 <div class="bg-zinc-50 rounded-xl px-4 py-3 border border-zinc-100">
@@ -271,9 +276,9 @@
                             @endforeach
                             @if($listing->condition)
                                 <div class="bg-zinc-50 rounded-xl px-4 py-3 border border-zinc-100">
-                                    <p class="text-[11px] text-zinc-400 font-semibold mb-0.5">الحالة</p>
+                                    <p class="text-[11px] text-zinc-400 font-semibold mb-0.5">{{ __('listing.detail.condition_heading') }}</p>
                                     <p class="font-bold text-sm {{ $listing->condition === 'new' ? 'text-[#1D9E75]' : 'text-amber-700' }}">
-                                        {{ $listing->condition === 'new' ? '✦ جديد' : '◉ مستعمل' }}
+                                        {{ $listing->condition === 'new' ? '✦ ' . __('listing.detail.condition_new') : '◉ ' . __('listing.detail.condition_used') }}
                                     </p>
                                 </div>
                             @endif
@@ -283,7 +288,7 @@
 
                 {{-- Description ---------------------------------------------------- --}}
                 <div class="bg-white rounded-xl border border-zinc-200 p-5">
-                    <h2 class="text-base font-black text-zinc-900 mb-4">وصف الإعلان</h2>
+                    <h2 class="text-base font-black text-zinc-900 mb-4">{{ __('listing.detail.description_heading') }}</h2>
                     <div class="text-zinc-600 leading-relaxed text-sm">
                         {!! $listing->description !!}
                     </div>
@@ -295,7 +300,7 @@
                         <button @click="offerOpen = true"
                                 class="w-full flex justify-center items-center gap-2.5 border-2 border-[#1D9E75]/30 hover:border-[#1D9E75] text-[#1D9E75] hover:bg-[#1D9E75] hover:text-white px-6 py-3.5 rounded-xl font-bold text-sm">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
-                            قدّم عرض سعر للبائع
+                            {{ __('listing.detail.make_offer') }}
                         </button>
                     </div>
                 @endif
@@ -306,12 +311,12 @@
                         {{ mb_substr($listing->user->name, 0, 1) }}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-[11px] text-zinc-400 font-semibold mb-0.5">المعلن</p>
+                        <p class="text-[11px] text-zinc-400 font-semibold mb-0.5">{{ __('listing.detail.seller') }}</p>
                         <div class="flex items-center gap-2 flex-wrap">
                             <p class="font-black text-zinc-900 leading-snug">{{ $listing->user->name }}</p>
                             @include('frontend.partials.business-badge', ['seller' => $listing->user])
                         </div>
-                        <p class="text-xs text-zinc-400 mt-0.5">عضو منذ {{ $listing->user->created_at->format('Y/m') }}</p>
+                        <p class="text-xs text-zinc-400 mt-0.5">{{ __('listing.detail.member_since') }} {{ $listing->user->created_at->format('Y/m') }}</p>
                     </div>
                 </div>
 
@@ -323,14 +328,14 @@
 
                     {{-- Price card --}}
                     <div class="bg-white rounded-xl border border-zinc-200 p-5">
-                        <p class="text-xs text-zinc-400 font-semibold mb-1.5">السعر المطلوب</p>
+                        <p class="text-xs text-zinc-400 font-semibold mb-1.5">{{ __('listing.detail.asking_price') }}</p>
                         <div class="text-3xl font-black text-[#1D9E75]">
                             {{ number_format($listing->price) }}
-                            <span class="text-base font-bold text-zinc-400">ج.م</span>
+                            <span class="text-base font-bold text-zinc-400">{{ __('ui.sections.currency') }}</span>
                         </div>
                         @if($listing->condition)
                             <span class="inline-block mt-2 text-xs font-bold px-2.5 py-1 rounded-full {{ $listing->condition === 'new' ? 'bg-[#1D9E75]/8 text-[#1D9E75]' : 'bg-amber-50 text-amber-700' }}">
-                                {{ $listing->condition === 'new' ? 'جديد' : 'مستعمل' }}
+                                {{ $listing->condition === 'new' ? __('listing.detail.condition_new') : __('listing.detail.condition_used') }}
                             </span>
                         @endif
                     </div>
@@ -343,12 +348,12 @@
                                     class="w-full flex items-center justify-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] text-white py-3.5 rounded-xl font-bold disabled:opacity-60">
                                 <span x-show="!loading">
                                     <svg class="w-4 h-4 inline me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                    إظهار رقم التواصل
+                                    {{ __('listing.detail.reveal_phone') }}
                                 </span>
-                                <span x-show="loading" style="display:none;">جاري التحميل...</span>
+                                <span x-show="loading" style="display:none;">{{ __('listing.detail.loading') }}</span>
                             </button>
                             @guest
-                                <p class="text-xs text-center text-zinc-400 mt-2">يجب تسجيل الدخول لعرض الرقم</p>
+                                <p class="text-xs text-center text-zinc-400 mt-2">{{ __('listing.detail.login_to_view') }}</p>
                             @endguest
                         </div>
                         {{-- After reveal --}}
@@ -357,7 +362,7 @@
                                class="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-white"
                                style="background:#25D366;">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z M12.043 0C5.384 0 0 5.384 0 12.043c0 2.138.566 4.257 1.645 6.105L.057 23.814a.5.5 0 00.615.621l5.794-1.512a12.003 12.003 0 005.577 1.379h.005C18.703 24.302 24.086 18.918 24.086 12.258 24.086 5.599 18.702.214 12.043 0z"/></svg>
-                                تواصل واتساب
+                                {{ __('listing.detail.whatsapp') }}
                             </a>
                             <a :href="'tel:' + phone"
                                class="flex items-center justify-center gap-2 w-full bg-zinc-900 hover:bg-zinc-800 text-white py-3.5 rounded-xl font-bold">
@@ -371,22 +376,22 @@
                     <div class="bg-white rounded-xl border border-zinc-200 p-5 text-sm space-y-0">
                         @if($listing->category)
                             <div class="flex justify-between items-center py-2.5 border-b border-zinc-50">
-                                <span class="text-zinc-400 font-semibold">القسم</span>
+                                <span class="text-zinc-400 font-semibold">{{ __('listing.detail.category') }}</span>
                                 <a href="{{ route('category.show', $listing->category->slug) }}" class="font-bold text-zinc-800 hover:text-[#1D9E75] transition-colors">{{ $listing->category->name }}</a>
                             </div>
                         @endif
                         @if($listing->province || $listing->location)
                             <div class="flex justify-between items-center py-2.5 border-b border-zinc-50">
-                                <span class="text-zinc-400 font-semibold">الموقع</span>
-                                <span class="font-bold text-zinc-800 text-end max-w-[130px]">{{ $listing->province?->name_ar ?? $listing->location?->name_ar }}</span>
+                                <span class="text-zinc-400 font-semibold">{{ __('listing.detail.location') }}</span>
+                                <span class="font-bold text-zinc-800 text-end max-w-[130px]">{{ $listing->province?->name ?? $listing->location?->name }}</span>
                             </div>
                         @endif
                         <div class="flex justify-between items-center py-2.5 border-b border-zinc-50">
-                            <span class="text-zinc-400 font-semibold">تاريخ النشر</span>
+                            <span class="text-zinc-400 font-semibold">{{ __('listing.detail.publish_date') }}</span>
                             <span class="font-bold text-zinc-800">{{ $listing->created_at->format('Y/m/d') }}</span>
                         </div>
                         <div class="flex justify-between items-center py-2.5">
-                            <span class="text-zinc-400 font-semibold">المشاهدات</span>
+                            <span class="text-zinc-400 font-semibold">{{ __('listing.detail.views') }}</span>
                             <span class="font-bold text-zinc-800">{{ number_format($listing->views_count) }}</span>
                         </div>
                     </div>
@@ -408,15 +413,15 @@
             {{-- Price chip --}}
             <div class="shrink-0 min-w-0">
                 <p class="text-lg font-black text-[#1D9E75] leading-none">{{ number_format($listing->price) }}</p>
-                <p class="text-xs text-zinc-400 font-medium leading-none mt-0.5">ج.م</p>
+                <p class="text-xs text-zinc-400 font-medium leading-none mt-0.5">{{ __('ui.sections.currency') }}</p>
             </div>
 
             {{-- Before reveal --}}
             <div x-show="!revealed" class="flex-1">
                 <button @click="revealPhone()" :disabled="loading"
                         class="w-full flex items-center justify-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] text-white py-3 rounded-xl font-bold text-sm disabled:opacity-60">
-                    <span x-show="!loading">إظهار رقم البائع</span>
-                    <span x-show="loading" style="display:none;">جاري...</span>
+                    <span x-show="!loading">{{ __('listing.detail.reveal_phone_short') }}</span>
+                    <span x-show="loading" style="display:none;">{{ __('listing.detail.loading_short') }}</span>
                 </button>
             </div>
 
@@ -425,13 +430,13 @@
                 <a :href="'tel:' + phone"
                    class="flex-1 flex items-center justify-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white py-3 rounded-xl font-bold text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                    اتصال
+                    {{ __('listing.detail.call') }}
                 </a>
                 <a href="#" @click.prevent="trackWhatsappClick()"
                    class="flex-1 flex items-center justify-center gap-1.5 text-white py-3 rounded-xl font-bold text-sm"
                    style="background:#25D366;">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z M12.043 0C5.384 0 0 5.384 0 12.043c0 2.138.566 4.257 1.645 6.105L.057 23.814a.5.5 0 00.615.621l5.794-1.512a12.003 12.003 0 005.577 1.379h.005C18.703 24.302 24.086 18.918 24.086 12.258 24.086 5.599 18.702.214 12.043 0z"/></svg>
-                    واتساب
+                    {{ __('listing.detail.whatsapp_short') }}
                 </a>
             </div>
         </div>
@@ -493,12 +498,12 @@
                  class="bg-white rounded-xl border border-zinc-200 w-full max-w-md p-6"
                  x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100">
                 <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-xl font-black text-zinc-900">تقديم عرض سعر</h3>
+                    <h3 class="text-xl font-black text-zinc-900">{{ __('listing.detail.offer_title') }}</h3>
                     <button @click="offerOpen = false" class="text-zinc-400 hover:text-zinc-600 p-1">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <p class="text-zinc-500 text-sm mb-5">السعر المطلوب: <strong class="text-[#1D9E75]">{{ number_format($listing->price) }} ج.م</strong></p>
+                <p class="text-zinc-500 text-sm mb-5">{{ __('listing.detail.offer_asking') }} <strong class="text-[#1D9E75]">{{ number_format($listing->price) }} {{ __('ui.sections.currency') }}</strong></p>
 
                 <template x-if="offerFeedback">
                     <div :class="offerFeedback.type === 'success' ? 'bg-[#1D9E75]/8 text-[#178a64] border-[#1D9E75]/20' : 'bg-red-50 text-red-700 border-red-200'"
@@ -507,16 +512,16 @@
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-bold text-zinc-700 mb-1.5">سعرك المقترح (ج.م)</label>
+                        <label class="block text-sm font-bold text-zinc-700 mb-1.5">{{ __('listing.detail.offer_amount_label') }} ({{ __('ui.sections.currency') }})</label>
                         <input type="number" x-model="offerAmount"
                                class="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 font-bold text-lg text-zinc-900 focus:outline-none focus:border-zinc-400"
-                               placeholder="اكتب سعرك هنا...">
+                               placeholder="{{ __('listing.detail.offer_amount_placeholder') }}">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-zinc-700 mb-1.5">رسالة للبائع (اختياري)</label>
+                        <label class="block text-sm font-bold text-zinc-700 mb-1.5">{{ __('listing.detail.offer_msg_label') }}</label>
                         <textarea x-model="offerMsg" rows="3"
                                   class="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm text-zinc-900 focus:outline-none focus:border-zinc-400 resize-none"
-                                  placeholder="مثال: أنا جاهز للشراء اليوم..."></textarea>
+                                  placeholder="{{ __('listing.detail.offer_msg_placeholder') }}"></textarea>
                     </div>
                 </div>
 
@@ -524,12 +529,12 @@
                     <button @click="submitOffer()"
                             :disabled="offerSubmitting || !offerAmount"
                             class="flex-1 bg-[#1D9E75] hover:bg-[#178a64] text-white py-3 rounded-xl font-bold disabled:opacity-40 disabled:cursor-not-allowed">
-                        <span x-show="!offerSubmitting">إرسال العرض</span>
-                        <span x-show="offerSubmitting" style="display:none;">جاري الإرسال...</span>
+                        <span x-show="!offerSubmitting">{{ __('listing.detail.offer_submit') }}</span>
+                        <span x-show="offerSubmitting" style="display:none;">{{ __('listing.detail.offer_submitting') }}</span>
                     </button>
                     <button @click="offerOpen = false" :disabled="offerSubmitting"
                             class="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 py-3 rounded-xl font-bold">
-                        إلغاء
+                        {{ __('listing.detail.offer_cancel') }}
                     </button>
                 </div>
             </div>

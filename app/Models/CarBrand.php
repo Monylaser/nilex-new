@@ -17,6 +17,12 @@ class CarBrand extends Model
         ];
     }
 
+    /** Locale-aware name accessor (same pattern as Category/Location). */
+    public function getNameAttribute(): string
+    {
+        return app()->getLocale() === 'ar' ? $this->name_ar : $this->name_en;
+    }
+
     public function models(): HasMany
     {
         return $this->hasMany(CarModel::class)->orderBy('sort_order');

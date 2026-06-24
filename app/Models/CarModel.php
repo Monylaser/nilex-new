@@ -30,6 +30,12 @@ class CarModel extends Model
         });
     }
 
+    /** Locale-aware name accessor (same pattern as Category/Location). */
+    public function getNameAttribute(): string
+    {
+        return app()->getLocale() === 'ar' ? $this->name_ar : $this->name_en;
+    }
+
     public function brand(): BelongsTo
     {
         return $this->belongsTo(CarBrand::class, 'car_brand_id');
