@@ -132,6 +132,92 @@ return [
         'insufficient'   => '(insufficient points)',
         'deduct_prefix'  => 'You will be charged',
         'deduct_suffix'  => 'points right after the listing is published.',
+        'opt_0'          => 'No feature (free)',
+        'opt_1'          => '1 day',
+        'opt_3'          => '3 days',
+        'opt_7'          => '7 days',
+        'opt_14'         => '14 days',
+    ],
+
+    // Select-option labels for the listing wizard (B.3b). Keys are locale-neutral
+    // and match the `value` stored in custom_fields_values — except `condition`,
+    // whose stored value remains an Arabic literal (see create.blade.php).
+    'options' => [
+        'fuel' => [
+            'petrol'   => 'Petrol',
+            'diesel'   => 'Diesel',
+            'electric' => 'Electric',
+            'hybrid'   => 'Hybrid',
+            'gas'      => 'Gas (CNG/LPG)',
+        ],
+        'transmission' => [
+            'automatic' => 'Automatic',
+            'manual'    => 'Manual',
+        ],
+        'condition' => [
+            'fabrica'           => 'Factory (unpainted)',
+            'excellent'         => 'Excellent condition',
+            'good'              => 'Good condition',
+            'fair'              => 'Fair condition',
+            'needs_maintenance' => 'Needs maintenance',
+        ],
+        'property_type' => [
+            'apartment' => 'Apartment',
+            'villa'     => 'Villa',
+            'duplex'    => 'Duplex',
+            'studio'    => 'Studio',
+            'chalet'    => 'Chalet',
+            'office'    => 'Office',
+            'shop'      => 'Shop',
+            'warehouse' => 'Warehouse',
+            'land'      => 'Land',
+            'building'  => 'Building',
+        ],
+        'listing_type' => [
+            'sale' => 'For Sale',
+            'rent' => 'For Rent',
+        ],
+        'rooms' => [
+            '1'  => '1 room',
+            '2'  => '2 rooms',
+            '3'  => '3 rooms',
+            '4'  => '4 rooms',
+            '5'  => '5 rooms',
+            '6+' => '6+ rooms',
+        ],
+        'bathrooms' => [
+            '1'  => '1 bathroom',
+            '2'  => '2 bathrooms',
+            '3'  => '3 bathrooms',
+            '4+' => '4 or more',
+        ],
+        'floor' => [
+            'ground'  => 'Ground',
+            '1'       => '1st',
+            '2'       => '2nd',
+            '3'       => '3rd',
+            '4'       => '4th',
+            '5'       => '5th',
+            '6+'      => '6th or higher',
+            'rooftop' => 'Rooftop',
+        ],
+        'finishing' => [
+            'super_lux'  => 'Super Lux',
+            'lux'        => 'Lux',
+            'semi_lux'   => 'Semi Lux',
+            'core_shell' => 'Core & Shell',
+            'unfinished' => 'Unfinished',
+            'furnished'  => 'Furnished',
+        ],
+        'compound' => [
+            'yes' => 'Yes',
+            'no'  => 'No',
+        ],
+        'price_type' => [
+            'fixed'      => 'Fixed price',
+            'negotiable' => 'Negotiable',
+            'on_contact' => 'On contact',
+        ],
     ],
 
 ];

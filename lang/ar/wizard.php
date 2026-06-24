@@ -132,6 +132,92 @@ return [
         'insufficient'   => '(نقاط غير كافية)',
         'deduct_prefix'  => 'سيتم خصم',
         'deduct_suffix'  => 'نقطة بعد نشر الإعلان مباشرةً.',
+        'opt_0'          => 'بدون تمييز (مجاني)',
+        'opt_1'          => 'يوم واحد',
+        'opt_3'          => '3 أيام',
+        'opt_7'          => '7 أيام',
+        'opt_14'         => '14 يوم',
+    ],
+
+    // Select-option labels for the listing wizard (B.3b). Keys are locale-neutral
+    // and match the `value` stored in custom_fields_values — except `condition`,
+    // whose stored value remains an Arabic literal (see create.blade.php).
+    'options' => [
+        'fuel' => [
+            'petrol'   => 'بنزين',
+            'diesel'   => 'ديزل',
+            'electric' => 'كهربائي',
+            'hybrid'   => 'هجين',
+            'gas'      => 'غاز (CNG/LPG)',
+        ],
+        'transmission' => [
+            'automatic' => 'أوتوماتيك',
+            'manual'    => 'مانيوال',
+        ],
+        'condition' => [
+            'fabrica'           => 'فابريكا (لم تُدهن)',
+            'excellent'         => 'حالة ممتازة',
+            'good'              => 'حالة جيدة',
+            'fair'              => 'حالة مقبولة',
+            'needs_maintenance' => 'تحتاج صيانة',
+        ],
+        'property_type' => [
+            'apartment' => 'شقة',
+            'villa'     => 'فيلا',
+            'duplex'    => 'دوبليكس',
+            'studio'    => 'استوديو',
+            'chalet'    => 'شاليه',
+            'office'    => 'مكتب',
+            'shop'      => 'محل تجاري',
+            'warehouse' => 'مخزن',
+            'land'      => 'أرض',
+            'building'  => 'عمارة',
+        ],
+        'listing_type' => [
+            'sale' => 'للبيع',
+            'rent' => 'للإيجار',
+        ],
+        'rooms' => [
+            '1'  => 'غرفة واحدة',
+            '2'  => 'غرفتان',
+            '3'  => '3 غرف',
+            '4'  => '4 غرف',
+            '5'  => '5 غرف',
+            '6+' => '6 غرف أو أكثر',
+        ],
+        'bathrooms' => [
+            '1'  => 'حمام واحد',
+            '2'  => 'حمامان',
+            '3'  => '3 حمامات',
+            '4+' => '4 أو أكثر',
+        ],
+        'floor' => [
+            'ground'  => 'أرضي',
+            '1'       => 'الأول',
+            '2'       => 'الثاني',
+            '3'       => 'الثالث',
+            '4'       => 'الرابع',
+            '5'       => 'الخامس',
+            '6+'      => 'السادس فأكثر',
+            'rooftop' => 'روف',
+        ],
+        'finishing' => [
+            'super_lux'  => 'سوبر لوكس',
+            'lux'        => 'لوكس',
+            'semi_lux'   => 'نص لوكس',
+            'core_shell' => 'كور وشل',
+            'unfinished' => 'تشطيب عادي',
+            'furnished'  => 'مفروش',
+        ],
+        'compound' => [
+            'yes' => 'نعم',
+            'no'  => 'لا',
+        ],
+        'price_type' => [
+            'fixed'      => 'سعر ثابت',
+            'negotiable' => 'قابل للتفاوض',
+            'on_contact' => 'عند التواصل',
+        ],
     ],
 
 ];
