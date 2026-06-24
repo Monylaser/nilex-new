@@ -274,4 +274,27 @@ return [
         'phone'       => 'Contact number entered',
     ],
 
+    // Server-side messages (B.3d) consumed by HomeController via __(). These are
+    // the locale-aware replacements for the literal Arabic strings previously
+    // passed into validate() and into the success/AI responses.
+    'server' => [
+        'price_max'              => 'The entered price is too high, please check the number',
+        'car_brand_required'     => 'Brand is required',
+        'car_model_required'     => 'Model is required',
+        'car_model_not_in_brand' => 'The selected model does not belong to this brand',
+        'fuel_required'          => 'Fuel type is required',
+        'transmission_required'  => 'Transmission is required',
+        'year_required'          => 'Year is required',
+        'condition_required'     => 'Car condition is required',
+        'car_brand_other_required' => 'Enter the brand name',
+        'property_type_required' => 'Property type is required',
+        'listing_type_required'  => 'Listing type is required',
+        // Dynamic custom-field required message (:field is the locale-aware label).
+        'field_required'         => ':field is required',
+        // Success flash (non-AJAX fallback path only — AJAX redirects instead).
+        'created_success'        => 'Your listing was saved successfully, and you earned 3 points! 🚀',
+        // AI assistant failure (overrides the JS fallback when present).
+        'ai_failed'              => 'Could not generate the listing right now (possibly due to usage limits). You can fill in the data manually and continue.',
+    ],
+
 ];

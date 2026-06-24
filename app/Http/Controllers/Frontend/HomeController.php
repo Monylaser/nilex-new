@@ -118,7 +118,7 @@ class HomeController extends Controller
             // optional featuring after creation (0 = none)
             'feature_days' => 'nullable|integer|in:0,1,3,7,14',
         ], [
-            'price.max' => 'السعر المدخل كبير جداً، يرجى التحقق من الرقم',
+            'price.max' => __('wizard.server.price_max'),
         ]);
 
         $category = Category::findOrFail($validated['category_id']);
@@ -140,13 +140,13 @@ class HomeController extends Controller
                 'custom_fields_values.year'         => 'required',
                 'custom_fields_values.condition'    => 'required|string|max:255',
             ], [
-                'car_brand_id.required'                      => 'الماركة مطلوبة',
-                'car_model_id.required'                      => 'الموديل مطلوب',
-                'car_model_id.exists'                        => 'الموديل المختار لا يتبع هذه الماركة',
-                'custom_fields_values.fuel.required'         => 'نوع الوقود مطلوب',
-                'custom_fields_values.transmission.required' => 'ناقل الحركة مطلوب',
-                'custom_fields_values.year.required'         => 'سنة الصنع مطلوبة',
-                'custom_fields_values.condition.required'    => 'حالة السيارة مطلوبة',
+                'car_brand_id.required'                      => __('wizard.server.car_brand_required'),
+                'car_model_id.required'                      => __('wizard.server.car_model_required'),
+                'car_model_id.exists'                        => __('wizard.server.car_model_not_in_brand'),
+                'custom_fields_values.fuel.required'         => __('wizard.server.fuel_required'),
+                'custom_fields_values.transmission.required' => __('wizard.server.transmission_required'),
+                'custom_fields_values.year.required'         => __('wizard.server.year_required'),
+                'custom_fields_values.condition.required'    => __('wizard.server.condition_required'),
             ]);
 
             $brand = CarBrand::find($validated['car_brand_id'] ?? $request->input('car_brand_id'));
@@ -154,7 +154,7 @@ class HomeController extends Controller
                 $request->validate([
                     'custom_fields_values.car_brand_other' => 'required|string|max:255',
                 ], [
-                    'custom_fields_values.car_brand_other.required' => 'اكتب اسم الماركة',
+                    'custom_fields_values.car_brand_other.required' => __('wizard.server.car_brand_other_required'),
                 ]);
             }
         }
@@ -168,8 +168,8 @@ class HomeController extends Controller
                 'custom_fields_values.property_type' => 'required|string',
                 'custom_fields_values.listing_type'  => 'required|string',
             ], [
-                'custom_fields_values.property_type.required' => 'نوع العقار مطلوب',
-                'custom_fields_values.listing_type.required'  => 'نوع العرض مطلوب',
+                'custom_fields_values.property_type.required' => __('wizard.server.property_type_required'),
+                'custom_fields_values.listing_type.required'  => __('wizard.server.listing_type_required'),
             ]);
         }
 
@@ -181,7 +181,13 @@ class HomeController extends Controller
                 if (!empty($field['required'])) {
                     $key                            = "custom_fields_values.{$field['name']}";
                     $customRules[$key]              = 'required';
-                    $customMessages[$key . '.required'] = ($field['label_ar'] ?? $field['name']) . ' مطلوب';
+                    // Locale-aware field label: prefer label_en in non-Arabic locales,
+                    // falling back to label_ar then the raw field name. The Arabic
+                    // suffix is gone — the ":field is required" template handles it.
+                    $label = app()->getLocale() === 'ar'
+                        ? ($field['label_ar'] ?? $field['name'])
+                        : ($field['label_en'] ?? $field['label_ar'] ?? $field['name']);
+                    $customMessages[$key . '.required'] = __('wizard.server.field_required', ['field' => $label]);
                 }
             }
 
@@ -244,7 +250,7 @@ class HomeController extends Controller
             ]);
         }
 
-        return redirect()->route('dashboard')->with('success', 'تم حفظ الإعلان بنجاح، وكسبت 3 نقاط! 🚀');
+        return redirect()->route('dashboard')->with('success', __('wizard.server.created_success'));
     }
 
     /**
@@ -267,7 +273,7 @@ class HomeController extends Controller
         if (empty($result['title']) && empty($result['description'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'تعذّر توليد الإعلان حالياً (قد يكون بسبب تجاوز حد الاستخدام). يمكنك إكمال البيانات يدوياً والمتابعة.',
+                'message' => __('wizard.server.ai_failed'),
             ]);
         }
 

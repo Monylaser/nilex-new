@@ -274,4 +274,27 @@ return [
         'phone'       => 'تم إدخال رقم التواصل',
     ],
 
+    // Server-side messages (B.3d) consumed by HomeController via __(). These are
+    // the locale-aware replacements for the literal Arabic strings previously
+    // passed into validate() and into the success/AI responses.
+    'server' => [
+        'price_max'              => 'السعر المدخل كبير جداً، يرجى التحقق من الرقم',
+        'car_brand_required'     => 'الماركة مطلوبة',
+        'car_model_required'     => 'الموديل مطلوب',
+        'car_model_not_in_brand' => 'الموديل المختار لا يتبع هذه الماركة',
+        'fuel_required'          => 'نوع الوقود مطلوب',
+        'transmission_required'  => 'ناقل الحركة مطلوب',
+        'year_required'          => 'سنة الصنع مطلوبة',
+        'condition_required'     => 'حالة السيارة مطلوبة',
+        'car_brand_other_required' => 'اكتب اسم الماركة',
+        'property_type_required' => 'نوع العقار مطلوب',
+        'listing_type_required'  => 'نوع العرض مطلوب',
+        // Dynamic custom-field required message (:field is the locale-aware label).
+        'field_required'         => ':field مطلوب',
+        // Success flash (non-AJAX fallback path only — AJAX redirects instead).
+        'created_success'        => 'تم حفظ الإعلان بنجاح، وكسبت 3 نقاط! 🚀',
+        // AI assistant failure (overrides the JS fallback when present).
+        'ai_failed'              => 'تعذّر توليد الإعلان حالياً (قد يكون بسبب تجاوز حد الاستخدام). يمكنك إكمال البيانات يدوياً والمتابعة.',
+    ],
+
 ];
