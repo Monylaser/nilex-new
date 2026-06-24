@@ -1030,12 +1030,12 @@
             },
             get checklist() {
                 return [
-                    { label: 'تم اختيار القسم',        done: !!this.formData.category_id },
-                    { label: 'تم إدخال العنوان',        done: this.formData.title.trim().length > 0 },
-                    { label: 'تم إدخال الوصف',          done: this.formData.description.trim().length >= 20 },
-                    { label: 'تم تحديد السعر',          done: this.formData.price !== '' && Number(this.formData.price) >= 0 },
-                    { label: 'تمت إضافة صور',           done: this.images.length > 0 },
-                    { label: 'تم إدخال رقم التواصل',    done: this.formData.phone.trim().length > 0 },
+                    { label: NILEX_WIZARD_I18N.checklist.category,    done: !!this.formData.category_id },
+                    { label: NILEX_WIZARD_I18N.checklist.title,       done: this.formData.title.trim().length > 0 },
+                    { label: NILEX_WIZARD_I18N.checklist.description, done: this.formData.description.trim().length >= 20 },
+                    { label: NILEX_WIZARD_I18N.checklist.price,       done: this.formData.price !== '' && Number(this.formData.price) >= 0 },
+                    { label: NILEX_WIZARD_I18N.checklist.images,      done: this.images.length > 0 },
+                    { label: NILEX_WIZARD_I18N.checklist.phone,       done: this.formData.phone.trim().length > 0 },
                 ];
             },
 
@@ -1109,39 +1109,40 @@
 
                 if (step === 1) {
                     if (!this.formData.category_id) {
-                        this.errors.category_id = 'يجب اختيار القسم للمتابعة';
+                        this.errors.category_id = NILEX_WIZARD_I18N.validation.category_required;
                         ok = false;
                     } else if (this.selectedRoot && this.subCategories.length > 0
                                && this.formData.category_id == this.selectedRoot.id) {
-                        this.errors.category_id = 'يرجى اختيار القسم الفرعي';
+                        this.errors.category_id = NILEX_WIZARD_I18N.validation.subcategory_required;
                         ok = false;
                     }
                 }
 
                 if (step === 2) {
                     if (!this.formData.title.trim()) {
-                        this.errors.title = 'عنوان الإعلان مطلوب';
+                        this.errors.title = NILEX_WIZARD_I18N.validation.title_required;
                         ok = false;
                     } else if (this.formData.title.length > 255) {
-                        this.errors.title = 'العنوان يجب ألا يتجاوز 255 حرفاً';
+                        this.errors.title = NILEX_WIZARD_I18N.validation.title_max;
                         ok = false;
                     }
                     if (this.formData.description.trim().length < 20) {
-                        this.errors.description = 'الوصف يجب أن يكون 20 حرفاً على الأقل';
+                        this.errors.description = NILEX_WIZARD_I18N.validation.desc_min;
                         ok = false;
                     }
                     if (this.formData.price === '' || isNaN(this.formData.price) || Number(this.formData.price) < 0) {
-                        this.errors.price = 'أدخل سعراً صحيحاً';
+                        this.errors.price = NILEX_WIZARD_I18N.validation.price_invalid;
                         ok = false;
                     } else if (Number(this.formData.price) > NILEX_MAX_PRICE) {
-                        this.errors.price = 'السعر المدخل كبير جداً، يرجى التحقق من الرقم';
+                        this.errors.price = NILEX_WIZARD_I18N.validation.price_too_high;
                         ok = false;
                     }
                     for (const field of this.customFieldsSchema) {
                         if (field.required) {
                             const val = this.formData.custom_fields[field.name];
                             if (val === undefined || val === '' || val === null || val === false) {
-                                this.errors['cf_' + field.name] = (field.label_ar || field.name) + ' مطلوب';
+                                this.errors['cf_' + field.name] = NILEX_WIZARD_I18N.validation.field_required
+                                    .replace(':field', field.label_ar || field.name);
                                 ok = false;
                             }
                         }
@@ -1150,31 +1151,31 @@
                     // 🚗 حقول السيارة المطلوبة (قسم السيارات فقط)
                     if (this.isCarCategory) {
                         if (!this.formData.car_brand_id) {
-                            this.errors.car_brand_id = 'الماركة مطلوبة';
+                            this.errors.car_brand_id = NILEX_WIZARD_I18N.validation.car_brand_required;
                             ok = false;
                         }
                         if (this.selectedBrandIsOther && !(this.formData.custom_fields.car_brand_other || '').trim()) {
-                            this.errors.car_brand_other = 'اكتب اسم الماركة';
+                            this.errors.car_brand_other = NILEX_WIZARD_I18N.validation.car_brand_other_required;
                             ok = false;
                         }
                         if (!this.formData.car_model_id) {
-                            this.errors.car_model_id = 'الموديل مطلوب';
+                            this.errors.car_model_id = NILEX_WIZARD_I18N.validation.car_model_required;
                             ok = false;
                         }
                         if (!this.formData.custom_fields.fuel) {
-                            this.errors.fuel = 'نوع الوقود مطلوب';
+                            this.errors.fuel = NILEX_WIZARD_I18N.validation.fuel_required;
                             ok = false;
                         }
                         if (!this.formData.custom_fields.transmission) {
-                            this.errors.transmission = 'ناقل الحركة مطلوب';
+                            this.errors.transmission = NILEX_WIZARD_I18N.validation.transmission_required;
                             ok = false;
                         }
                         if (!this.formData.custom_fields.year) {
-                            this.errors.year = 'سنة الصنع مطلوبة';
+                            this.errors.year = NILEX_WIZARD_I18N.validation.year_required;
                             ok = false;
                         }
                         if (!this.formData.custom_fields.condition) {
-                            this.errors.condition = 'حالة السيارة مطلوبة';
+                            this.errors.condition = NILEX_WIZARD_I18N.validation.condition_required;
                             ok = false;
                         }
                     }
@@ -1182,11 +1183,11 @@
                     // 🏠 حقول العقار المطلوبة (قسم العقارات فقط)
                     if (this.isRealEstateCategory) {
                         if (!this.formData.custom_fields.property_type) {
-                            this.errors.property_type = 'نوع العقار مطلوب';
+                            this.errors.property_type = NILEX_WIZARD_I18N.validation.property_type_required;
                             ok = false;
                         }
                         if (!this.formData.custom_fields.listing_type) {
-                            this.errors.listing_type = 'نوع العرض مطلوب';
+                            this.errors.listing_type = NILEX_WIZARD_I18N.validation.listing_type_required;
                             ok = false;
                         }
                     }
@@ -1194,7 +1195,7 @@
 
                 if (step === 4) {
                     if (!this.formData.phone.trim()) {
-                        this.errors.phone = 'رقم التواصل مطلوب';
+                        this.errors.phone = NILEX_WIZARD_I18N.validation.phone_required;
                         ok = false;
                     }
                 }
@@ -1208,15 +1209,15 @@
                 const allowed = ['image/jpeg', 'image/png', 'image/webp'];
                 for (const file of Array.from(fileList)) {
                     if (this.images.length >= 10) {
-                        this.submitError = 'الحد الأقصى المسموح به هو 10 صور';
+                        this.submitError = NILEX_WIZARD_I18N.errors.max_images;
                         break;
                     }
                     if (!allowed.includes(file.type)) {
-                        this.submitError = 'صيغة غير مدعومة: ' + file.name;
+                        this.submitError = NILEX_WIZARD_I18N.errors.unsupported_format.replace(':name', file.name);
                         continue;
                     }
                     if (file.size > 5 * 1024 * 1024) {
-                        this.submitError = 'حجم الصورة أكبر من 5 ميجابايت: ' + file.name;
+                        this.submitError = NILEX_WIZARD_I18N.errors.image_too_large.replace(':name', file.name);
                         continue;
                     }
                     this.images.push(file);
@@ -1235,7 +1236,7 @@
             async generateWithAI() {
                 const prompt = this.aiPrompt.trim();
                 if (prompt.length < 3) {
-                    this.aiMessage = { type: 'error', text: 'اكتب وصفاً مختصراً (3 أحرف على الأقل) أولاً.' };
+                    this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.ai.prompt_too_short };
                     return;
                 }
                 this.aiLoading = true;
@@ -1268,19 +1269,19 @@
                                 this.formData.price = String(data.data.suggested_price);
                                 delete this.errors.price;
                             }
-                            this.aiMessage = { type: 'success', text: 'تم توليد البيانات ✨ راجعها وعدّلها كما تريد.' };
+                            this.aiMessage = { type: 'success', text: NILEX_WIZARD_I18N.ai.success };
                         } else {
-                            this.aiMessage = { type: 'error', text: data.message || 'تعذّر توليد الإعلان حالياً، يمكنك المتابعة يدوياً.' };
+                            this.aiMessage = { type: 'error', text: data.message || NILEX_WIZARD_I18N.ai.failed };
                         }
                     } else if (res.status === 422) {
-                        this.aiMessage = { type: 'error', text: 'اكتب وصفاً مختصراً صالحاً أولاً (3 أحرف على الأقل).' };
+                        this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.ai.invalid_prompt };
                     } else if (res.status === 419) {
-                        this.aiMessage = { type: 'error', text: 'انتهت صلاحية الجلسة، يرجى تحديث الصفحة وإعادة المحاولة.' };
+                        this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.errors.session_expired };
                     } else {
-                        this.aiMessage = { type: 'error', text: 'تعذّر الاتصال بالمساعد الذكي، يمكنك المتابعة يدوياً.' };
+                        this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.ai.connection_failed };
                     }
                 } catch (e) {
-                    this.aiMessage = { type: 'error', text: 'تعذّر الاتصال بالمساعد الذكي، يمكنك المتابعة يدوياً.' };
+                    this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.ai.connection_failed };
                 } finally {
                     this.aiLoading = false;
                 }
@@ -1288,7 +1289,9 @@
 
             // ── Labels ─────────────────────────────────────────────────
             conditionLabel() {
-                return this.formData.condition === 'new' ? 'جديد ✨' : 'مستعمل 🔄';
+                return this.formData.condition === 'new'
+                    ? NILEX_WIZARD_I18N.step2.condition_new + ' ✨'
+                    : NILEX_WIZARD_I18N.step2.condition_used + ' 🔄';
             },
             priceTypeLabel() {
                 const found = this.priceTypes.find(p => p.value === this.formData.price_type);
@@ -1353,12 +1356,12 @@
                         const data = await res.json();
                         this.mapServerErrors(data.errors || {});
                     } else if (res.status === 419) {
-                        this.submitError = 'انتهت صلاحية الجلسة، يرجى تحديث الصفحة وإعادة المحاولة';
+                        this.submitError = NILEX_WIZARD_I18N.errors.session_expired;
                     } else {
-                        this.submitError = 'حدث خطأ غير متوقع، حاول مرة أخرى';
+                        this.submitError = NILEX_WIZARD_I18N.errors.unexpected;
                     }
                 } catch (e) {
-                    this.submitError = 'تعذّر الاتصال بالخادم، تحقق من اتصالك بالإنترنت';
+                    this.submitError = NILEX_WIZARD_I18N.errors.network;
                 } finally {
                     this.isSubmitting = false;
                 }
@@ -1391,7 +1394,7 @@
                     }
                 }
                 this.currentStep = targetStep;
-                this.submitError = 'يرجى تصحيح الأخطاء الموضّحة';
+                this.submitError = NILEX_WIZARD_I18N.errors.fix_errors;
                 this.scrollTop();
             },
 

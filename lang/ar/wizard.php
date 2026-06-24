@@ -220,4 +220,58 @@ return [
         ],
     ],
 
+    // Client-side validation messages (B.3c). Mostly fixed per-field keys; the
+    // dynamic custom-field case uses `field_required` with a :field placeholder.
+    'validation' => [
+        'category_required'        => 'يجب اختيار القسم للمتابعة',
+        'subcategory_required'     => 'يرجى اختيار القسم الفرعي',
+        'title_required'           => 'عنوان الإعلان مطلوب',
+        'title_max'                => 'العنوان يجب ألا يتجاوز 255 حرفاً',
+        'desc_min'                 => 'الوصف يجب أن يكون 20 حرفاً على الأقل',
+        'price_invalid'            => 'أدخل سعراً صحيحاً',
+        'price_too_high'           => 'السعر المدخل كبير جداً، يرجى التحقق من الرقم',
+        'field_required'           => ':field مطلوب',
+        'car_brand_required'       => 'الماركة مطلوبة',
+        'car_brand_other_required' => 'اكتب اسم الماركة',
+        'car_model_required'       => 'الموديل مطلوب',
+        'fuel_required'            => 'نوع الوقود مطلوب',
+        'transmission_required'    => 'ناقل الحركة مطلوب',
+        'year_required'            => 'سنة الصنع مطلوبة',
+        'condition_required'       => 'حالة السيارة مطلوبة',
+        'property_type_required'   => 'نوع العقار مطلوب',
+        'listing_type_required'    => 'نوع العرض مطلوب',
+        'phone_required'           => 'رقم التواصل مطلوب',
+    ],
+
+    // AI assistant (Gemini) messages (B.3c). `session_expired` is shared from
+    // the `errors` group below.
+    'ai' => [
+        'prompt_too_short'  => 'اكتب وصفاً مختصراً (3 أحرف على الأقل) أولاً.',
+        'success'           => 'تم توليد البيانات ✨ راجعها وعدّلها كما تريد.',
+        'failed'            => 'تعذّر توليد الإعلان حالياً، يمكنك المتابعة يدوياً.',
+        'invalid_prompt'    => 'اكتب وصفاً مختصراً صالحاً أولاً (3 أحرف على الأقل).',
+        'connection_failed' => 'تعذّر الاتصال بالمساعد الذكي، يمكنك المتابعة يدوياً.',
+    ],
+
+    // Submit / network / image error strings (B.3c). `:name` is the filename.
+    'errors' => [
+        'max_images'         => 'الحد الأقصى المسموح به هو 10 صور',
+        'unsupported_format' => 'صيغة غير مدعومة: :name',
+        'image_too_large'    => 'حجم الصورة أكبر من 5 ميجابايت: :name',
+        'session_expired'    => 'انتهت صلاحية الجلسة، يرجى تحديث الصفحة وإعادة المحاولة.',
+        'unexpected'         => 'حدث خطأ غير متوقع، حاول مرة أخرى',
+        'network'            => 'تعذّر الاتصال بالخادم، تحقق من اتصالك بالإنترنت',
+        'fix_errors'         => 'يرجى تصحيح الأخطاء الموضّحة',
+    ],
+
+    // Completion checklist labels (B.3c).
+    'checklist' => [
+        'category'    => 'تم اختيار القسم',
+        'title'       => 'تم إدخال العنوان',
+        'description' => 'تم إدخال الوصف',
+        'price'       => 'تم تحديد السعر',
+        'images'      => 'تمت إضافة صور',
+        'phone'       => 'تم إدخال رقم التواصل',
+    ],
+
 ];

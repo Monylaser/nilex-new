@@ -220,4 +220,58 @@ return [
         ],
     ],
 
+    // Client-side validation messages (B.3c). Mostly fixed per-field keys; the
+    // dynamic custom-field case uses `field_required` with a :field placeholder.
+    'validation' => [
+        'category_required'        => 'You must choose a category to continue',
+        'subcategory_required'     => 'Please choose a subcategory',
+        'title_required'           => 'Listing title is required',
+        'title_max'                => 'Title must not exceed 255 characters',
+        'desc_min'                 => 'Description must be at least 20 characters',
+        'price_invalid'            => 'Enter a valid price',
+        'price_too_high'           => 'The entered price is too high, please check the number',
+        'field_required'           => ':field is required',
+        'car_brand_required'       => 'Brand is required',
+        'car_brand_other_required' => 'Enter the brand name',
+        'car_model_required'       => 'Model is required',
+        'fuel_required'            => 'Fuel type is required',
+        'transmission_required'    => 'Transmission is required',
+        'year_required'            => 'Year is required',
+        'condition_required'       => 'Car condition is required',
+        'property_type_required'   => 'Property type is required',
+        'listing_type_required'    => 'Listing type is required',
+        'phone_required'           => 'Contact number is required',
+    ],
+
+    // AI assistant (Gemini) messages (B.3c). `session_expired` is shared from
+    // the `errors` group below.
+    'ai' => [
+        'prompt_too_short'  => 'Write a short description (at least 3 characters) first.',
+        'success'           => 'Data generated ✨ review and edit it as you like.',
+        'failed'            => 'Could not generate the listing right now, you can continue manually.',
+        'invalid_prompt'    => 'Write a valid short description first (at least 3 characters).',
+        'connection_failed' => 'Could not connect to the AI assistant, you can continue manually.',
+    ],
+
+    // Submit / network / image error strings (B.3c). `:name` is the filename.
+    'errors' => [
+        'max_images'         => 'The maximum allowed is 10 photos',
+        'unsupported_format' => 'Unsupported format: :name',
+        'image_too_large'    => 'Image larger than 5 MB: :name',
+        'session_expired'    => 'Your session has expired, please refresh the page and try again.',
+        'unexpected'         => 'An unexpected error occurred, please try again',
+        'network'            => 'Could not connect to the server, check your internet connection',
+        'fix_errors'         => 'Please correct the highlighted errors',
+    ],
+
+    // Completion checklist labels (B.3c).
+    'checklist' => [
+        'category'    => 'Category selected',
+        'title'       => 'Title entered',
+        'description' => 'Description entered',
+        'price'       => 'Price set',
+        'images'      => 'Photos added',
+        'phone'       => 'Contact number entered',
+    ],
+
 ];
