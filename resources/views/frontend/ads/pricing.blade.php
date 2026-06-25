@@ -23,7 +23,7 @@
     $localeDesc = fn ($row) => $isRtl
         ? ($row['description_ar'] ?? null)
         : ($row['description_en'] ?? $row['description_ar'] ?? null);
-    $stepNums = $isRtl ? ['١', '٢', '٣'] : ['1', '2', '3'];
+    $stepNums = ['1', '2', '3'];
 @endphp
 
 <main class="bg-white min-h-screen" dir="{{ $isRtl ? 'rtl' : 'ltr' }}" style="padding-top:64px;">

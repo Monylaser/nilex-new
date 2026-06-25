@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center gap-3">
             <div class="w-1 h-6 bg-nilex rounded-full shrink-0"></div>
-            <h2 class="text-lg font-black text-zinc-900">سجل النقاط والمكافآت</h2>
+            <h2 class="text-lg font-black text-zinc-900">{{ __('ui.points.header') }}</h2>
         </div>
     </x-slot>
 
@@ -13,15 +13,15 @@
             <div class="bg-white rounded-2xl border border-zinc-100 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                  style="box-shadow:0 1px 4px rgba(0,0,0,0.05);">
                 <div>
-                    <p class="text-xs font-bold text-nilex uppercase tracking-wider mb-1">رصيدك الحالي</p>
-                    <h3 class="text-zinc-900 font-black text-lg">نقاطك المتاحة</h3>
-                    <p class="text-zinc-500 text-sm mt-0.5">استخدمها لتمييز إعلاناتك وزيادة الظهور</p>
+                    <p class="text-xs font-bold text-nilex uppercase tracking-wider mb-1">{{ __('ui.points.balance_label') }}</p>
+                    <h3 class="text-zinc-900 font-black text-lg">{{ __('ui.points.balance_title') }}</h3>
+                    <p class="text-zinc-500 text-sm mt-0.5">{{ __('ui.points.balance_subtitle') }}</p>
                 </div>
                 <div class="flex items-baseline gap-2 shrink-0">
                     <span class="font-black text-nilex leading-none" style="font-size:2.25rem;">
                         {{ number_format(Auth::user()->points) }}
                     </span>
-                    <span class="text-zinc-400 font-semibold text-sm">نقطة</span>
+                    <span class="text-zinc-400 font-semibold text-sm">{{ __('ui.points.unit') }}</span>
                 </div>
             </div>
 
@@ -37,8 +37,8 @@
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-bold text-zinc-900 text-sm">اشحن رصيدك</p>
-                        <p class="text-zinc-500 text-xs mt-0.5">اشتري نقاط إضافية بأسعار مناسبة</p>
+                        <p class="font-bold text-zinc-900 text-sm">{{ __('ui.points.topup_title') }}</p>
+                        <p class="text-zinc-500 text-xs mt-0.5">{{ __('ui.points.topup_subtitle') }}</p>
                     </div>
                     <svg class="w-4 h-4 text-zinc-300 shrink-0 rotate-180 rtl:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -54,8 +54,8 @@
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-bold text-zinc-900 text-sm">أضف إعلان جديد</p>
-                        <p class="text-zinc-500 text-xs mt-0.5">اكسب ١٠ نقاط لكل إعلان تنشره</p>
+                        <p class="font-bold text-zinc-900 text-sm">{{ __('ui.points.add_listing_title') }}</p>
+                        <p class="text-zinc-500 text-xs mt-0.5">{{ __('ui.points.add_listing_subtitle') }}</p>
                     </div>
                     <svg class="w-4 h-4 text-zinc-300 shrink-0 rotate-180 rtl:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -69,8 +69,8 @@
 
                 {{-- Table header --}}
                 <div class="px-5 py-4 border-b border-zinc-50 flex items-center justify-between">
-                    <h3 class="font-black text-zinc-900 text-sm">سجل المعاملات</h3>
-                    <span class="text-xs text-zinc-400">{{ $transactions->total() }} معاملة</span>
+                    <h3 class="font-black text-zinc-900 text-sm">{{ __('ui.points.transactions_title') }}</h3>
+                    <span class="text-xs text-zinc-400">{{ $transactions->total() }} {{ __('ui.points.transactions_count') }}</span>
                 </div>
 
                 {{-- Table --}}
@@ -78,10 +78,10 @@
                     <table class="w-full">
                         <thead>
                             <tr class="border-b border-zinc-50 bg-zinc-50/60">
-                                <th class="px-5 py-3 text-start text-xs font-bold text-zinc-400 uppercase tracking-wider">التاريخ</th>
-                                <th class="px-5 py-3 text-start text-xs font-bold text-zinc-400 uppercase tracking-wider">الوصف</th>
-                                <th class="px-5 py-3 text-start text-xs font-bold text-zinc-400 uppercase tracking-wider">النقاط</th>
-                                <th class="px-5 py-3 text-start text-xs font-bold text-zinc-400 uppercase tracking-wider">الحالة</th>
+                                <th class="px-5 py-3 text-start text-xs font-bold text-zinc-400 uppercase tracking-wider">{{ __('ui.points.col_date') }}</th>
+                                <th class="px-5 py-3 text-start text-xs font-bold text-zinc-400 uppercase tracking-wider">{{ __('ui.points.col_description') }}</th>
+                                <th class="px-5 py-3 text-start text-xs font-bold text-zinc-400 uppercase tracking-wider">{{ __('ui.points.col_points') }}</th>
+                                <th class="px-5 py-3 text-start text-xs font-bold text-zinc-400 uppercase tracking-wider">{{ __('ui.points.col_status') }}</th>
                             </tr>
                         </thead>
 
@@ -91,7 +91,7 @@
 
                                     {{-- Date --}}
                                     <td class="whitespace-nowrap px-5 py-4 text-sm text-zinc-400">
-                                        {{ $transaction->created_at->format('d M Y') }}
+                                        {{ $transaction->created_at->translatedFormat('d M Y') }}
                                     </td>
 
                                     {{-- Description --}}
@@ -120,14 +120,14 @@
                                                           ? 'bg-nilex/10 text-nilex-dark'
                                                           : 'bg-red-50 text-red-600' }}">
                                             {{ $transaction->amount > 0 ? '+' : '' }}{{ number_format($transaction->amount) }}
-                                            <span class="font-semibold opacity-70">نقطة</span>
+                                            <span class="font-semibold opacity-70">{{ __('ui.points.unit') }}</span>
                                         </span>
                                     </td>
 
                                     {{-- Status --}}
                                     <td class="whitespace-nowrap px-5 py-4">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-nilex/8 text-nilex-dark border border-nilex/15">
-                                            مكتملة
+                                            {{ __('ui.points.status_completed') }}
                                         </span>
                                     </td>
                                 </tr>
@@ -141,13 +141,13 @@
                                                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                                 </svg>
                                             </div>
-                                            <p class="font-bold text-zinc-800 text-sm mb-1">لا توجد معاملات بعد</p>
+                                            <p class="font-bold text-zinc-800 text-sm mb-1">{{ __('ui.points.empty_title') }}</p>
                                             <p class="text-xs text-zinc-400 max-w-xs mb-4">
-                                                ابدأ بنشر إعلانات واكسب نقاطك الأولى، أو اشحن رصيدك من صفحة الأسعار.
+                                                {{ __('ui.points.empty_subtitle') }}
                                             </p>
                                             <a href="{{ route('pricing') }}"
                                                class="inline-flex items-center gap-1.5 text-xs font-bold text-nilex hover:text-nilex-dark transition-colors duration-200">
-                                                عرض باقات النقاط
+                                                {{ __('ui.points.empty_cta') }}
                                                 <svg class="w-3.5 h-3.5 rotate-180 rtl:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                                 </svg>
@@ -175,14 +175,14 @@
                     <svg class="w-4 h-4 text-nilex" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    كيف تكسب نقاط مجانية؟
+                    {{ __('ui.points.earn_title') }}
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     @foreach([
-                        ['+١٠٠', 'إنشاء حساب جديد'],
-                        ['+٥٠',  'توثيق رقم الهاتف'],
-                        ['+١٠',  'نشر إعلان جديد'],
-                        ['+٢٥',  'الحصول على تقييم إيجابي'],
+                        ['+100', __('ui.points.earn_register')],
+                        ['+50',  __('ui.points.earn_verify')],
+                        ['+3',   __('ui.points.earn_listing')],
+                        ['+25',  __('ui.points.earn_rating')],
                     ] as [$pts, $action])
                         <div class="flex items-center gap-3 bg-zinc-50 rounded-xl px-4 py-3">
                             <span class="font-black text-nilex text-sm shrink-0">{{ $pts }}</span>

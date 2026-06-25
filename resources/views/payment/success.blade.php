@@ -4,10 +4,10 @@
             <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
                 ✅
             </div>
-            <h2 class="text-2xl font-black text-gray-900 mb-2">تمت عملية الدفع بنجاح!</h2>
-            <p class="text-gray-500 mb-8 font-medium">شكراً لك، تم إضافة النقاط إلى رصيدك بنجاح. يمكنك الآن تمييز إعلاناتك.</p>
+            <h2 class="text-2xl font-black text-gray-900 mb-2">{{ __('ui.payment.success_title') }}</h2>
+            <p class="text-gray-500 mb-8 font-medium">{{ __('ui.payment.success_body') }}</p>
             <a href="{{ route('dashboard') }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all">
-                الذهاب للوحة التحكم
+                {{ __('ui.payment.success_cta') }}
             </a>
         </div>
     </div>

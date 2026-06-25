@@ -4,10 +4,10 @@
             <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
                 ❌
             </div>
-            <h2 class="text-2xl font-black text-gray-900 mb-2">فشلت عملية الدفع</h2>
-            <p class="text-gray-500 mb-8 font-medium">للأسف لم تكتمل العملية، برجاء المحاولة مرة أخرى أو التواصل مع الدعم الفني.</p>
+            <h2 class="text-2xl font-black text-gray-900 mb-2">{{ __('ui.payment.failed_title') }}</h2>
+            <p class="text-gray-500 mb-8 font-medium">{{ __('ui.payment.failed_body') }}</p>
             <a href="{{ route('dashboard') }}" class="block w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition-all">
-                رجوع للرئيسية
+                {{ __('ui.payment.failed_cta') }}
             </a>
         </div>
     </div>

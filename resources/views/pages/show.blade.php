@@ -12,8 +12,8 @@
         <meta property="og:title"       content="{{ $page->getEffectiveSeoTitle() }}">
         <meta property="og:description" content="{{ $page->getEffectiveSeoDescription() }}">
         <meta property="og:url"         content="{{ url('/pages/' . $page->slug) }}">
-        <meta property="og:site_name"   content="نايلكس">
-        <meta property="og:locale"      content="ar_EG">
+        <meta property="og:site_name"   content="{{ __('ui.pages.og_site_name') }}">
+        <meta property="og:locale"      content="{{ __('ui.pages.og_locale') }}">
     @endpush
 
     @push('head')
@@ -42,12 +42,12 @@
         </style>
     @endpush
 
-    <div class="bg-zinc-50 min-h-screen" dir="rtl">
+    <div class="bg-zinc-50 min-h-screen" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
             {{-- Breadcrumb --}}
-            <nav class="flex items-center gap-2 text-sm text-zinc-500 mb-6" aria-label="مسار التنقل">
-                <a href="{{ route('home') }}" class="hover:text-nilex transition-colors font-medium">الرئيسية</a>
+            <nav class="flex items-center gap-2 text-sm text-zinc-500 mb-6" aria-label="{{ __('ui.pages.breadcrumb_aria') }}">
+                <a href="{{ route('home') }}" class="hover:text-nilex transition-colors font-medium">{{ __('ui.footer.link_home') }}</a>
                 <svg class="w-4 h-4 text-zinc-300 rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
@@ -71,10 +71,10 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-white/60 text-xs font-semibold mb-1">نايلكس — وثيقة رسمية</p>
+                        <p class="text-white/60 text-xs font-semibold mb-1">{{ __('ui.pages.official_doc') }}</p>
                         <h1 class="text-xl sm:text-2xl font-black leading-tight">{{ $page->title }}</h1>
                         <p class="text-white/60 text-xs mt-2">
-                            آخر تحديث: {{ $page->updated_at->translatedFormat('d F Y') }}
+                            {{ __('ui.pages.last_updated') }} {{ $page->updated_at->translatedFormat('d F Y') }}
                         </p>
                     </div>
                 </div>
@@ -97,7 +97,7 @@
 
             @if($otherPages->isNotEmpty())
                 <div class="mt-8">
-                    <h2 class="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-3">وثائق قانونية أخرى</h2>
+                    <h2 class="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-3">{{ __('ui.pages.other_docs') }}</h2>
                     <div class="flex flex-wrap gap-2">
                         @foreach($otherPages as $other)
                             <a href="{{ route('legal.show', $other->slug) }}"

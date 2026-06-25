@@ -80,17 +80,17 @@
         {{-- Stats row --}}
         <div class="flex items-center justify-center gap-6 mt-5">
             <div>
-                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_1_num') ?? '١٢٠٠٠+' }}</span>
+                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_1_num') ?? '12000+' }}</span>
                 <span class="text-xs text-zinc-400 ms-1">{{ __('ui.hero.stat_1_label') ?? 'إعلان' }}</span>
             </div>
             <div class="w-px h-4 bg-zinc-200"></div>
             <div>
-                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_2_num') ?? '٨٠٠٠+' }}</span>
+                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_2_num') ?? '8000+' }}</span>
                 <span class="text-xs text-zinc-400 ms-1">{{ __('ui.hero.stat_2_label') ?? 'مستخدم' }}</span>
             </div>
             <div class="w-px h-4 bg-zinc-200"></div>
             <div>
-                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_3_num') ?? '٢٧' }}</span>
+                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_3_num') ?? '27' }}</span>
                 <span class="text-xs text-zinc-400 ms-1">{{ __('ui.hero.stat_3_label') ?? 'محافظة' }}</span>
             </div>
         </div>
