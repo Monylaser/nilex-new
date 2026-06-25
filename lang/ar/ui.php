@@ -471,4 +471,73 @@ return [
         'og_locale'       => 'ar_EG',
     ],
 
+    // Self-service ad campaign management (seller-facing CRUD) — C.5.
+    // Placement & duration labels resolve from config/ad_pricing.php via the
+    // B.5 $localeLabel pattern; only chrome strings live here.
+    'ads_dashboard' => [
+        'common' => [
+            'back_dashboard' => 'لوحة التحكم',
+            'back_campaigns' => 'العودة للحملات',
+            'day_fallback'   => ':count يوم',
+        ],
+        'payment_status' => [
+            'pending'  => 'قيد الدفع',
+            'paid'     => 'مدفوع',
+            'failed'   => 'فشل',
+            'refunded' => 'مسترد',
+        ],
+        'approval_status' => [
+            'pending'  => 'قيد الموافقة',
+            'approved' => 'موافق عليه',
+            'rejected' => 'مرفوض',
+        ],
+        'index' => [
+            'title'        => 'حملاتي الإعلانية',
+            'subtitle'     => 'إدارة حملات الإعلانات الذاتية الخاصة بك',
+            'new_campaign' => 'حملة جديدة',
+            'empty'        => 'لا توجد حملات إعلانية بعد.',
+            'create_first' => 'إنشاء أول حملة',
+            'col_title'    => 'العنوان',
+            'col_placement'=> 'الموضع',
+            'col_payment'  => 'حالة الدفع',
+            'col_approval' => 'حالة الموافقة',
+            'col_amount'   => 'المبلغ',
+            'col_starts'   => 'يبدأ',
+            'col_ends'     => 'ينتهي',
+            'view'         => 'عرض',
+            'retry_payment'=> 'إعادة الدفع',
+        ],
+        'create' => [
+            'title'          => 'إنشاء حملة إعلانية',
+            'subtitle'       => 'اختر الموضع والمدة ثم ارفع البانر للدفع',
+            'label_title'    => 'عنوان الحملة',
+            'label_placement'=> 'موضع الإعلان',
+            'label_category' => 'التصنيف',
+            'select_category'=> '— اختر التصنيف —',
+            'label_target'   => 'رابط الهدف',
+            'label_image'    => 'صورة البانر',
+            'image_hint'     => 'صور فقط (JPEG, PNG, WebP, GIF) — الحد الأقصى 2 ميجابايت',
+            'label_duration' => 'مدة الحملة',
+            'calc_heading'   => 'حاسبة السعر',
+            'calc_placement' => 'سعر الموضع',
+            'calc_duration'  => 'المدة',
+            'calc_total'     => 'الإجمالي',
+            'submit'         => 'متابعة للدفع',
+        ],
+        'show' => [
+            'subtitle'      => 'تفاصيل الحملة الإعلانية',
+            'placement'     => 'الموضع',
+            'duration'      => 'المدة',
+            'payment'       => 'حالة الدفع',
+            'approval'      => 'حالة الموافقة',
+            'amount'        => 'المبلغ',
+            'target_url'    => 'رابط الهدف',
+            'category'      => 'التصنيف',
+            'starts'        => 'يبدأ',
+            'ends'          => 'ينتهي',
+            'reject_reason' => 'سبب الرفض',
+            'retry_payment' => 'إعادة محاولة الدفع',
+        ],
+    ],
+
 ];

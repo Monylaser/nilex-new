@@ -471,4 +471,73 @@ return [
         'og_locale'       => 'en_US',
     ],
 
+    // Self-service ad campaign management (seller-facing CRUD) — C.5.
+    // Placement & duration labels resolve from config/ad_pricing.php via the
+    // B.5 $localeLabel pattern; only chrome strings live here.
+    'ads_dashboard' => [
+        'common' => [
+            'back_dashboard' => 'Dashboard',
+            'back_campaigns' => 'Back to campaigns',
+            'day_fallback'   => ':count days',
+        ],
+        'payment_status' => [
+            'pending'  => 'Pending payment',
+            'paid'     => 'Paid',
+            'failed'   => 'Failed',
+            'refunded' => 'Refunded',
+        ],
+        'approval_status' => [
+            'pending'  => 'Pending approval',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+        ],
+        'index' => [
+            'title'        => 'My Ad Campaigns',
+            'subtitle'     => 'Manage your self-service ad campaigns',
+            'new_campaign' => 'New campaign',
+            'empty'        => 'No ad campaigns yet.',
+            'create_first' => 'Create your first campaign',
+            'col_title'    => 'Title',
+            'col_placement'=> 'Placement',
+            'col_payment'  => 'Payment status',
+            'col_approval' => 'Approval status',
+            'col_amount'   => 'Amount',
+            'col_starts'   => 'Starts',
+            'col_ends'     => 'Ends',
+            'view'         => 'View',
+            'retry_payment'=> 'Retry payment',
+        ],
+        'create' => [
+            'title'          => 'Create Ad Campaign',
+            'subtitle'       => 'Choose a placement and duration, then upload your banner to pay',
+            'label_title'    => 'Campaign title',
+            'label_placement'=> 'Ad placement',
+            'label_category' => 'Category',
+            'select_category'=> '— Select a category —',
+            'label_target'   => 'Target URL',
+            'label_image'    => 'Banner image',
+            'image_hint'     => 'Images only (JPEG, PNG, WebP, GIF) — max 2 MB',
+            'label_duration' => 'Campaign duration',
+            'calc_heading'   => 'Price calculator',
+            'calc_placement' => 'Placement price',
+            'calc_duration'  => 'Duration',
+            'calc_total'     => 'Total',
+            'submit'         => 'Continue to payment',
+        ],
+        'show' => [
+            'subtitle'      => 'Ad campaign details',
+            'placement'     => 'Placement',
+            'duration'      => 'Duration',
+            'payment'       => 'Payment status',
+            'approval'      => 'Approval status',
+            'amount'        => 'Amount',
+            'target_url'    => 'Target URL',
+            'category'      => 'Category',
+            'starts'        => 'Starts',
+            'ends'          => 'Ends',
+            'reject_reason' => 'Rejection reason',
+            'retry_payment' => 'Retry payment',
+        ],
+    ],
+
 ];
