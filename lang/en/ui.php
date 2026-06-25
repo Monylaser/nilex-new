@@ -10,6 +10,20 @@ return [
         'login'              => 'Login',
         'add_listing'        => 'Add Listing',
         'add_short'          => 'Add',
+        'home'                  => 'Home',
+        'ad_spaces'             => 'Ad Spaces',
+        'admin_panel'           => 'Admin Panel',
+        'login_full'            => 'Log In',
+        'register'              => 'New Account',
+        'profile'               => 'Profile',
+        'logout'                => 'Log Out',
+        'search_placeholder_full' => 'What are you looking for today? (apartment, car, mobile...)',
+    ],
+
+    'notifications' => [
+        'title'   => 'Recent Notifications',
+        'default' => 'Update on your account',
+        'empty'   => 'No new notifications',
     ],
 
     'misc' => [
@@ -114,6 +128,12 @@ return [
         'register_free'   => 'Register Free',
         'copyright'       => 'All Rights Reserved',
         'prices_link'     => 'Prices',
+        'brand'           => 'Nilex',
+        'tagline'         => "Egypt's #1 classifieds platform — buy and sell with confidence.",
+        'link_search'     => 'Search',
+        'link_register_short' => 'Create Account',
+        'privacy'         => 'Privacy',
+        'terms'           => 'Terms',
     ],
 
     'lang' => [

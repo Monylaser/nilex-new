@@ -12,14 +12,14 @@
                     @if(config('features.self_service_ads'))
                     <a href="{{ route('ads.pricing') }}"
                        class="text-sm text-zinc-600 hover:text-[#1D9E75] transition-colors inline-flex items-center px-1 pt-1">
-                        المساحات الإعلانية
+                        {{ __('ui.nav.ad_spaces') }}
                     </a>
                     @endif
                     {{-- ✅ يظهر بس للأدمن --}}
                     @auth
                         @if(Auth::user()->hasRole('super_admin') || Auth::user()->hasRole('admin'))
                             <x-nav-link href="/admin" :active="request()->is('admin*')">
-                                لوحة التحكم الشاملة
+                                {{ __('ui.nav.admin_panel') }}
                             </x-nav-link>
                         @endif
                     @endauth
@@ -48,14 +48,14 @@
 
                         <x-slot name="content">
                             <x-dropdown-link :href="route('profile.edit')">
-                                {{ __('Profile') }}
+                                {{ __('ui.nav.profile') }}
                             </x-dropdown-link>
 
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <x-dropdown-link :href="route('logout')"
                                         onclick="event.preventDefault(); this.closest('form').submit();">
-                                    {{ __('Log Out') }}
+                                    {{ __('ui.nav.logout') }}
                                 </x-dropdown-link>
                             </form>
                         </x-slot>
@@ -63,8 +63,8 @@
                 @endauth
 
                 @guest
-                    <a href="{{ route('login') }}" class="text-sm font-bold text-gray-600 hover:text-blue-600">تسجيل الدخول</a>
-                    <a href="{{ route('register') }}" class="text-sm font-bold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">حساب جديد</a>
+                    <a href="{{ route('login') }}" class="text-sm font-bold text-gray-600 hover:text-blue-600">{{ __('ui.nav.login_full') }}</a>
+                    <a href="{{ route('register') }}" class="text-sm font-bold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">{{ __('ui.nav.register') }}</a>
                 @endguest
 
             </div>
@@ -86,7 +86,7 @@
         
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                الرئيسية
+                {{ __('ui.nav.home') }}
             </x-responsive-nav-link>
         </div>
 
@@ -108,19 +108,19 @@
                     {{-- ✅ يظهر بس للأدمن في الموبايل --}}
                     @if(Auth::user()->hasRole('super_admin') || Auth::user()->hasRole('admin'))
                         <x-responsive-nav-link href="/admin">
-                            لوحة التحكم الشاملة
+                            {{ __('ui.nav.admin_panel') }}
                         </x-responsive-nav-link>
                     @endif
 
                     <x-responsive-nav-link :href="route('profile.edit')">
-                        الملف الشخصي
+                        {{ __('ui.nav.profile') }}
                     </x-responsive-nav-link>
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <x-responsive-nav-link :href="route('logout')"
                                 onclick="event.preventDefault(); this.closest('form').submit();">
-                            تسجيل الخروج
+                            {{ __('ui.nav.logout') }}
                         </x-responsive-nav-link>
                     </form>
                 </div>
@@ -130,10 +130,10 @@
         @guest
             <div class="pt-4 pb-3 border-t border-gray-200 space-y-1">
                 <x-responsive-nav-link :href="route('login')">
-                    تسجيل الدخول
+                    {{ __('ui.nav.login_full') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('register')">
-                    حساب جديد
+                    {{ __('ui.nav.register') }}
                 </x-responsive-nav-link>
             </div>
         @endguest>

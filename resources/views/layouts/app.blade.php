@@ -69,16 +69,16 @@
                             </button>
                             <div x-show="open" @click.away="open = false" x-transition class="absolute left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
                                 <div class="p-3 border-b border-gray-50 bg-gray-50/50">
-                                    <span class="font-bold text-gray-800 text-sm">الإشعارات الأخيرة</span>
+                                    <span class="font-bold text-gray-800 text-sm">{{ __('ui.notifications.title') }}</span>
                                 </div>
                                 <div class="max-h-64 overflow-y-auto">
                                     @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
                                         <div class="p-4 border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
-                                            <p class="text-xs text-gray-700 leading-tight">{{ $notification->data['message'] ?? 'تحديث في حسابك' }}</p>
+                                            <p class="text-xs text-gray-700 leading-tight">{{ $notification->data['message'] ?? __('ui.notifications.default') }}</p>
                                             <span class="text-[10px] text-gray-400 mt-1 block">{{ $notification->created_at->diffForHumans() }}</span>
                                         </div>
                                     @empty
-                                        <div class="p-6 text-center text-gray-400 text-xs">لا توجد إشعارات جديدة</div>
+                                        <div class="p-6 text-center text-gray-400 text-xs">{{ __('ui.notifications.empty') }}</div>
                                     @endforelse
                                 </div>
                             </div>
@@ -94,9 +94,9 @@
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <form action="{{ route('listings.search') }}" method="GET" class="relative max-w-2xl mx-auto">
                         <input type="text" name="query" value="{{ request('query') }}"
-                               placeholder="بتدور على إيه النهاردة؟ (شقة، سيارة، موبايل...)"
-                               class="w-full bg-gray-100 border-transparent rounded-2xl py-3 px-6 pr-12 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-right"
-                               style="direction: rtl;">
+                               placeholder="{{ __('ui.nav.search_placeholder_full') }}"
+                               class="w-full bg-gray-100 border-transparent rounded-2xl py-3 px-6 pr-12 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all {{ app()->getLocale() === 'ar' ? 'text-right' : 'text-left' }}"
+                               style="direction: {{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                         <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -133,7 +133,7 @@
         </div>
 
         {{-- ══ الفوتر القانوني ══ --}}
-        <footer class="bg-gray-900 text-gray-400 mt-16" dir="rtl">
+        <footer class="bg-gray-900 text-gray-400 mt-16" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
 
@@ -145,37 +145,37 @@
                                 <path d="M10 26V13l8-4 8 4v13" stroke="white" stroke-width="2.2" stroke-linejoin="round"/>
                                 <rect x="14" y="18" width="8" height="8" rx="1" fill="white" opacity=".85"/>
                             </svg>
-                            <span class="text-white font-black text-xl">نايلكس</span>
+                            <span class="text-white font-black text-xl">{{ __('ui.footer.brand') }}</span>
                         </div>
-                        <p class="text-sm leading-relaxed">منصة الإعلانات المبوّبة الأولى في مصر — بيع واشتري بثقة.</p>
+                        <p class="text-sm leading-relaxed">{{ __('ui.footer.tagline') }}</p>
                     </div>
 
                     {{-- روابط سريعة --}}
                     <div>
-                        <h3 class="text-white font-bold mb-3 text-sm uppercase tracking-wide">روابط سريعة</h3>
+                        <h3 class="text-white font-bold mb-3 text-sm uppercase tracking-wide">{{ __('ui.footer.quick_links') }}</h3>
                         <ul class="space-y-2 text-sm">
-                            <li><a href="{{ route('home') }}" class="hover:text-indigo-400 transition">الرئيسية</a></li>
-                            <li><a href="{{ route('listings.search') }}" class="hover:text-indigo-400 transition">البحث</a></li>
+                            <li><a href="{{ route('home') }}" class="hover:text-indigo-400 transition">{{ __('ui.footer.link_home') }}</a></li>
+                            <li><a href="{{ route('listings.search') }}" class="hover:text-indigo-400 transition">{{ __('ui.footer.link_search') }}</a></li>
                             @if(config('features.self_service_ads'))
                             <li>
                                 <a href="{{ route('ads.pricing') }}"
                                    class="text-zinc-400 hover:text-[#1D9E75] text-sm transition-colors">
-                                    المساحات الإعلانية
+                                    {{ __('ui.nav.ad_spaces') }}
                                 </a>
                             </li>
                             @endif
                             @auth
-                                <li><a href="{{ route('dashboard') }}" class="hover:text-indigo-400 transition">لوحة التحكم</a></li>
+                                <li><a href="{{ route('dashboard') }}" class="hover:text-indigo-400 transition">{{ __('ui.footer.link_dashboard') }}</a></li>
                             @else
-                                <li><a href="{{ route('login') }}" class="hover:text-indigo-400 transition">تسجيل الدخول</a></li>
-                                <li><a href="{{ route('register') }}" class="hover:text-indigo-400 transition">إنشاء حساب</a></li>
+                                <li><a href="{{ route('login') }}" class="hover:text-indigo-400 transition">{{ __('ui.footer.link_login') }}</a></li>
+                                <li><a href="{{ route('register') }}" class="hover:text-indigo-400 transition">{{ __('ui.footer.link_register_short') }}</a></li>
                             @endauth
                         </ul>
                     </div>
 
                     {{-- الصفحات القانونية --}}
                     <div>
-                        <h3 class="text-white font-bold mb-3 text-sm uppercase tracking-wide">الصفحات القانونية</h3>
+                        <h3 class="text-white font-bold mb-3 text-sm uppercase tracking-wide">{{ __('ui.footer.legal_pages') }}</h3>
                         <ul class="space-y-2 text-sm">
                             @foreach(\App\Models\LegalPage::orderBy('title')->get() as $legalPage)
                                 <li>
@@ -189,13 +189,13 @@
                 </div>
 
                 <div class="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                    <p>جميع الحقوق محفوظة &copy; {{ date('Y') }} <span class="text-indigo-400 font-semibold">نايلكس</span></p>
+                    <p>{{ __('ui.footer.copyright') }} &copy; {{ date('Y') }} <span class="text-indigo-400 font-semibold">{{ __('ui.footer.brand') }}</span></p>
                     <div class="flex items-center gap-4">
-                        <a href="/pages/privacy-policy" class="hover:text-indigo-400 transition">الخصوصية</a>
+                        <a href="/pages/privacy-policy" class="hover:text-indigo-400 transition">{{ __('ui.footer.privacy') }}</a>
                         <span class="text-gray-700">|</span>
-                        <a href="/pages/terms-and-conditions" class="hover:text-indigo-400 transition">الشروط</a>
+                        <a href="/pages/terms-and-conditions" class="hover:text-indigo-400 transition">{{ __('ui.footer.terms') }}</a>
                         <span class="text-gray-700">|</span>
-                        <a href="/pages/contact-us" class="hover:text-indigo-400 transition">تواصل معنا</a>
+                        <a href="/pages/contact-us" class="hover:text-indigo-400 transition">{{ __('ui.footer.contact') }}</a>
                     </div>
                 </div>
             </div>
