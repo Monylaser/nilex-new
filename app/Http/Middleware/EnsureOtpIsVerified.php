@@ -22,7 +22,7 @@ class EnsureOtpIsVerified
         // لو اليوزر مسجل دخول، بس حقل is_phone_verified لسه false
         if ($request->user() && !$request->user()->is_phone_verified) {
             // نرجعه فوراً لصفحة إدخال الكود
-            return redirect()->route('otp.notice')->with('error', 'يجب تأكيد حسابك أولاً للوصول لهذه الصفحة.');
+            return redirect()->route('otp.notice')->with('error', __('server.auth.otp_gate'));
         }
 
         // لو متفعل، خليه يكمل طريقه عادي

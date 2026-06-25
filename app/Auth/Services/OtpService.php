@@ -86,7 +86,7 @@ class OtpService
             $seconds = now()->diffInSeconds($until);
 
             throw ValidationException::withMessages([
-                'otp' => "محاولات كثيرة. حاول مرة أخرى بعد {$seconds} ثانية.",
+                'otp' => __('server.auth.otp_throttled', ['seconds' => $seconds]),
             ]);
         }
     }

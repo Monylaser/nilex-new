@@ -99,14 +99,16 @@ class SellerListingAnalyticsService
 
     public function getCategoryPerformance(User $user): array
     {
+        $nameColumn = app()->getLocale() === 'ar' ? 'categories.name_ar' : 'categories.name_en';
+
         $rows = Listing::query()
             ->where('listings.user_id', $user->id)
             ->join('categories', 'categories.id', '=', 'listings.category_id')
             ->select(
-                'categories.name_ar as category_name',
+                "{$nameColumn} as category_name",
                 DB::raw('SUM(listings.views_count) as total_views'),
             )
-            ->groupBy('categories.id', 'categories.name_ar')
+            ->groupBy('categories.id', $nameColumn)
             ->orderByDesc('total_views')
             ->limit(8)
             ->get();
@@ -170,7 +172,7 @@ class SellerListingAnalyticsService
                 'listing_id'    => $listing->id,
                 'title'         => $listing->title,
                 'price'         => (float) $listing->price,
-                'category'      => $listing->category?->name_ar ?? '—',
+                'category'      => $listing->category?->name ?? '—',
                 'avg_category'  => $avgPrice ? round((float) $avgPrice, 2) : null,
                 'diff_percent'  => $avgPrice && $avgPrice > 0
                     ? round((($listing->price - $avgPrice) / $avgPrice) * 100, 1)

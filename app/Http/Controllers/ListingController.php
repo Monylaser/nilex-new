@@ -89,7 +89,7 @@ class ListingController extends Controller
 
         // 2. منع المشتري من تقديم عرض على إعلانه الخاص
         if ($listing->user_id === Auth::id()) {
-            return response()->json(['error' => 'لا يمكنك تقديم عرض على إعلانك الخاص!'], 400);
+            return response()->json(['error' => __('server.offer.own_listing')], 400);
         }
 
         // 3. منع التكرار (عشان المشتري ميعملش سبام عروض)
@@ -99,7 +99,7 @@ class ListingController extends Controller
             ->exists();
 
         if ($existingOffer) {
-            return response()->json(['error' => 'لديك عرض قيد الانتظار بالفعل لهذا الإعلان.'], 400);
+            return response()->json(['error' => __('server.offer.duplicate')], 400);
         }
 
         // 4. حفظ العرض في الداتابيز
@@ -111,6 +111,6 @@ class ListingController extends Controller
             'message'     => $request->message,
         ]);
 
-        return response()->json(['success' => 'تم إرسال عرضك للبائع بنجاح! 🚀']);
+        return response()->json(['success' => __('server.offer.sent_success')]);
     }
 }

@@ -22,7 +22,7 @@ class MessageController extends Controller
                 Rule::exists('users', 'id'),
                 function ($attribute, $value, $fail) use ($request) {
                     if ((int) $value === (int) $request->user()->id) {
-                        $fail('لا يمكنك إرسال رسالة لنفسك.');
+                        $fail(__('server.message.self'));
                     }
                 },
             ],

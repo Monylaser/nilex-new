@@ -37,14 +37,17 @@ class SmartAdCreator extends Component
         ];
     }
 
-    protected $messages = [
-        'photos.*.max'   => 'حجم الصورة لا يتجاوز 5 ميجابايت',
-        'photos.*.image' => 'الملف يجب أن يكون صورة',
-        'photos.*.mimes' => 'صيغ مدعومة: JPG, PNG, WEBP, GIF',
-        'audio.max'      => 'حجم الملف الصوتي لا يتجاوز 10 ميجابايت',
-        'audio.mimes'    => 'صيغ مدعومة: MP3, WAV, M4A, OGG, WEBM',
-        'textNote.max'   => 'الملاحظات لا تتجاوز 500 حرف',
-    ];
+    protected function messages(): array
+    {
+        return [
+            'photos.*.max'   => __('server.ai.photo_max'),
+            'photos.*.image' => __('server.ai.photo_image'),
+            'photos.*.mimes' => __('server.ai.photo_mimes'),
+            'audio.max'      => __('server.ai.audio_max'),
+            'audio.mimes'    => __('server.ai.audio_mimes'),
+            'textNote.max'   => __('server.ai.note_max'),
+        ];
+    }
 
     // ── mount: استقبال الصور من Filament ─────────────────────────────────────
     public function mount(array $existingImages = []): void
@@ -57,7 +60,7 @@ class SmartAdCreator extends Component
     public function updatedPhotos(): void
     {
         if (count($this->photos) > $this->maxPhotos) {
-            $this->errorMessage = "لا يمكن رفع أكثر من {$this->maxPhotos} صور";
+            $this->errorMessage = __('server.ai.too_many_photos', ['max' => $this->maxPhotos]);
             $this->photos = array_slice($this->photos, 0, $this->maxPhotos);
         } else {
             $this->errorMessage = '';
@@ -99,7 +102,7 @@ class SmartAdCreator extends Component
         $hasText          = !empty($this->textNote);
 
         if (!$hasNewPhotos && !$hasExisting && !$hasAudio && !$hasText) {
-            $this->errorMessage = 'من فضلك ارفع صورة واحدة على الأقل أو سجل صوت';
+            $this->errorMessage = __('server.ai.need_input');
             return;
         }
 
@@ -108,14 +111,14 @@ class SmartAdCreator extends Component
         $this->progress     = 0;
 
         try {
-            $this->updateProgress(5, 'جاري التحقق من الإعدادات...');
+            $this->updateProgress(5, __('server.ai.step_checking'));
 
             $apiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY');
             if (empty($apiKey)) {
-                throw new \Exception('مفتاح Gemini API غير موجود في ملف .env');
+                throw new \Exception(__('server.ai.no_api_key'));
             }
 
-            $this->updateProgress(10, 'تجهيز البيانات للإرسال...');
+            $this->updateProgress(10, __('server.ai.step_preparing'));
 
             $url   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
             $parts = [];
@@ -126,7 +129,7 @@ class SmartAdCreator extends Component
                 $parts[] = ['text' => "📝 ملاحظات إضافية: " . $this->textNote];
             }
 
-            $this->updateProgress(20, 'جاري معالجة الصور...');
+            $this->updateProgress(20, __('server.ai.step_processing_images'));
 
             // ── 1. الصور الممررة من Filament (مسارات على الديسك) ─────────────
             foreach (array_slice($this->existingImages, 0, $this->maxPhotos) as $imagePath) {
@@ -156,21 +159,21 @@ class SmartAdCreator extends Component
                 ];
             }
 
-            $this->updateProgress(40, 'تم معالجة الصور');
+            $this->updateProgress(40, __('server.ai.step_images_done'));
 
             // ── 3. الصوت ─────────────────────────────────────────────────────
             if ($this->audio) {
-                $this->updateProgress(50, 'جاري معالجة التسجيل الصوتي...');
+                $this->updateProgress(50, __('server.ai.step_processing_audio'));
                 $parts[] = [
                     'inline_data' => [
                         'mime_type' => $this->audio->getMimeType(),
                         'data'      => base64_encode(file_get_contents($this->audio->getRealPath())),
                     ]
                 ];
-                $this->updateProgress(60, 'تم معالجة التسجيل الصوتي');
+                $this->updateProgress(60, __('server.ai.step_audio_done'));
             }
 
-            $this->updateProgress(65, 'جاري الاتصال بالذكاء الاصطناعي...');
+            $this->updateProgress(65, __('server.ai.step_connecting'));
 
             $response = Http::timeout(120)
                 ->retry(3, 1000)
@@ -189,13 +192,13 @@ class SmartAdCreator extends Component
                     ],
                 ]);
 
-            $this->updateProgress(85, 'جاري تحليل النتائج...');
+            $this->updateProgress(85, __('server.ai.step_analyzing'));
 
             if ($response->successful()) {
                 $responseText = $response->json('candidates.0.content.parts.0.text');
 
                 if (empty($responseText)) {
-                    throw new \Exception('لم يتم استلام رد من الذكاء الاصطناعي');
+                    throw new \Exception(__('server.ai.no_response'));
                 }
 
                 $data = json_decode($responseText, true);
@@ -211,12 +214,12 @@ class SmartAdCreator extends Component
 
                 $data = $this->sanitizeData($data);
 
-                $this->updateProgress(95, 'جاري إرسال البيانات...');
+                $this->updateProgress(95, __('server.ai.step_sending'));
 
                 // إرسال الحدث للـ Filament form لملء الحقول
                 $this->dispatch('ai-ad-generated', data: $data);
 
-                $this->updateProgress(100, 'تم بنجاح! ✅');
+                $this->updateProgress(100, __('server.ai.step_success'));
 
                 $this->reset(['photos', 'audio', 'textNote', 'progress', 'currentStep']);
                 $this->isProcessing = false;
@@ -225,14 +228,14 @@ class SmartAdCreator extends Component
                 $this->dispatch('close-modal', id: 'smart-ad-modal');
 
             } else {
-                $errorMessage = $response->json('error.message') ?? 'خطأ غير معروف';
+                $errorMessage = $response->json('error.message') ?? __('server.ai.unknown_error');
                 Log::error('Gemini API Error', ['status' => $response->status(), 'body' => $response->body()]);
-                $this->errorMessage = 'خطأ من الخادم: ' . $errorMessage;
+                $this->errorMessage = __('server.ai.server_error', ['message' => $errorMessage]);
             }
 
         } catch (\Exception $e) {
             Log::error('AI Processing Exception: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->errorMessage = '⚠️ خطأ تقني: ' . $e->getMessage();
+            $this->errorMessage = __('server.ai.technical_error', ['message' => $e->getMessage()]);
         }
 
         $this->isProcessing = false;

@@ -121,7 +121,7 @@ class SellerAdCampaignController extends Controller
         $this->authorize('retryPayment', $campaign);
 
         if ($campaign->duration_days === null) {
-            return back()->withErrors(['payment' => 'مدة الحملة غير محددة.']);
+            return back()->withErrors(['payment' => __('server.ads.duration_missing')]);
         }
 
         try {

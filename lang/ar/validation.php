@@ -173,8 +173,8 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'category_id' => [
+            'required' => 'التصنيف مطلوب لبانر صفحة التصنيف.',
         ],
     ],
 

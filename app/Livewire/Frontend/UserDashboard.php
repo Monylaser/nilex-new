@@ -21,7 +21,7 @@ class UserDashboard extends Component
     {
         $offer = Offer::where('receiver_id', Auth::id())->findOrFail($id);
         $offer->update(['status' => 'accepted']);
-        session()->flash('success', 'تم قبول العرض بنجاح! ✅');
+        session()->flash('success', __('server.dashboard.offer_accepted'));
     }
 
     // ✅ رفض العرض (تم إضافة int)
@@ -29,7 +29,7 @@ class UserDashboard extends Component
     {
         $offer = Offer::where('receiver_id', Auth::id())->findOrFail($id);
         $offer->update(['status' => 'rejected']);
-        session()->flash('error', 'تم رفض العرض. ❌');
+        session()->flash('error', __('server.dashboard.offer_rejected'));
     }
 
     // دالة لحذف الإعلان (تم إضافة int)
@@ -42,7 +42,7 @@ class UserDashboard extends Component
         
         $listing->delete();
 
-        session()->flash('success', 'تم حذف الإعلان بنجاح 🗑️');
+        session()->flash('success', __('server.dashboard.listing_deleted'));
     }
 
     // دالة تمييز الإعلان باستخدام النقاط (تم إضافة int)
@@ -51,7 +51,7 @@ class UserDashboard extends Component
         $listing = Listing::where('user_id', Auth::id())->findOrFail($id);
 
         if ($listing->is_featured) {
-            session()->flash('error', 'هذا الإعلان مميز بالفعل!');
+            session()->flash('error', __('server.dashboard.already_featured'));
             return;
         }
 
@@ -60,7 +60,7 @@ class UserDashboard extends Component
 
             session()->flash(
                 'success',
-                'تم خصم النقاط وتمييز الإعلان بنجاح! 🚀'
+                __('server.dashboard.featured_success')
             );
         } catch (\Exception $e) {
             session()->flash(

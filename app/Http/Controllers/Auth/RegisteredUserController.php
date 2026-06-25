@@ -48,20 +48,20 @@ class RegisteredUserController extends Controller
 
         if (! $isEmail && ! $isPhone) {
             throw ValidationException::withMessages([
-                'contact' => 'الرجاء إدخال بريد إلكتروني صحيح أو رقم هاتف مصري صالح (01XXXXXXXXX).',
+                'contact' => __('server.auth.contact_invalid'),
             ]);
         }
 
         // ── 3. Uniqueness check ──────────────────────────────────────
         if ($isEmail && User::where('email', $request->contact)->exists()) {
             throw ValidationException::withMessages([
-                'contact' => 'هذا البريد الإلكتروني مسجل بالفعل.',
+                'contact' => __('server.auth.email_taken'),
             ]);
         }
 
         if ($isPhone && User::where('phone', $request->contact)->exists()) {
             throw ValidationException::withMessages([
-                'contact' => 'رقم الهاتف هذا مسجل بالفعل.',
+                'contact' => __('server.auth.phone_taken'),
             ]);
         }
 

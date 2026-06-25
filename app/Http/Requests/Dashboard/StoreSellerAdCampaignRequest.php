@@ -43,26 +43,8 @@ class StoreSellerAdCampaignRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             if ($this->input('placement') !== 'category_page' && $this->filled('category_id')) {
-                $validator->errors()->add('category_id', 'التصنيف متاح فقط لبانر صفحة التصنيف.');
+                $validator->errors()->add('category_id', __('server.ads.category_only_category_page'));
             }
         });
-    }
-
-    public function messages(): array
-    {
-        return [
-            'title.required'         => 'عنوان الحملة مطلوب.',
-            'placement.required'     => 'موضع الإعلان مطلوب.',
-            'placement.in'           => 'موضع الإعلان غير صالح.',
-            'category_id.required'   => 'التصنيف مطلوب لبانر صفحة التصنيف.',
-            'category_id.exists'     => 'التصنيف المحدد غير موجود.',
-            'target_url.required'    => 'رابط الهدف مطلوب.',
-            'target_url.url'         => 'رابط الهدف غير صالح.',
-            'duration_days.required' => 'مدة الحملة مطلوبة.',
-            'duration_days.in'       => 'مدة الحملة غير صالحة.',
-            'ad_image.required'      => 'صورة البانر مطلوبة.',
-            'ad_image.mimes'         => 'يجب أن تكون الصورة بصيغة jpeg أو png أو webp أو gif.',
-            'ad_image.max'           => 'حجم الصورة يجب ألا يتجاوز 2 ميجابايت.',
-        ];
     }
 }

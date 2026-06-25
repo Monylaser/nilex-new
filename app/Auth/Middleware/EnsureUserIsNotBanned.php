@@ -13,14 +13,14 @@ class EnsureUserIsNotBanned
         $user = $request->user();
 
         if ($user?->is_banned) {
-            $reason = $user->ban_reason ?? 'مخالفة سياسات المنصة';
+            $reason = $user->ban_reason ?? __('server.auth.ban_reason_default');
 
             auth()->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             return redirect()->route('login')
-                ->withErrors(['email' => "تم تعليق حسابك. السبب: {$reason}"]);
+                ->withErrors(['email' => __('server.auth.banned', ['reason' => $reason])]);
         }
 
         return $next($request);

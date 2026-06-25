@@ -34,7 +34,7 @@ class SocialiteController extends Controller
             $socialUser = Socialite::driver($provider)->user();
         } catch (\Exception $e) {
             return redirect()->route('login')
-                ->withErrors(['error' => 'حدث خطأ أثناء محاولة تسجيل الدخول عبر '.ucfirst($provider)]);
+                ->withErrors(['error' => __('server.auth.social_error', ['provider' => ucfirst($provider)])]);
         }
 
         $user = User::where('provider_name', $provider)
@@ -57,7 +57,7 @@ class SocialiteController extends Controller
         if (! $user) {
             if (! $this->deviceLimit->canCreateAccount(request())) {
                 return redirect()->route('register')
-                    ->withErrors(['contact' => 'عذراً، لقد وصلت للحد الأقصى لإنشاء الحسابات من هذا الجهاز.']);
+                    ->withErrors(['contact' => __('server.auth.device_limit')]);
             }
 
             $device = $this->fingerprints->resolveDeviceCookie(request());
@@ -97,6 +97,6 @@ class SocialiteController extends Controller
         Auth::login($user);
 
         return redirect()->intended(route('dashboard'))
-            ->with('success', 'تم تسجيل الدخول بنجاح!');
+            ->with('success', __('server.auth.login_success'));
     }
 }

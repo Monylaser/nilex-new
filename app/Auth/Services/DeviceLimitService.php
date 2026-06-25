@@ -48,7 +48,7 @@ class DeviceLimitService
         DB::transaction(function () use ($request) {
             if (! $this->canCreateAccount($request)) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'contact' => 'عذراً، لقد وصلت للحد الأقصى لإنشاء الحسابات من هذا الجهاز (3 حسابات كحد أقصى).',
+                    'contact' => __('server.auth.device_limit_detailed'),
                 ]);
             }
         }, 3);

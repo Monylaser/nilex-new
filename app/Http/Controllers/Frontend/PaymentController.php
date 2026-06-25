@@ -29,7 +29,7 @@ class PaymentController extends Controller
             ],
             'refund_policy_accepted' => ['accepted'],
         ], [
-            'refund_policy_accepted.accepted' => 'يجب الموافقة على سياسة الاسترجاع والاسترداد قبل إتمام عملية الدفع.',
+            'refund_policy_accepted.accepted' => __('server.payment.refund_required'),
         ]);
 
         $plan = PointPlan::query()

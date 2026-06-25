@@ -300,7 +300,10 @@ class Listing extends Model implements HasMedia
     public static function featureCostStrict(int $days): int
     {
         if (! array_key_exists($days, self::FEATURE_COSTS)) {
-            throw new \InvalidArgumentException("مدة التمييز غير مدعومة: {$days} أيام. القيم المتاحة: " . implode(', ', array_keys(self::FEATURE_COSTS)));
+            throw new \InvalidArgumentException(__('server.dashboard.feature_unsupported_duration', [
+                'days'   => $days,
+                'values' => implode(', ', array_keys(self::FEATURE_COSTS)),
+            ]));
         }
 
         return self::FEATURE_COSTS[$days];
@@ -322,17 +325,20 @@ class Listing extends Model implements HasMedia
         $isNewFeaturedSlot = ! ($this->is_featured && $this->featured_until?->isFuture());
 
         if ($isNewFeaturedSlot && ! $entitlements->canUseFeature($user, \App\Services\EntitlementService::FEATURE_FEATURED_LISTINGS_LIMIT, $this)) {
-            throw new \Exception('وصلت للحد الأقصى من الإعلانات المميزة في خطتك الحالية.');
+            throw new \Exception(__('server.dashboard.feature_limit_plan'));
         }
 
         if (! $entitlements->canUseFeature($user, \App\Services\EntitlementService::FEATURE_MONTHLY_BOOST_LIMIT)) {
-            throw new \Exception('وصلت للحد الشهري لعمليات التمييز في خطتك الحالية.');
+            throw new \Exception(__('server.dashboard.feature_limit_monthly'));
         }
 
         // ✅ تأكد من كفاية النقاط
         if (! $user->hasPoints($cost)) {
             throw new \Exception(
-                "نقاط غير كافية — المطلوب: {$cost} نقطة، المتاح: {$user->points} نقطة"
+                __('server.dashboard.feature_insufficient_points', [
+                    'cost'      => $cost,
+                    'available' => $user->points,
+                ])
             );
         }
 

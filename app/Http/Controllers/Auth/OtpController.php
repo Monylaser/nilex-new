@@ -32,8 +32,8 @@ class OtpController extends Controller
         $request->validate([
             'otp' => 'required|numeric|digits:4',
         ], [
-            'otp.required' => 'يرجى إدخال كود التفعيل',
-            'otp.digits' => 'الكود يجب أن يتكون من 4 أرقام',
+            'otp.required' => __('server.auth.otp_required'),
+            'otp.digits' => __('server.auth.otp_digits'),
         ]);
 
         /** @var \App\Models\User $user */
@@ -49,10 +49,10 @@ class OtpController extends Controller
                 $this->pointService->credit($user, 50, 'مكافأة توثيق رقم الهاتف');
             }
 
-            return redirect()->route('dashboard')->with('success', 'تم تفعيل حسابك بنجاح! 🎉');
+            return redirect()->route('dashboard')->with('success', __('server.auth.verified_success'));
         }
 
-        return back()->withErrors(['otp' => 'الكود غير صحيح أو انتهت صلاحيته.']);
+        return back()->withErrors(['otp' => __('server.auth.otp_invalid')]);
     }
 
     public function resend()
@@ -62,6 +62,6 @@ class OtpController extends Controller
 
         $this->otpService->resend($user);
 
-        return back()->with('status', 'تم إرسال كود جديد بنجاح.');
+        return back()->with('status', __('server.auth.otp_resent'));
     }
 }

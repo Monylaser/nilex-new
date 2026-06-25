@@ -22,7 +22,7 @@ class AdCampaignPaymentService
     public function ensureEnabled(): void
     {
         if (! $this->isEnabled()) {
-            throw new RuntimeException('Self-service advertising is disabled.');
+            throw new RuntimeException(__('server.ads.self_service_disabled'));
         }
     }
 
@@ -32,13 +32,13 @@ class AdCampaignPaymentService
         $placementConfig = $placements[$placement] ?? null;
 
         if ($placementConfig === null) {
-            throw new RuntimeException("Unknown ad placement: {$placement}");
+            throw new RuntimeException(__('server.ads.unknown_placement', ['placement' => $placement]));
         }
 
         $price = $placementConfig['prices'][$durationDays] ?? null;
 
         if ($price === null) {
-            throw new RuntimeException("No price configured for placement [{$placement}] and duration [{$durationDays}] days.");
+            throw new RuntimeException(__('server.ads.no_price', ['placement' => $placement, 'days' => $durationDays]));
         }
 
         return (float) $price;
@@ -57,7 +57,7 @@ class AdCampaignPaymentService
     public function verifyCampaignOwnership(AdCampaign $campaign, User $seller): void
     {
         if ($campaign->seller_id === null || (int) $campaign->seller_id !== (int) $seller->id) {
-            throw new RuntimeException('Campaign does not belong to the authenticated seller.');
+            throw new RuntimeException(__('server.ads.not_owner'));
         }
     }
 
@@ -67,7 +67,7 @@ class AdCampaignPaymentService
         $this->verifyCampaignOwnership($campaign, $seller);
 
         if ($campaign->payment_status === 'paid') {
-            throw new RuntimeException('Campaign is already paid.');
+            throw new RuntimeException(__('server.ads.already_paid'));
         }
 
         $amount = $this->calculatePrice($campaign->placement, $durationDays);
@@ -82,7 +82,7 @@ class AdCampaignPaymentService
             $token = $this->paymobService->getAuthToken();
 
             if ($token === null || $token === '') {
-                throw new RuntimeException('Failed to authenticate with Paymob.');
+                throw new RuntimeException(__('server.ads.paymob_auth_failed'));
             }
 
             $orderId = $this->paymobService->createOrder(
@@ -92,7 +92,7 @@ class AdCampaignPaymentService
             );
 
             if ($orderId === null || $orderId === '') {
-                throw new RuntimeException('Failed to create Paymob order.');
+                throw new RuntimeException(__('server.ads.paymob_order_failed'));
             }
 
             $attempt->update([
@@ -107,7 +107,7 @@ class AdCampaignPaymentService
             $paymentKey = $this->paymobService->getPaymentKey($token, $orderId, $amount, $seller);
 
             if ($paymentKey === null || $paymentKey === '') {
-                throw new RuntimeException('Failed to obtain Paymob payment key.');
+                throw new RuntimeException(__('server.ads.paymob_key_failed'));
             }
 
             $iframeId = config('services.paymob.iframe_id', env('PAYMOB_IFRAME_ID'));

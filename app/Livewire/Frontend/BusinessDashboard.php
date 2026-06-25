@@ -43,7 +43,7 @@ class BusinessDashboard extends Component
                 fputcsv($handle, [
                     $listing->id,
                     $listing->title,
-                    $listing->category?->name_ar ?? '',
+                    $listing->category?->name ?? '',
                     $listing->price,
                     $listing->views_count,
                     $listing->whatsapp_clicks,
