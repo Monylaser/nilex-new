@@ -11,20 +11,20 @@
                 </div>
                 <div>
                     <h2 class="text-xl font-black text-zinc-900 leading-tight">
-                        أهلاً، {{ explode(' ', $user->name)[0] }}
+                        {{ __('ui.dashboard.greeting', ['name' => explode(' ', $user->name)[0]]) }}
                     </h2>
                     <div class="flex items-center gap-3 mt-1 flex-wrap">
                         <span class="flex items-center gap-1.5 text-sm font-semibold text-zinc-500">
                             <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 14a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"/></svg>
-                            {{ number_format($user->points ?? 0) }} نقطة
+                            {{ number_format($user->points ?? 0) }} {{ __('ui.dashboard.points_suffix') }}
                         </span>
                         @if($user->is_phone_verified ?? false)
                             <span class="flex items-center gap-1 text-xs font-bold text-nilex bg-nilex/8 px-2 py-0.5 rounded-full">
                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                موثق
+                                {{ __('ui.sections.verified') }}
                             </span>
                         @endif
-                        <span class="text-xs text-zinc-400 font-medium">عضو منذ {{ $user->created_at->diffForHumans() }}</span>
+                        <span class="text-xs text-zinc-400 font-medium">{{ __('ui.dashboard.member_since') }} {{ $user->created_at->diffForHumans() }}</span>
                     </div>
                 </div>
             </div>
@@ -32,7 +32,7 @@
                 @if(\App\Services\AdCampaignService::selfServiceEnabled())
                     <a href="{{ route('dashboard.ads.index') }}"
                        class="flex items-center justify-center gap-2 bg-white border border-amber-200 text-amber-700 hover:bg-amber-50 font-bold py-3 px-5 rounded-xl transition-all text-sm">
-                        📢 حملاتي الإعلانية
+                        📢 {{ __('ui.dashboard.my_campaigns') }}
                     </a>
                 @endif
                 <a href="{{ route('dashboard.leads') }}"
@@ -43,7 +43,7 @@
                    class="flex items-center justify-center gap-2 bg-nilex hover:bg-nilex-dark text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 text-sm"
                    style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                    أضف إعلان جديد
+                    {{ __('ui.dashboard.add_listing') }}
                 </a>
             </div>
         </div>
@@ -52,32 +52,32 @@
         <div class="grid grid-cols-3 lg:grid-cols-6 gap-3">
             {{-- Total --}}
             <div class="bg-white rounded-2xl border border-zinc-100 p-4 text-center" style="box-shadow:0 1px 4px rgba(0,0,0,0.04);">
-                <p class="text-xs text-zinc-400 font-semibold mb-1">الكل</p>
+                <p class="text-xs text-zinc-400 font-semibold mb-1">{{ __('ui.dashboard.stat_all') }}</p>
                 <p class="text-2xl font-black text-zinc-900">{{ $stats['total'] }}</p>
             </div>
             {{-- Active --}}
             <div class="bg-nilex/5 rounded-2xl border border-nilex/15 p-4 text-center">
-                <p class="text-xs text-nilex font-semibold mb-1">نشط</p>
+                <p class="text-xs text-nilex font-semibold mb-1">{{ __('ui.dashboard.stat_active') }}</p>
                 <p class="text-2xl font-black text-nilex">{{ $stats['active'] }}</p>
             </div>
             {{-- Pending --}}
             <div class="bg-amber-50 rounded-2xl border border-amber-100 p-4 text-center">
-                <p class="text-xs text-amber-600 font-semibold mb-1">مراجعة</p>
+                <p class="text-xs text-amber-600 font-semibold mb-1">{{ __('ui.dashboard.stat_pending') }}</p>
                 <p class="text-2xl font-black text-amber-700">{{ $stats['pending'] }}</p>
             </div>
             {{-- Rejected --}}
             <div class="bg-red-50 rounded-2xl border border-red-100 p-4 text-center">
-                <p class="text-xs text-red-500 font-semibold mb-1">مرفوض</p>
+                <p class="text-xs text-red-500 font-semibold mb-1">{{ __('ui.dashboard.stat_rejected') }}</p>
                 <p class="text-2xl font-black text-red-600">{{ $stats['rejected'] }}</p>
             </div>
             {{-- Views --}}
             <div class="bg-zinc-50 rounded-2xl border border-zinc-200 p-4 text-center">
-                <p class="text-xs text-zinc-500 font-semibold mb-1">مشاهدات</p>
+                <p class="text-xs text-zinc-500 font-semibold mb-1">{{ __('ui.dashboard.stat_views') }}</p>
                 <p class="text-2xl font-black text-zinc-800">{{ number_format($stats['views']) }}</p>
             </div>
             {{-- WhatsApp clicks --}}
             <div class="rounded-2xl border p-4 text-center" style="background:rgba(37,211,102,0.06); border-color:rgba(37,211,102,0.2);">
-                <p class="text-xs font-semibold mb-1" style="color:#1da851;">واتساب</p>
+                <p class="text-xs font-semibold mb-1" style="color:#1da851;">{{ __('ui.dashboard.stat_whatsapp') }}</p>
                 <p class="text-2xl font-black" style="color:#1da851;">{{ number_format($stats['clicks']) }}</p>
             </div>
         </div>
@@ -223,8 +223,8 @@
         @if($access['analytics'] ?? false)
         <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
             <div class="flex items-center justify-between mb-5">
-                <h3 class="text-base font-black text-zinc-900">أداء الإعلانات</h3>
-                <span class="text-xs text-zinc-400 font-medium">آخر 7 إعلانات</span>
+                <h3 class="text-base font-black text-zinc-900">{{ __('ui.dashboard.legacy_chart_title') }}</h3>
+                <span class="text-xs text-zinc-400 font-medium">{{ __('ui.dashboard.legacy_chart_subtitle') }}</span>
             </div>
             <div wire:ignore
                  id="chartDataContainer"
@@ -241,29 +241,29 @@
         @if($incomingOffers->count() > 0)
             <div>
                 <div class="flex items-center gap-2 mb-3">
-                    <h3 class="text-base font-black text-zinc-900">عروض سعر مستلمة</h3>
+                    <h3 class="text-base font-black text-zinc-900">{{ __('ui.dashboard.offers_title') }}</h3>
                     <span class="bg-nilex text-white text-xs px-2.5 py-0.5 rounded-full font-bold">{{ $incomingOffers->count() }}</span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     @foreach($incomingOffers as $offer)
                         <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 4px rgba(0,0,0,0.04);">
                             <div class="flex items-start justify-between mb-3">
-                                <span class="text-xs font-bold text-nilex bg-nilex/8 px-2.5 py-1 rounded-full">عرض سعر</span>
-                                <span class="text-lg font-black text-zinc-900">{{ number_format($offer->amount) }} <span class="text-sm font-bold text-zinc-400">ج.م</span></span>
+                                <span class="text-xs font-bold text-nilex bg-nilex/8 px-2.5 py-1 rounded-full">{{ __('ui.dashboard.offer_badge') }}</span>
+                                <span class="text-lg font-black text-zinc-900">{{ number_format($offer->amount) }} <span class="text-sm font-bold text-zinc-400">{{ __('ui.sections.currency') }}</span></span>
                             </div>
                             <p class="font-bold text-zinc-800 text-sm leading-snug mb-1 line-clamp-1">{{ $offer->listing->title }}</p>
-                            <p class="text-xs text-zinc-500 mb-3">من: <span class="font-semibold text-zinc-700">{{ $offer->sender->name }}</span></p>
+                            <p class="text-xs text-zinc-500 mb-3">{{ __('ui.dashboard.offer_from') }} <span class="font-semibold text-zinc-700">{{ $offer->sender->name }}</span></p>
                             @if($offer->message)
                                 <p class="text-xs text-zinc-500 bg-zinc-50 px-3 py-2 rounded-xl mb-4 italic leading-relaxed">"{{ $offer->message }}"</p>
                             @endif
                             <div class="flex gap-2">
                                 <button wire:click="acceptOffer({{ $offer->id }})"
                                         class="flex-1 bg-nilex hover:bg-nilex-dark text-white text-xs font-bold py-2.5 rounded-xl transition-all active:scale-95">
-                                    قبول
+                                    {{ __('ui.dashboard.offer_accept') }}
                                 </button>
                                 <button wire:click="rejectOffer({{ $offer->id }})"
                                         class="flex-1 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold py-2.5 rounded-xl transition-all">
-                                    رفض
+                                    {{ __('ui.dashboard.offer_reject') }}
                                 </button>
                             </div>
                         </div>
@@ -283,8 +283,8 @@
         {{-- ── LISTINGS SECTION ────────────────────────────────────────────── --}}
         <div class="bg-white rounded-2xl border border-zinc-100 overflow-hidden" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
             <div class="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
-                <h3 class="text-base font-black text-zinc-900">إعلاناتي</h3>
-                <span class="text-sm font-bold text-zinc-500">{{ $listings->total() }} إعلان</span>
+                <h3 class="text-base font-black text-zinc-900">{{ __('ui.dashboard.my_listings') }}</h3>
+                <span class="text-sm font-bold text-zinc-500">{{ $listings->total() }} {{ __('ui.dashboard.listing_count_suffix') }}</span>
             </div>
 
             @if($listings->count() > 0)
@@ -310,13 +310,13 @@
                                     {{ $listing->title }}
                                 </a>
                                 <div class="flex items-center gap-2 mt-1 flex-wrap">
-                                    <span class="text-sm font-black text-nilex">{{ number_format($listing->price) }} ج.م</span>
+                                    <span class="text-sm font-black text-nilex">{{ number_format($listing->price) }} {{ __('ui.sections.currency') }}</span>
                                     @if($listing->status === 'published')
-                                        <span class="text-xs font-bold bg-nilex/8 text-nilex px-2 py-0.5 rounded-full">نشط</span>
+                                        <span class="text-xs font-bold bg-nilex/8 text-nilex px-2 py-0.5 rounded-full">{{ __('ui.dashboard.stat_active') }}</span>
                                     @elseif($listing->status === 'pending')
-                                        <span class="text-xs font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">مراجعة</span>
+                                        <span class="text-xs font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{{ __('ui.dashboard.stat_pending') }}</span>
                                     @elseif($listing->status === 'rejected')
-                                        <span class="text-xs font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-full">مرفوض</span>
+                                        <span class="text-xs font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{{ __('ui.dashboard.stat_rejected') }}</span>
                                     @endif
                                 </div>
                                 <div class="flex items-center gap-3 mt-1.5 text-xs text-zinc-400">
@@ -329,18 +329,18 @@
                             <div class="flex flex-col gap-2 shrink-0 justify-center">
                                 @if(!$listing->is_featured && $listing->status === 'published')
                                     <button wire:click="featureListing({{ $listing->id }})"
-                                            wire:confirm="هل تريد خصم النقاط لتمييز الإعلان؟"
-                                            title="تمييز الإعلان"
+                                            wire:confirm="{{ __('ui.dashboard.confirm_feature') }}"
+                                            title="{{ __('ui.dashboard.tooltip_feature') }}"
                                             class="text-zinc-400 hover:text-amber-500 transition-colors p-1.5 rounded-lg hover:bg-amber-50">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                                     </button>
                                 @elseif($listing->is_featured)
-                                    <span class="text-amber-400 p-1.5" title="مميز">
+                                    <span class="text-amber-400 p-1.5" title="{{ __('ui.dashboard.tooltip_featured') }}">
                                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                                     </span>
                                 @endif
                                 <button wire:click="deleteListing({{ $listing->id }})"
-                                        wire:confirm="هل أنت متأكد من الحذف؟"
+                                        wire:confirm="{{ __('ui.dashboard.confirm_delete') }}"
                                         class="text-zinc-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
@@ -354,11 +354,11 @@
                     <table class="w-full text-right text-sm">
                         <thead class="bg-zinc-50 border-b border-zinc-100 text-zinc-400 text-xs font-bold uppercase tracking-wider">
                             <tr>
-                                <th class="px-5 py-3 font-semibold">الإعلان</th>
-                                <th class="px-5 py-3 font-semibold">القسم</th>
-                                <th class="px-5 py-3 font-semibold">السعر</th>
-                                <th class="px-5 py-3 font-semibold">الحالة</th>
-                                <th class="px-5 py-3 font-semibold text-center">إجراءات</th>
+                                <th class="px-5 py-3 font-semibold">{{ __('ui.dashboard.col_listing') }}</th>
+                                <th class="px-5 py-3 font-semibold">{{ __('ui.dashboard.col_category') }}</th>
+                                <th class="px-5 py-3 font-semibold">{{ __('ui.dashboard.col_price') }}</th>
+                                <th class="px-5 py-3 font-semibold">{{ __('ui.dashboard.col_status') }}</th>
+                                <th class="px-5 py-3 font-semibold text-center">{{ __('ui.dashboard.col_actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-50">
@@ -393,25 +393,25 @@
                                     {{-- Category --}}
                                     <td class="px-5 py-4">
                                         <span class="text-xs font-semibold bg-zinc-100 text-zinc-600 px-2.5 py-1 rounded-lg">
-                                            {{ $listing->category->name_ar ?? 'بدون قسم' }}
+                                            {{ $listing->category->name ?? __('ui.dashboard.no_category') }}
                                         </span>
                                     </td>
                                     {{-- Price --}}
                                     <td class="px-5 py-4">
                                         <span class="font-black text-zinc-900">{{ number_format($listing->price) }}</span>
-                                        <span class="text-xs text-zinc-400 font-medium"> ج.م</span>
+                                        <span class="text-xs text-zinc-400 font-medium"> {{ __('ui.sections.currency') }}</span>
                                     </td>
                                     {{-- Status --}}
                                     <td class="px-5 py-4">
                                         @if($listing->status === 'published')
                                             <span class="text-xs font-bold bg-nilex/8 text-nilex px-2.5 py-1 rounded-full">
                                                 @if($listing->is_featured)⭐ @endif
-                                                نشط
+                                                {{ __('ui.dashboard.stat_active') }}
                                             </span>
                                         @elseif($listing->status === 'pending')
-                                            <span class="text-xs font-bold bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">مراجعة</span>
+                                            <span class="text-xs font-bold bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">{{ __('ui.dashboard.stat_pending') }}</span>
                                         @elseif($listing->status === 'rejected')
-                                            <span class="text-xs font-bold bg-red-50 text-red-600 px-2.5 py-1 rounded-full" title="{{ $listing->rejection_reason }}">مرفوض</span>
+                                            <span class="text-xs font-bold bg-red-50 text-red-600 px-2.5 py-1 rounded-full" title="{{ $listing->rejection_reason }}">{{ __('ui.dashboard.stat_rejected') }}</span>
                                         @endif
                                     </td>
                                     {{-- Actions --}}
@@ -419,15 +419,15 @@
                                         <div class="flex items-center justify-center gap-2">
                                             @if(!$listing->is_featured && $listing->status === 'published')
                                                 <button wire:click="featureListing({{ $listing->id }})"
-                                                        wire:confirm="هل تريد خصم النقاط لتمييز الإعلان؟"
-                                                        title="تمييز الإعلان"
+                                                        wire:confirm="{{ __('ui.dashboard.confirm_feature') }}"
+                                                        title="{{ __('ui.dashboard.tooltip_feature') }}"
                                                         class="text-zinc-400 hover:text-amber-500 transition-colors p-2 rounded-xl hover:bg-amber-50">
                                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                                                 </button>
                                             @endif
                                             <button wire:click="deleteListing({{ $listing->id }})"
-                                                    wire:confirm="هل أنت متأكد من حذف هذا الإعلان؟"
-                                                    title="حذف الإعلان"
+                                                    wire:confirm="{{ __('ui.dashboard.confirm_delete_listing') }}"
+                                                    title="{{ __('ui.dashboard.tooltip_delete') }}"
                                                     class="text-zinc-400 hover:text-red-500 transition-colors p-2 rounded-xl hover:bg-red-50">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             </button>
@@ -445,13 +445,13 @@
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-nilex/5 rounded-2xl mb-4">
                         <svg class="w-8 h-8 text-nilex/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                     </div>
-                    <h3 class="text-base font-black text-zinc-800 mb-2">لا توجد إعلانات بعد</h3>
-                    <p class="text-zinc-500 text-sm mb-5">ابدأ بنشر أول إعلان لك الآن</p>
+                    <h3 class="text-base font-black text-zinc-800 mb-2">{{ __('ui.dashboard.empty_title') }}</h3>
+                    <p class="text-zinc-500 text-sm mb-5">{{ __('ui.dashboard.empty_subtitle') }}</p>
                     <a href="{{ route('listings.create') }}"
                        class="inline-flex items-center gap-2 bg-nilex hover:bg-nilex-dark text-white px-6 py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
                        style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                        أضف إعلانك مجاناً
+                        {{ __('ui.dashboard.empty_cta') }}
                     </a>
                 </div>
             @endif
@@ -497,7 +497,7 @@
                     labels,
                     datasets: [
                         {
-                            label: 'المشاهدات',
+                            label: '{{ __('ui.dashboard.chart_views') }}',
                             data: views,
                             backgroundColor: 'rgba(29,158,117,0.15)',
                             borderColor: '#1D9E75',
@@ -505,7 +505,7 @@
                             borderRadius: 6,
                         },
                         {
-                            label: 'نقرات الواتساب',
+                            label: '{{ __('ui.dashboard.chart_whatsapp_clicks') }}',
                             data: clicks,
                             backgroundColor: 'rgba(37,211,102,0.15)',
                             borderColor: '#25D366',
@@ -543,7 +543,7 @@
                     data: {
                         labels: JSON.parse(viewsContainer.getAttribute('data-labels') || '[]'),
                         datasets: [{
-                            label: 'المشاهدات',
+                            label: '{{ __('ui.dashboard.chart_views') }}',
                             data: JSON.parse(viewsContainer.getAttribute('data-values') || '[]'),
                             borderColor: '#1D9E75',
                             backgroundColor: 'rgba(29,158,117,0.1)',
@@ -569,7 +569,7 @@
                     data: {
                         labels: JSON.parse(waContainer.getAttribute('data-labels') || '[]'),
                         datasets: [{
-                            label: 'نقرات الواتساب',
+                            label: '{{ __('ui.dashboard.chart_whatsapp_clicks') }}',
                             data: JSON.parse(waContainer.getAttribute('data-values') || '[]'),
                             backgroundColor: 'rgba(37,211,102,0.2)',
                             borderColor: '#25D366',

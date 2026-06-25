@@ -71,7 +71,7 @@
                                 <td class="px-5 py-3 font-bold text-zinc-800 truncate max-w-[200px]">{{ $listing->title }}</td>
                                 <td class="px-5 py-3">{{ number_format($listing->views_count) }}</td>
                                 <td class="px-5 py-3">{{ number_format($listing->whatsapp_clicks) }}</td>
-                                <td class="px-5 py-3 font-black text-nilex">{{ number_format($listing->price) }} ج.م</td>
+                                <td class="px-5 py-3 font-black text-nilex">{{ number_format($listing->price) }} {{ __('ui.sections.currency') }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="4" class="px-5 py-8 text-center text-zinc-400">{{ __('ui.leads.empty') }}</td></tr>
@@ -113,7 +113,7 @@
         <div class="bg-white rounded-2xl border border-zinc-100 overflow-hidden" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
             <div class="px-5 py-4 border-b border-zinc-100 flex justify-between items-center">
                 <h3 class="text-base font-black text-zinc-900">{{ __('ui.pricing.features.event_views') }}</h3>
-                <span class="text-sm font-bold text-zinc-500">{{ $listings->count() }} إعلان</span>
+                <span class="text-sm font-bold text-zinc-500">{{ $listings->count() }} {{ __('ui.dashboard.listing_count_suffix') }}</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-right text-sm">
@@ -135,7 +135,7 @@
                                 </td>
                                 <td class="px-5 py-3">{{ number_format($listing->views_count) }}</td>
                                 <td class="px-5 py-3">{{ number_format($listing->whatsapp_clicks) }}</td>
-                                <td class="px-5 py-3 font-black">{{ number_format($listing->price) }} ج.م</td>
+                                <td class="px-5 py-3 font-black">{{ number_format($listing->price) }} {{ __('ui.sections.currency') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -167,7 +167,7 @@
                 data: {
                     labels: JSON.parse(container.getAttribute('data-labels') || '[]'),
                     datasets: [{
-                        label: 'المشاهدات',
+                        label: '{{ __('ui.dashboard.chart_views') }}',
                         data: JSON.parse(container.getAttribute('data-values') || '[]'),
                         borderColor: '#1D9E75',
                         backgroundColor: 'rgba(29,158,117,0.1)',

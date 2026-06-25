@@ -13,16 +13,16 @@
         </div>
 
         <h2 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
-            المساعد الذكي AI ✨
+            {{ __('ui.ad_creator.title') }} ✨
         </h2>
 
         <p class="text-gray-500 text-sm mt-1">
             @if(!empty($existingImages))
                 <span class="text-green-600 font-semibold">
-                    ✅ تم العثور على {{ count($existingImages) }} صورة من الإعلان — اضغط تحليل للبدء
+                    ✅ {{ __('ui.ad_creator.images_found', ['count' => count($existingImages)]) }}
                 </span>
             @else
-                ارفع صور أو سجل صوت، ونحن نكتب الإعلان نيابة عنك
+                {{ __('ui.ad_creator.upload_prompt') }}
             @endif
         </p>
     </div>
@@ -31,7 +31,7 @@
     @if($isProcessing)
         <div class="mb-6">
             <div class="flex justify-between text-xs text-gray-600 mb-1">
-                <span>🧠 <span x-text="currentStep || 'جاري المعالجة...'"></span></span>
+                <span>🧠 <span x-text="currentStep || '{{ __('ui.ad_creator.processing') }}'"></span></span>
                 <span x-text="progress + '%'"></span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -51,7 +51,7 @@
     {{-- ── معاينة الصور الموجودة من الإعلان ─────────────────────────────────── --}}
     @if(!empty($existingImages))
         <div class="mb-4">
-            <p class="text-xs text-gray-400 mb-2 text-right">الصور الممررة من الإعلان:</p>
+            <p class="text-xs text-gray-400 mb-2 text-right">{{ __('ui.ad_creator.passed_images') }}</p>
             <div class="flex flex-wrap gap-2 justify-center">
                 @foreach($existingImages as $img)
                     @if(!empty($img))
@@ -70,7 +70,7 @@
     @if(empty($existingImages) && !$isProcessing)
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2 text-right">
-                ارفع صور المنتج (حتى {{ $maxPhotos }} صور)
+                {{ __('ui.ad_creator.upload_label', ['count' => $maxPhotos]) }}
             </label>
             <input type="file"
                    wire:model="photos"
@@ -98,14 +98,14 @@
     @if(!$isProcessing)
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1 text-right">
-                ملاحظات إضافية (اختياري)
+                {{ __('ui.ad_creator.notes_label') }}
             </label>
             <textarea wire:model="textNote"
                       rows="2"
                       maxlength="500"
-                      placeholder="مثال: شقة تشطيب سوبر لوكس، الدور الثالث، بالأسانسير..."
+                      placeholder="{{ __('ui.ad_creator.notes_placeholder') }}"
                       class="w-full text-sm border border-gray-300 rounded-xl p-2 resize-none focus:ring-amber-500 focus:border-amber-500 text-right"
-                      dir="rtl"></textarea>
+                      dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"></textarea>
         </div>
     @endif
 
@@ -117,13 +117,13 @@
                     class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl shadow-md hover:from-amber-600 hover:to-amber-700 transition disabled:opacity-60">
                 <span wire:loading.remove wire:target="processWithAI">
                     @if(!empty($existingImages))
-                        🚀 ابدأ تحليل الصور
+                        🚀 {{ __('ui.ad_creator.analyze_images') }}
                     @else
-                        ✨ ولّد الإعلان بالـ AI
+                        ✨ {{ __('ui.ad_creator.generate_ai') }}
                     @endif
                 </span>
                 <span wire:loading wire:target="processWithAI">
-                    ⏳ جاري المعالجة...
+                    ⏳ {{ __('ui.ad_creator.processing') }}
                 </span>
             </button>
         @endif
