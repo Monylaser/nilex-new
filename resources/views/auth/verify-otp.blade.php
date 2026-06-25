@@ -1,5 +1,5 @@
 <x-guest-layout>
-    <div x-data="otpVerification()" x-init="startTimer()" dir="rtl">
+    <div x-data="otpVerification()" x-init="startTimer()" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 
         {{-- Header --}}
         <div class="text-center mb-8">
@@ -8,8 +8,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
             </div>
-            <h1 class="text-2xl font-black text-zinc-900">تأكيد الحساب</h1>
-            <p class="text-zinc-500 text-sm mt-1">أدخل الكود المرسل إلى</p>
+            <h1 class="text-2xl font-black text-zinc-900">{{ __('ui.auth.otp_heading') }}</h1>
+            <p class="text-zinc-500 text-sm mt-1">{{ __('ui.auth.otp_sent_to') }}</p>
             <p class="font-bold text-nilex text-base mt-1">
                 {{ auth()->user()->email ?? auth()->user()->phone }}
             </p>
@@ -26,11 +26,11 @@
 
             <div class="mb-6">
                 <label class="block text-sm font-semibold text-zinc-700 mb-4 text-center">
-                    كود التفعيل (4 أرقام)
+                    {{ __('ui.auth.otp_label') }}
                 </label>
 
                 {{-- 4 individual boxes --}}
-                <div class="flex justify-center gap-3" role="group" aria-label="أدخل رمز التحقق">
+                <div class="flex justify-center gap-3" role="group" aria-label="{{ __('ui.auth.otp_group_aria') }}">
                     @for($i = 0; $i < 4; $i++)
                         <input type="text"
                                inputmode="numeric"
@@ -42,7 +42,7 @@
                                @paste.prevent="handlePaste($event)"
                                class="w-14 h-14 text-center text-2xl font-black rounded-xl border-2 border-zinc-200 focus:border-nilex focus:outline-none focus:ring-2 focus:ring-nilex/15 transition-all bg-zinc-50 focus:bg-white text-zinc-900"
                                {{ $i === 0 ? 'autofocus' : '' }}
-                               aria-label="الرقم {{ $i + 1 }}">
+                               aria-label="{{ __('ui.auth.otp_digit_aria', ['num' => $i + 1]) }}">
                     @endfor
                 </div>
 
@@ -56,8 +56,8 @@
             {{-- Submit --}}
             <button type="submit"
                     class="btn-primary"
-                    aria-label="تأكيد رمز التحقق">
-                تأكيد الحساب
+                    aria-label="{{ __('ui.auth.otp_submit') }}">
+                {{ __('ui.auth.otp_submit') }}
             </button>
         </form>
 
@@ -65,9 +65,9 @@
         <div class="mt-5 text-center">
             <template x-if="timer > 0">
                 <p class="text-zinc-500 text-sm">
-                    إعادة الإرسال خلال
+                    {{ __('ui.auth.otp_resend_in') }}
                     <span x-text="timer" class="font-bold text-nilex"></span>
-                    ثانية
+                    {{ __('ui.auth.otp_seconds') }}
                 </p>
             </template>
             <template x-if="timer === 0">
@@ -75,7 +75,7 @@
                     @csrf
                     <button type="submit"
                             class="text-nilex hover:text-nilex-dark font-bold text-sm transition-colors">
-                        لم يصلك الكود؟ إعادة الإرسال
+                        {{ __('ui.auth.otp_resend') }}
                     </button>
                 </form>
             </template>

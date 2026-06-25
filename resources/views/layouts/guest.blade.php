@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Nilex') }} — {{ $title ?? 'تسجيل الدخول' }}</title>
+    <title>{{ config('app.name', 'Nilex') }} — {{ $title ?? __('ui.auth.page_title_default') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -160,7 +160,7 @@
             </svg>
         </div>
 
-        <div style="position:relative; z-index:1; text-align:right;">
+        <div style="position:relative; z-index:1; text-align:{{ app()->getLocale() === 'ar' ? 'right' : 'left' }};">
 
             {{-- Logo --}}
             <div style="margin-bottom:40px;">
@@ -172,7 +172,7 @@
                     <span style="font-size:26px; font-weight:900; color:white; letter-spacing:-0.5px; display:none;">نايلكس</span>
                 </a>
                 <p style="color:rgba(255,255,255,0.6); font-size:14px; margin-top:8px;">
-                    منصة الإعلانات المبوبة الأولى في مصر والشرق الأوسط
+                    {{ __('ui.auth.panel_tagline') }}
                 </p>
             </div>
 
@@ -180,9 +180,9 @@
             <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:40px;">
                 @php
                     $trustPoints = [
-                        ['icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', 'text' => 'منصة موثوقة ومشرفة بالكامل'],
-                        ['icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', 'text' => 'ملايين المشترين والبائعين'],
-                        ['icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'text' => 'نظام نقاط مكافآت مجاني'],
+                        ['icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', 'text' => __('ui.auth.panel_trust_1')],
+                        ['icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', 'text' => __('ui.auth.panel_trust_2')],
+                        ['icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'text' => __('ui.auth.panel_trust_3')],
                     ];
                 @endphp
                 @foreach($trustPoints as $point)
@@ -201,9 +201,9 @@
             <div style="display:flex; gap:0; border:1px solid rgba(255,255,255,0.15); border-radius:16px; overflow:hidden;">
                 @php
                     $stats = [
-                        ['value' => '+١٢ك', 'label' => 'إعلان نشط'],
-                        ['value' => '+٨ك',  'label' => 'مستخدم'],
-                        ['value' => '١٤',   'label' => 'تصنيف'],
+                        ['value' => __('ui.auth.panel_stat_1_value'), 'label' => __('ui.auth.panel_stat_1_label')],
+                        ['value' => __('ui.auth.panel_stat_2_value'), 'label' => __('ui.auth.panel_stat_2_label')],
+                        ['value' => __('ui.auth.panel_stat_3_value'), 'label' => __('ui.auth.panel_stat_3_label')],
                     ];
                 @endphp
                 @foreach($stats as $i => $stat)

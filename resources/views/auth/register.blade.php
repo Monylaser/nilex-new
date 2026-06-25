@@ -1,9 +1,9 @@
 <x-guest-layout>
 
     {{-- ── رأس الصفحة ── --}}
-    <div class="mb-8 text-right">
-        <h1 class="text-2xl font-black text-gray-900">إنضم لـ Nilex 🚀</h1>
-        <p class="text-gray-500 text-sm mt-1">أنشئ حسابك مجاناً وابدأ نشر إعلاناتك</p>
+    <div class="mb-8 {{ app()->getLocale() === 'ar' ? 'text-right' : 'text-left' }}">
+        <h1 class="text-2xl font-black text-gray-900">{{ __('ui.auth.register_heading') }}</h1>
+        <p class="text-gray-500 text-sm mt-1">{{ __('ui.auth.register_subtitle') }}</p>
     </div>
 
     {{-- ── الفورم ── --}}
@@ -13,13 +13,13 @@
         {{-- الاسم الكامل --}}
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                الاسم الكامل
+                {{ __('ui.auth.label_name') }}
             </label>
             <input
                 type="text"
                 name="name"
                 value="{{ old('name') }}"
-                placeholder="اكتب اسمك كامل"
+                placeholder="{{ __('ui.auth.placeholder_name') }}"
                 class="input-field"
                 required
             >
@@ -31,13 +31,13 @@
         {{-- البريد الإلكتروني أو رقم الموبايل --}}
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                البريد الإلكتروني أو رقم الموبايل
+                {{ __('ui.auth.label_contact') }}
             </label>
             <input
                 type="text"
                 name="contact"
                 value="{{ old('contact') }}"
-                placeholder="example@email.com أو 01XXXXXXXXX"
+                placeholder="{{ __('ui.auth.placeholder_contact') }}"
                 class="input-field text-left"
                 dir="ltr"
                 required
@@ -49,7 +49,7 @@
 
         {{-- كلمة المرور --}}
         <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">كلمة المرور</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ __('ui.auth.label_password') }}</label>
             <div class="relative" x-data="{ show: false }">
                 <input
                     :type="show ? 'text' : 'password'"
@@ -62,7 +62,7 @@
                 >
                 <button type="button" @click="show = !show"
                     class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-nilex transition-colors p-1"
-                    aria-label="إظهار/إخفاء كلمة المرور">
+                    aria-label="{{ __('ui.auth.toggle_password') }}">
                     <svg id="reg-eye-open" x-show="!show" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -91,7 +91,7 @@
 
         {{-- تأكيد كلمة المرور --}}
         <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">تأكيد كلمة المرور</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ __('ui.auth.label_password_confirm') }}</label>
             <input
                 type="password"
                 name="password_confirmation"
@@ -106,13 +106,13 @@
 
         {{-- زر التسجيل --}}
         <button type="submit" class="btn-primary mt-2">
-            إنشاء الحساب مجاناً 🎉
+            {{ __('ui.auth.register_submit') }}
         </button>
 
     </form>
 
     {{-- ── فاصل ── --}}
-    <div class="divider my-6">أو سجّل بـ</div>
+    <div class="divider my-6">{{ __('ui.auth.divider_register') }}</div>
 
     {{-- ── أزرار السوشيال ── --}}
     <div class="grid grid-cols-2 gap-3">
@@ -159,9 +159,9 @@
 
     {{-- رابط الدخول --}}
     <p class="text-center text-sm text-gray-500 mt-6">
-        عندك حساب بالفعل؟
+        {{ __('ui.auth.have_account') }}
         <a href="{{ route('login') }}" class="text-nilex font-bold hover:text-nilex-dark transition-colors">
-            سجّل دخولك
+            {{ __('ui.auth.login_link') }}
         </a>
     </p>
 
@@ -169,6 +169,8 @@
 
 @push('scripts')
 <script>
+    const NILEX_AUTH_STRENGTH = @json(__('ui.auth.strength'));
+
     function toggleRegPassword() {
         const input  = document.getElementById('reg-password');
         const open   = document.getElementById('reg-eye-open');
@@ -192,7 +194,7 @@
         if (/[^A-Za-z0-9]/.test(val))  score++;
 
         const colors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'];
-        const labels = ['', 'ضعيفة جداً', 'ضعيفة', 'متوسطة', 'قوية 💪'];
+        const labels = ['', NILEX_AUTH_STRENGTH.very_weak, NILEX_AUTH_STRENGTH.weak, NILEX_AUTH_STRENGTH.medium, NILEX_AUTH_STRENGTH.strong];
 
         for (let i = 1; i <= 4; i++) {
             document.getElementById('str-' + i).style.background =

@@ -1,18 +1,18 @@
 <x-guest-layout>
 
     {{-- ── رأس الصفحة ── --}}
-    <div style="margin-bottom:32px; text-align:right;">
-        <h1 style="font-size:24px; font-weight:900; color:#111827; margin:0;">أهلاً بعودتك 👋</h1>
-        <p style="color:#6b7280; font-size:14px; margin:4px 0 0;">سجّل دخولك للوصول لحسابك على Nilex</p>
+    <div style="margin-bottom:32px; text-align:{{ app()->getLocale() === 'ar' ? 'right' : 'left' }};">
+        <h1 style="font-size:24px; font-weight:900; color:#111827; margin:0;">{{ __('ui.auth.login_heading') }}</h1>
+        <p style="color:#6b7280; font-size:14px; margin:4px 0 0;">{{ __('ui.auth.login_subtitle') }}</p>
     </div>
 
     {{-- ── تبديل: موبايل / إيميل ── --}}
     <div style="display:flex; background:#f3f4f6; border-radius:12px; padding:4px; margin-bottom:24px;">
         <button type="button" class="tab-btn active" onclick="switchTab('phone')" id="tab-phone">
-            📱 رقم الموبايل
+            {{ __('ui.auth.tab_phone') }}
         </button>
         <button type="button" class="tab-btn" onclick="switchTab('email')" id="tab-email">
-            ✉️ البريد الإلكتروني
+            {{ __('ui.auth.tab_email') }}
         </button>
     </div>
 
@@ -30,7 +30,7 @@
         {{-- حقل الموبايل --}}
         <div id="field-phone">
             <label style="display:block; font-size:14px; font-weight:600; color:#374151; margin-bottom:6px;">
-                رقم الموبايل
+                {{ __('ui.auth.label_phone') }}
             </label>
             <div style="position:relative;">
                 <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#9ca3af; font-size:13px; pointer-events:none; user-select:none;">
@@ -54,7 +54,7 @@
         {{-- حقل الإيميل ── مخفي بالبداية ── --}}
         <div id="field-email" style="display:none;">
             <label style="display:block; font-size:14px; font-weight:600; color:#374151; margin-bottom:6px;">
-                البريد الإلكتروني
+                {{ __('ui.auth.label_email') }}
             </label>
             <input
                 type="email"
@@ -74,10 +74,10 @@
         {{-- حقل الباسوورد مع زر العين --}}
         <div>
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-                <label style="font-size:14px; font-weight:600; color:#374151;">كلمة المرور</label>
+                <label style="font-size:14px; font-weight:600; color:#374151;">{{ __('ui.auth.label_password') }}</label>
                 @if (Route::has('password.request'))
                     <a href="{{ route('password.request') }}" style="font-size:12px; color:#1D9E75; text-decoration:none; font-weight:600;">
-                        نسيت كلمة المرور؟
+                        {{ __('ui.auth.forgot_password') }}
                     </a>
                 @endif
             </div>
@@ -97,7 +97,7 @@
                     type="button"
                     onclick="togglePassword()"
                     style="position:absolute; left:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px; display:flex; align-items:center;"
-                    title="إظهار/إخفاء كلمة المرور"
+                    title="{{ __('ui.auth.toggle_password') }}"
                 >
                     <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -118,19 +118,19 @@
             <input type="checkbox" name="remember" id="remember_me"
                 style="width:16px; height:16px; cursor:pointer; accent-color:#1D9E75;">
             <label for="remember_me" style="font-size:14px; color:#6b7280; cursor:pointer; user-select:none;">
-                تذكرني
+                {{ __('ui.auth.remember_me') }}
             </label>
         </div>
 
         {{-- زر الدخول --}}
         <button type="submit" class="btn-primary">
-            تسجيل الدخول
+            {{ __('ui.auth.login_submit') }}
         </button>
 
     </form>
 
     {{-- فاصل --}}
-    <div class="divider" style="margin:24px 0;">أو تابع بـ</div>
+    <div class="divider" style="margin:24px 0;">{{ __('ui.auth.divider_login') }}</div>
 
     {{-- أزرار السوشيال --}}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -177,9 +177,9 @@
 
     {{-- رابط التسجيل --}}
     <p style="text-align:center; font-size:14px; color:#6b7280; margin-top:24px;">
-        مش عندك حساب؟
+        {{ __('ui.auth.no_account') }}
         <a href="{{ route('register') }}" style="color:#1D9E75; font-weight:700; text-decoration:none;">
-            سجّل دلوقتي مجاناً
+            {{ __('ui.auth.register_now') }}
         </a>
     </p>
 

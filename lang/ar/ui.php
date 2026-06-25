@@ -26,6 +26,80 @@ return [
         'empty'   => 'لا توجد إشعارات جديدة',
     ],
 
+    'auth' => [
+        // login
+        'login_heading'          => 'أهلاً بعودتك 👋',
+        'login_subtitle'         => 'سجّل دخولك للوصول لحسابك على Nilex',
+        'tab_phone'              => '📱 رقم الموبايل',
+        'tab_email'              => '✉️ البريد الإلكتروني',
+        'label_phone'            => 'رقم الموبايل',
+        'label_email'            => 'البريد الإلكتروني',
+        'label_password'         => 'كلمة المرور',
+        'forgot_password'        => 'نسيت كلمة المرور؟',
+        'toggle_password'        => 'إظهار/إخفاء كلمة المرور',
+        'remember_me'            => 'تذكرني',
+        'login_submit'           => 'تسجيل الدخول',
+        'divider_login'          => 'أو تابع بـ',
+        'no_account'             => 'مش عندك حساب؟',
+        'register_now'           => 'سجّل دلوقتي مجاناً',
+
+        // register
+        'register_heading'       => 'إنضم لـ Nilex 🚀',
+        'register_subtitle'      => 'أنشئ حسابك مجاناً وابدأ نشر إعلاناتك',
+        'label_name'             => 'الاسم الكامل',
+        'placeholder_name'       => 'اكتب اسمك كامل',
+        'label_contact'          => 'البريد الإلكتروني أو رقم الموبايل',
+        'placeholder_contact'    => 'example@email.com أو 01XXXXXXXXX',
+        'label_password_confirm' => 'تأكيد كلمة المرور',
+        'register_submit'        => 'إنشاء الحساب مجاناً 🎉',
+        'divider_register'       => 'أو سجّل بـ',
+        'have_account'           => 'عندك حساب بالفعل؟',
+        'login_link'             => 'سجّل دخولك',
+        'strength' => [
+            'very_weak' => 'ضعيفة جداً',
+            'weak'      => 'ضعيفة',
+            'medium'    => 'متوسطة',
+            'strong'    => 'قوية 💪',
+        ],
+
+        // verify-otp
+        'otp_heading'            => 'تأكيد الحساب',
+        'otp_sent_to'            => 'أدخل الكود المرسل إلى',
+        'otp_label'              => 'كود التفعيل (4 أرقام)',
+        'otp_group_aria'         => 'أدخل رمز التحقق',
+        'otp_digit_aria'         => 'الرقم :num',
+        'otp_submit'             => 'تأكيد الحساب',
+        'otp_resend_in'          => 'إعادة الإرسال خلال',
+        'otp_seconds'            => 'ثانية',
+        'otp_resend'             => 'لم يصلك الكود؟ إعادة الإرسال',
+
+        // forgot-password
+        'forgot_heading'         => 'نسيت كلمة المرور؟',
+        'forgot_subtitle'        => 'اكتب بريدك الإلكتروني وهنبعتلك رابط لتغيير كلمة المرور.',
+        'forgot_submit'          => 'إرسال رابط إعادة التعيين',
+        'remembered'             => 'تذكرت كلمة المرور؟',
+        'back_to_login'          => 'تسجيل الدخول',
+
+        // reset-password
+        'reset_heading'          => 'تعيين كلمة مرور جديدة',
+        'reset_subtitle'         => 'اختر كلمة مرور قوية لحساب آمن.',
+        'label_new_password'     => 'كلمة المرور الجديدة',
+        'reset_submit'           => 'تعيين كلمة المرور',
+
+        // guest layout brand panel
+        'panel_tagline'          => 'منصة الإعلانات المبوبة الأولى في مصر والشرق الأوسط',
+        'panel_trust_1'          => 'منصة موثوقة ومشرفة بالكامل',
+        'panel_trust_2'          => 'ملايين المشترين والبائعين',
+        'panel_trust_3'          => 'نظام نقاط مكافآت مجاني',
+        'panel_stat_1_value'     => '+١٢ك',
+        'panel_stat_1_label'     => 'إعلان نشط',
+        'panel_stat_2_value'     => '+٨ك',
+        'panel_stat_2_label'     => 'مستخدم',
+        'panel_stat_3_value'     => '١٤',
+        'panel_stat_3_label'     => 'تصنيف',
+        'page_title_default'     => 'تسجيل الدخول',
+    ],
+
     'misc' => [
         'in' => 'في',
     ],

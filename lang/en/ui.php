@@ -26,6 +26,80 @@ return [
         'empty'   => 'No new notifications',
     ],
 
+    'auth' => [
+        // login
+        'login_heading'          => 'Welcome back 👋',
+        'login_subtitle'         => 'Sign in to access your Nilex account',
+        'tab_phone'              => '📱 Mobile Number',
+        'tab_email'              => '✉️ Email',
+        'label_phone'            => 'Mobile Number',
+        'label_email'            => 'Email',
+        'label_password'         => 'Password',
+        'forgot_password'        => 'Forgot your password?',
+        'toggle_password'        => 'Show/hide password',
+        'remember_me'            => 'Remember me',
+        'login_submit'           => 'Log In',
+        'divider_login'          => 'Or continue with',
+        'no_account'             => "Don't have an account?",
+        'register_now'           => 'Register now for free',
+
+        // register
+        'register_heading'       => 'Join Nilex 🚀',
+        'register_subtitle'      => 'Create your free account and start posting your ads',
+        'label_name'             => 'Full Name',
+        'placeholder_name'       => 'Enter your full name',
+        'label_contact'          => 'Email or Mobile Number',
+        'placeholder_contact'    => 'example@email.com or 01XXXXXXXXX',
+        'label_password_confirm' => 'Confirm Password',
+        'register_submit'        => 'Create Free Account 🎉',
+        'divider_register'       => 'Or sign up with',
+        'have_account'           => 'Already have an account?',
+        'login_link'             => 'Log in',
+        'strength' => [
+            'very_weak' => 'Very weak',
+            'weak'      => 'Weak',
+            'medium'    => 'Medium',
+            'strong'    => 'Strong 💪',
+        ],
+
+        // verify-otp
+        'otp_heading'            => 'Verify Account',
+        'otp_sent_to'            => 'Enter the code sent to',
+        'otp_label'              => 'Verification code (4 digits)',
+        'otp_group_aria'         => 'Enter verification code',
+        'otp_digit_aria'         => 'Digit :num',
+        'otp_submit'             => 'Verify Account',
+        'otp_resend_in'          => 'Resend in',
+        'otp_seconds'            => 'seconds',
+        'otp_resend'             => "Didn't get the code? Resend",
+
+        // forgot-password
+        'forgot_heading'         => 'Forgot your password?',
+        'forgot_subtitle'        => "Enter your email and we'll send you a link to reset your password.",
+        'forgot_submit'          => 'Send Reset Link',
+        'remembered'             => 'Remembered your password?',
+        'back_to_login'          => 'Log In',
+
+        // reset-password
+        'reset_heading'          => 'Set a New Password',
+        'reset_subtitle'         => 'Choose a strong password for a secure account.',
+        'label_new_password'     => 'New Password',
+        'reset_submit'           => 'Set Password',
+
+        // guest layout brand panel
+        'panel_tagline'          => "Egypt's & the Middle East's #1 classifieds platform",
+        'panel_trust_1'          => 'Fully trusted & moderated platform',
+        'panel_trust_2'          => 'Millions of buyers and sellers',
+        'panel_trust_3'          => 'Free rewards points system',
+        'panel_stat_1_value'     => '+12K',
+        'panel_stat_1_label'     => 'Active Listings',
+        'panel_stat_2_value'     => '+8K',
+        'panel_stat_2_label'     => 'Users',
+        'panel_stat_3_value'     => '14',
+        'panel_stat_3_label'     => 'Categories',
+        'page_title_default'     => 'Log In',
+    ],
+
     'misc' => [
         'in' => 'in',
     ],
