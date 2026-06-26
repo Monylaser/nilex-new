@@ -29,6 +29,9 @@ class UserDashboard extends Component
 
     public ?string $closingType = null;
 
+    // أنواع الإغلاق المسموحة (مصدر الحقيقة للتحقق + ترتيب العرض)
+    public const CLOSING_TYPES = ['sold_platform', 'sold_external', 'canceled'];
+
     // ✅ قبول العرض (تم إضافة int)
     public function acceptOffer(int $id)
     {
@@ -73,6 +76,16 @@ class UserDashboard extends Component
     public function closeClosingModal()
     {
         $this->reset(['closingModalOpen', 'closingListingId', 'closingListingTitle', 'closingType']);
+    }
+
+    // تبديل نوع الإغلاق (toggle): إن كان النوع نفسه مختاراً يُلغى، وإلا يُضبط
+    public function toggleClosingType(string $type)
+    {
+        if (! in_array($type, self::CLOSING_TYPES, true)) {
+            return;
+        }
+
+        $this->closingType = ($this->closingType === $type) ? null : $type;
     }
 
     // تأكيد الإغلاق حسب النوع المختار

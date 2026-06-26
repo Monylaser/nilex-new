@@ -470,24 +470,20 @@
 
         {{-- ── LISTING-CLOSING MODAL (Step 1: type selection) ──────────────── --}}
         {{-- Shared, rendered once outside the mobile/desktop loops. Opened from --}}
-        {{-- both delete buttons via openClosingModal($listing->id). The three   --}}
-        {{-- options replace the old native wire:confirm on delete.              --}}
-        <div x-data="{ open: @entangle('closingModalOpen') }"
-             x-show="open"
-             x-cloak
+        {{-- both delete buttons via openClosingModal($listing->id). Visibility   --}}
+        {{-- is driven by @if (Livewire morph adds/removes the node) — no Alpine  --}}
+        {{-- x-show, so close is deterministic. Escape still closes via Alpine.   --}}
+        @if($closingModalOpen)
+        <div x-data="{}"
              @keydown.escape.window="$wire.closeClosingModal()"
              class="fixed inset-0 z-50 flex items-center justify-center p-4"
              dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
             {{-- Backdrop --}}
-            <div x-show="open"
-                 x-transition.opacity
-                 class="absolute inset-0 bg-black/50"
+            <div class="absolute inset-0 bg-black/50"
                  wire:click="closeClosingModal"></div>
 
             {{-- Panel --}}
-            <div x-show="open"
-                 x-transition
-                 class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-5"
+            <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-5"
                  style="box-shadow:0 10px 40px rgba(0,0,0,0.18);">
                 <div>
                     <h3 class="text-lg font-black text-zinc-900">{{ __('ui.dashboard.close_modal_title') }}</h3>
@@ -496,20 +492,29 @@
                     </p>
                 </div>
 
-                {{-- Three options (radio cards) --}}
-                <div class="space-y-2.5">
-                    @foreach (['sold_platform', 'sold_external', 'canceled'] as $closeOption)
-                        <label class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all
-                                      {{ $closingType === $closeOption ? 'border-nilex bg-nilex/5' : 'border-zinc-200 hover:border-zinc-300' }}">
-                            <input type="radio"
-                                   wire:model.live="closingType"
-                                   value="{{ $closeOption }}"
-                                   class="mt-0.5 text-nilex focus:ring-nilex border-zinc-300">
+                {{-- Three options (toggle cards: clicking the selected one clears it). --}}
+                {{-- Non-form <button> + class-driven dot so the selected state is fully  --}}
+                {{-- server-rendered — avoids the live `.checked` DOM-property vs morph    --}}
+                {{-- problem that a real <input type="radio"> suffers after a toggle-off.  --}}
+                <div class="space-y-2.5" role="radiogroup">
+                    @foreach (\App\Livewire\Frontend\UserDashboard::CLOSING_TYPES as $closeOption)
+                        @php($isSelected = $closingType === $closeOption)
+                        <button type="button"
+                                role="radio"
+                                aria-checked="{{ $isSelected ? 'true' : 'false' }}"
+                                wire:click="toggleClosingType('{{ $closeOption }}')"
+                                class="w-full flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all
+                                       {{ app()->getLocale() === 'ar' ? 'text-right' : 'text-left' }}
+                                       {{ $isSelected ? 'border-nilex bg-nilex/5' : 'border-zinc-200 hover:border-zinc-300' }}">
+                            <span class="mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
+                                         {{ $isSelected ? 'border-nilex' : 'border-zinc-300' }}">
+                                <span class="w-2 h-2 rounded-full bg-nilex {{ $isSelected ? 'block' : 'hidden' }}"></span>
+                            </span>
                             <span class="flex-1 min-w-0">
                                 <span class="block text-sm font-bold text-zinc-900">{{ __('ui.dashboard.close_opt_' . $closeOption) }}</span>
                                 <span class="block text-xs text-zinc-500 mt-0.5">{{ __('ui.dashboard.close_opt_' . $closeOption . '_desc') }}</span>
                             </span>
-                        </label>
+                        </button>
                     @endforeach
                 </div>
 
@@ -522,7 +527,6 @@
                     </button>
                     <button type="button"
                             wire:click="confirmClosing"
-                            wire:loading.attr="disabled"
                             @disabled(is_null($closingType))
                             class="flex-1 bg-nilex hover:bg-nilex-dark text-white font-bold py-2.5 rounded-xl text-sm transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
                         {{ __('ui.dashboard.close_confirm') }}
@@ -530,6 +534,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
     </div>
 </div>

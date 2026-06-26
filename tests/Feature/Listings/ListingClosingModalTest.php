@@ -116,3 +116,52 @@ it('does not delete the listing when closing type is sold_platform (Step 1 stub)
     $this->assertNotSoftDeleted('listings', ['id' => $listing->id]);
     expect(Listing::find($listing->id))->not->toBeNull();
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4) toggleClosingType — radio behaves as a toggle (re-click clears it)
+// ═══════════════════════════════════════════════════════════════════════════
+
+it('toggles the closing type off when the same option is picked twice', function () {
+    Livewire::actingAs($this->seller)
+        ->test(UserDashboard::class)
+        // First click selects the type…
+        ->call('toggleClosingType', 'sold_external')
+        ->assertSet('closingType', 'sold_external')
+        // …re-clicking the SAME type clears it back to null…
+        ->call('toggleClosingType', 'sold_external')
+        ->assertSet('closingType', null)
+        // …and clicking a DIFFERENT type switches to it.
+        ->call('toggleClosingType', 'canceled')
+        ->assertSet('closingType', 'canceled');
+});
+
+it('ignores an invalid closing type (allowed-values guard)', function () {
+    Livewire::actingAs($this->seller)
+        ->test(UserDashboard::class)
+        ->set('closingType', 'sold_platform')
+        ->call('toggleClosingType', 'not_a_real_type')
+        // Unchanged — the guard rejects values outside CLOSING_TYPES.
+        ->assertSet('closingType', 'sold_platform');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5) closeClosingModal fully resets the modal state
+// ═══════════════════════════════════════════════════════════════════════════
+
+it('resets all modal state (incl. closingModalOpen) on close', function () {
+    $listing = makeClosingListing($this->seller, $this->category);
+
+    Livewire::actingAs($this->seller)
+        ->test(UserDashboard::class)
+        ->call('openClosingModal', $listing->id)
+        ->set('closingType', 'sold_external')
+        ->assertSet('closingModalOpen', true)
+        ->call('closeClosingModal')
+        ->assertSet('closingModalOpen', false)
+        ->assertSet('closingListingId', null)
+        ->assertSet('closingListingTitle', null)
+        ->assertSet('closingType', null);
+
+    // Closing alone must never delete the listing.
+    $this->assertNotSoftDeleted('listings', ['id' => $listing->id]);
+});

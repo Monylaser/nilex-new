@@ -366,6 +366,12 @@ The confirm button is **disabled until a type is selected** (`@disabled(is_null(
 
 **Deferred (next phase):** the buyer-selection sub-flow for `sold_platform`, the sale-confirmation/ratings DB schema, and persisting the chosen closing reason — all to come **after** the UI direction is fully locked.
 
+**Bug fix:** replaced `x-data="{ open: @entangle('closingModalOpen') }"` + `x-show="open"` with direct `x-show="$wire.closingModalOpen"` on the 3 `x-show` nodes — `@entangle` returned a proxy object (always truthy) causing the modal to open on page load, an empty subtitle, and Idiomorph skipping the `@disabled` update inside the Alpine scope.
+
+**Bug fix 2 (close + toggle):** the `x-show`/`x-transition` nodes were further replaced with a Livewire-native `@if($closingModalOpen)` wrapper (morph adds/removes the node → cancel/backdrop close deterministically; Escape kept via a tiny `x-data="{}"` + `@keydown.escape.window`; fade animation intentionally dropped for reliability), and the option radios switched from `wire:model.live` to `wire:click="toggleClosingType($type)"` (sets `$closingType`, or **clears it to `null` when the already-selected option is re-clicked** — toggle UX) guarded by a `CLOSING_TYPES` allow-list. Suite: **301 passing** (was 298; +3).
+
+**Bug fix 3 (toggle-off visuals):** after a toggle-off the real `<input type="radio">` stayed visually filled (its live `.checked` DOM property diverges from the `checked` *attribute* / `defaultChecked`, and Idiomorph preserves live form-control state), and the confirm button stayed enabled (`wire:loading.attr="disabled"` restored the pre-request enabled state, clobbering the morph's `@disabled`). Fixed by making the options **non-form** elements — `<button type="button" role="radio" aria-checked>` with a **class-driven dot** rendered purely from `$closingType === $closeOption` (same server-class pattern as the card highlight, no live form property) — and by **removing `wire:loading.attr="disabled"`** so `@disabled(is_null($closingType))` solely governs the confirm button (`confirmClosing()` is already server-guarded).
+
 ## Planned Next Steps
 
 - **Hosting:** Deploy via **Laravel Forge** (planned)
