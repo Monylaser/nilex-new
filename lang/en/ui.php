@@ -667,4 +667,16 @@ return [
         'response_insufficient' => 'Not enough data yet',
     ],
 
+    // Listing-closing modal — Step 2: buyer selection (sold on the platform)
+    'sale_confirmation' => [
+        'step2_title'        => 'Select the buyer',
+        'step2_subtitle'     => 'Who bought ":title"? Choose from those who contacted you about this listing',
+        'buyer_via_phone'    => 'Revealed phone number',
+        'buyer_via_offer'    => 'Submitted an offer',
+        'no_buyers_title'    => 'No buyers',
+        'no_buyers_subtitle' => 'No one contacted this listing (phone reveal or offer). You can go back and choose "Sold off the platform".',
+        'back'               => 'Back',
+        'confirm_select'     => 'Confirm selection',
+    ],
+
 ];

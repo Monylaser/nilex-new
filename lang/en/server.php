@@ -79,6 +79,13 @@ return [
         'delete_blocked' => 'Your account cannot be deleted because it has sales or reviews linked to it. These records are kept permanently.',
     ],
 
+    'sale_confirmation' => [
+        'created'           => 'The sale was recorded and the listing closed. Awaiting buyer confirmation.',
+        'invalid_buyer'     => 'The selected buyer is not valid for this listing.',
+        'already_confirmed' => 'A sale for this listing has already been confirmed.',
+        'select_required'   => 'Please select a buyer first.',
+    ],
+
     'ai' => [
         'photo_max'              => 'Image size must not exceed 5 MB',
         'photo_image'            => 'The file must be an image',

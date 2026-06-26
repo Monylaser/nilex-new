@@ -6,8 +6,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Listing;
 use App\Models\Offer;
+use App\Models\SaleConfirmation;
+use App\Models\SellerLead;
 use App\Services\EntitlementService;
 use App\Services\SellerListingAnalyticsService;
 
@@ -29,8 +32,19 @@ class UserDashboard extends Component
 
     public ?string $closingType = null;
 
+    // ── Step 2 (sold_platform): اختيار المشتري ────────────────────────────
+    // الخطوة داخل نفس النافذة (1 = اختيار النوع، 2 = اختيار المشتري). لا نفتح
+    // نافذة ثانية — نبدّل الجسم فقط عبر morph. `selectedBuyerId` مصدر الحقيقة
+    // لمن اختاره البائع، ويُعاد التحقق منه خادمياً ضد SellerLead قبل الإنشاء.
+    public int $closingStep = 1;
+
+    public ?int $selectedBuyerId = null;
+
     // أنواع الإغلاق المسموحة (مصدر الحقيقة للتحقق + ترتيب العرض)
     public const CLOSING_TYPES = ['sold_platform', 'sold_external', 'canceled'];
+
+    // مصادر التواصل المؤهَّلة لاعتبار المتواصل "مشترياً" محتملاً
+    public const BUYER_LEAD_SOURCES = [SellerLead::SOURCE_PHONE_REVEAL, SellerLead::SOURCE_OFFER];
 
     // ✅ قبول العرض (تم إضافة int)
     public function acceptOffer(int $id)
@@ -69,13 +83,35 @@ class UserDashboard extends Component
         $this->closingListingId    = $listing->id;
         $this->closingListingTitle = $listing->title;
         $this->closingType         = null;
+        $this->closingStep         = 1;
+        $this->selectedBuyerId     = null;
         $this->closingModalOpen    = true;
     }
 
     // إغلاق النافذة وتصفير الحالة (يمنع تنفيذ إجراء على إعلان خاطئ لاحقاً)
     public function closeClosingModal()
     {
-        $this->reset(['closingModalOpen', 'closingListingId', 'closingListingTitle', 'closingType']);
+        $this->reset([
+            'closingModalOpen',
+            'closingListingId',
+            'closingListingTitle',
+            'closingType',
+            'closingStep',
+            'selectedBuyerId',
+        ]);
+    }
+
+    // الرجوع من الخطوة 2 إلى الخطوة 1 (يُلغي اختيار المشتري)
+    public function backToStep1()
+    {
+        $this->closingStep     = 1;
+        $this->selectedBuyerId = null;
+    }
+
+    // تبديل اختيار المشتري (toggle): إعادة الضغط على نفس المشتري يُلغي اختياره
+    public function selectBuyer(int $buyerId)
+    {
+        $this->selectedBuyerId = ($this->selectedBuyerId === $buyerId) ? null : $buyerId;
     }
 
     // تبديل نوع الإغلاق (toggle): إن كان النوع نفسه مختاراً يُلغى، وإلا يُضبط
@@ -108,16 +144,99 @@ class UserDashboard extends Component
                 break;
 
             case 'sold_platform':
-                // TODO: Step 2 — buyer list filtered strictly by $this->closingListingId
-                // (SellerLead::where('listing_id', $this->closingListingId)
-                //   ->whereIn('source_type', ['phone_reveal','offer'])->whereNotNull('buyer_id')).
-                // Intentionally no delete in this step.
+                // الانتقال للخطوة 2 (اختيار المشتري) داخل نفس النافذة.
+                // لا حذف هنا — الحذف يتم فقط بعد تأكيد المشتري في confirmSaleToBuyer().
+                $this->selectedBuyerId = null;
+                $this->closingStep     = 2;
                 break;
 
             default:
                 // نوع غير صالح / لم يُختر — لا إجراء (الزر معطّل في الواجهة أصلاً)
                 break;
         }
+    }
+
+    // قائمة المشترين المؤهَّلين لهذا الإعلان (كشفوا الهاتف أو بعتوا عرضاً).
+    // مقيَّدة بصرامة بـ closingListingId، مشترٍ واحد لكل صف، مع تحميل اسم المشتري.
+    public function buyerLeads()
+    {
+        if ($this->closingListingId === null) {
+            return collect();
+        }
+
+        return SellerLead::query()
+            ->where('listing_id', $this->closingListingId)
+            ->whereIn('source_type', self::BUYER_LEAD_SOURCES)
+            ->whereNotNull('buyer_id')
+            ->with('buyer')
+            ->latest()
+            ->get()
+            ->unique('buyer_id')
+            ->values();
+    }
+
+    // تأكيد البيع لمشترٍ مختار: إنشاء SaleConfirmation (pending) + إغلاق الإعلان
+    // داخل transaction واحدة. يعيد التحقق من الملكية ومن أهلية المشتري (منع IDOR).
+    public function confirmSaleToBuyer()
+    {
+        if ($this->closingListingId === null || $this->selectedBuyerId === null) {
+            return;
+        }
+
+        // 1) إعادة التحقق من الملكية خادمياً — لا نثق بأي قيمة من الواجهة
+        $listing = Listing::where('user_id', Auth::id())->findOrFail($this->closingListingId);
+
+        // 2) البائع لا يمكن أن يكون هو المشتري
+        if ($this->selectedBuyerId === Auth::id()) {
+            session()->flash('error', __('server.sale_confirmation.invalid_buyer'));
+            return;
+        }
+
+        // 3) فحص IDOR: المشتري المختار يجب أن يكون فعلاً Lead مؤهَّل لهذا الإعلان
+        $isEligibleBuyer = SellerLead::query()
+            ->where('listing_id', $listing->id)
+            ->where('buyer_id', $this->selectedBuyerId)
+            ->whereIn('source_type', self::BUYER_LEAD_SOURCES)
+            ->whereNotNull('buyer_id')
+            ->exists();
+
+        if (! $isEligibleBuyer) {
+            session()->flash('error', __('server.sale_confirmation.invalid_buyer'));
+            return;
+        }
+
+        // 4) حماية "مشتري واحد لكل إعلان": يُمنع لو يوجد بيع مكتمل (confirmed)
+        if (! SaleConfirmation::canInitiateForListing($listing->id)) {
+            session()->flash('error', __('server.sale_confirmation.already_confirmed'));
+            $this->closeClosingModal();
+            return;
+        }
+
+        // 5) الإنشاء + الإغلاق الناعم داخل transaction واحدة (ذرّية)
+        DB::transaction(function () use ($listing) {
+            SaleConfirmation::updateOrCreate(
+                [
+                    'listing_id' => $listing->id,
+                    'buyer_id'   => $this->selectedBuyerId,
+                ],
+                [
+                    'seller_id'           => Auth::id(),
+                    'status'              => SaleConfirmation::STATUS_PENDING,
+                    'seller_confirmed_at' => now(),
+                    'buyer_confirmed_at'  => null,
+                    'canceled_at'         => null,
+                    'canceled_by'         => null,
+                ],
+            );
+
+            // إغلاق الإعلان (soft delete) كجزء من نفس العملية
+            $listing->delete();
+        });
+
+        // TODO (المرحلة القادمة): إشعار المشتري (SaleConfirmationRequested) + شاشة تأكيد المشتري
+
+        session()->flash('success', __('server.sale_confirmation.created'));
+        $this->closeClosingModal();
     }
 
     // دالة تمييز الإعلان باستخدام النقاط (تم إضافة int)
@@ -198,6 +317,11 @@ class UserDashboard extends Component
             'category_performance'  => $access['analytics'] ? $analyticsService->getCategoryPerformance($user) : ['labels' => [], 'values' => []],
         ];
 
+        // قائمة المشترين تُجلب فقط عند فتح الخطوة 2 (sold_platform)
+        $buyerLeads = ($this->closingModalOpen && $this->closingStep === 2)
+            ? $this->buyerLeads()
+            : collect();
+
         return view('livewire.frontend.user-dashboard', compact(
             'listings',
             'stats',
@@ -205,6 +329,7 @@ class UserDashboard extends Component
             'incomingOffers',
             'access',
             'chartData',
+            'buyerLeads',
         ));
     }
 }

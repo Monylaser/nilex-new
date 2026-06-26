@@ -27,10 +27,13 @@ class Offer extends Model
         ];
     }
 
-    // الإعلان المربوط بيه العرض
+    // الإعلان المربوط بيه العرض — withTrashed لأن الإعلان يُغلق (soft delete)
+    // عبر sold_platform/sold_external بينما تبقى العروض القديمة معلّقة وتعرض
+    // listing في لوحة التحكم؛ بدونها ترجع null وتكسر الصفحة (نفس نمط
+    // SaleConfirmation::listing() و Review::listing()).
     public function listing(): BelongsTo
     {
-        return $this->belongsTo(Listing::class);
+        return $this->belongsTo(Listing::class)->withTrashed();
     }
 
     // المشتري (اللي باعت العرض)

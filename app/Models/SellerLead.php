@@ -64,9 +64,11 @@ class SellerLead extends Model
         return $this->belongsTo(User::class, 'seller_id');
     }
 
+    // withTrashed للاتساق: الإعلان قد يُغلق (soft delete) بينما يبقى الـ Lead
+    // سجلاً تاريخياً للتواصل؛ بدونها تعرض صفحات الـ Leads "—" بدل عنوان الإعلان.
     public function listing(): BelongsTo
     {
-        return $this->belongsTo(Listing::class);
+        return $this->belongsTo(Listing::class)->withTrashed();
     }
 
     public function buyer(): BelongsTo

@@ -485,6 +485,9 @@
             {{-- Panel --}}
             <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-5"
                  style="box-shadow:0 10px 40px rgba(0,0,0,0.18);">
+
+                {{-- ═══ STEP 1: closing-type selection ═══════════════════════════ --}}
+                @if($closingStep === 1)
                 <div>
                     <h3 class="text-lg font-black text-zinc-900">{{ __('ui.dashboard.close_modal_title') }}</h3>
                     <p class="text-sm text-zinc-500 mt-1">
@@ -532,6 +535,77 @@
                         {{ __('ui.dashboard.close_confirm') }}
                     </button>
                 </div>
+                @endif
+
+                {{-- ═══ STEP 2: buyer selection (sold_platform only) ════════════ --}}
+                @if($closingStep === 2)
+                <div>
+                    <h3 class="text-lg font-black text-zinc-900">{{ __('ui.sale_confirmation.step2_title') }}</h3>
+                    <p class="text-sm text-zinc-500 mt-1">
+                        {{ __('ui.sale_confirmation.step2_subtitle', ['title' => $closingListingTitle ?? '']) }}
+                    </p>
+                </div>
+
+                @if($buyerLeads->isEmpty())
+                    {{-- Empty state: no eligible buyers contacted this listing --}}
+                    <div class="text-center py-8 px-2">
+                        <div class="inline-flex items-center justify-center w-14 h-14 bg-zinc-100 rounded-2xl mb-3">
+                            <svg class="w-7 h-7 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/></svg>
+                        </div>
+                        <h4 class="text-sm font-black text-zinc-800 mb-1">{{ __('ui.sale_confirmation.no_buyers_title') }}</h4>
+                        <p class="text-xs text-zinc-500">{{ __('ui.sale_confirmation.no_buyers_subtitle') }}</p>
+                    </div>
+                @else
+                    {{-- Buyer list (toggle cards, same server-rendered pattern as step 1) --}}
+                    <div class="space-y-2.5 max-h-72 overflow-y-auto" role="radiogroup">
+                        @foreach($buyerLeads as $lead)
+                            @php($isBuyerSelected = $selectedBuyerId === $lead->buyer_id)
+                            <button type="button"
+                                    role="radio"
+                                    aria-checked="{{ $isBuyerSelected ? 'true' : 'false' }}"
+                                    wire:click="selectBuyer({{ $lead->buyer_id }})"
+                                    class="w-full flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all
+                                           {{ app()->getLocale() === 'ar' ? 'text-right' : 'text-left' }}
+                                           {{ $isBuyerSelected ? 'border-nilex bg-nilex/5' : 'border-zinc-200 hover:border-zinc-300' }}">
+                                <span class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
+                                             {{ $isBuyerSelected ? 'border-nilex' : 'border-zinc-300' }}">
+                                    <span class="w-2 h-2 rounded-full bg-nilex {{ $isBuyerSelected ? 'block' : 'hidden' }}"></span>
+                                </span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="flex items-center gap-1.5">
+                                        <span class="block text-sm font-bold text-zinc-900 truncate">{{ $lead->buyer?->name ?? '—' }}</span>
+                                        @if($lead->buyer?->is_phone_verified)
+                                            <svg class="w-3.5 h-3.5 text-nilex shrink-0" fill="currentColor" viewBox="0 0 20 20" title="{{ __('ui.sections.verified') }}"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        @endif
+                                    </span>
+                                    <span class="block text-xs text-zinc-500 mt-0.5">
+                                        {{ $lead->source_type === \App\Models\SellerLead::SOURCE_OFFER ? __('ui.sale_confirmation.buyer_via_offer') : __('ui.sale_confirmation.buyer_via_phone') }}
+                                        <span class="text-zinc-300">·</span>
+                                        {{ $lead->created_at->diffForHumans() }}
+                                    </span>
+                                </span>
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- Actions --}}
+                <div class="flex gap-2 pt-1">
+                    <button type="button"
+                            wire:click="backToStep1"
+                            class="flex-1 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-600 font-bold py-2.5 rounded-xl text-sm transition-all">
+                        {{ __('ui.sale_confirmation.back') }}
+                    </button>
+                    @unless($buyerLeads->isEmpty())
+                        <button type="button"
+                                wire:click="confirmSaleToBuyer"
+                                @disabled(is_null($selectedBuyerId))
+                                class="flex-1 bg-nilex hover:bg-nilex-dark text-white font-bold py-2.5 rounded-xl text-sm transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
+                            {{ __('ui.sale_confirmation.confirm_select') }}
+                        </button>
+                    @endunless
+                </div>
+                @endif
             </div>
         </div>
         @endif
