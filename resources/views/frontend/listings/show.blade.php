@@ -476,6 +476,18 @@
             </div>
 
         </div>
+
+        {{-- ── SIMILAR LISTINGS (additive section; hidden when none) ─────────── --}}
+        @if(isset($similarListings) && $similarListings->isNotEmpty())
+            <section class="mt-10">
+                <h2 class="text-lg sm:text-xl font-black text-zinc-900 mb-4">{{ __('listing.detail.similar_heading') }}</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    @foreach($similarListings as $similar)
+                        @include('frontend.partials.listing-card', ['listing' => $similar, 'isFeatured' => $similar->is_featured])
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </div>
 
     {{-- ── MOBILE: FIXED BOTTOM CONTACT BAR ───────────────────────────────── --}}

@@ -42,6 +42,7 @@ return [
         'offer_submitting'         => 'Sending...',
         'offer_cancel'             => 'Cancel',
         'offer_error'              => 'An error occurred',
+        'similar_heading'          => 'Similar listings',
 
         // cf-label overrides (the rest reuse wizard.car.* / wizard.realestate.*).
         'label_color'              => 'Color',

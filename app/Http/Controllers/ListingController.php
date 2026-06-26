@@ -29,8 +29,23 @@ class ListingController extends Controller
             'user',
         ]);
 
+        // إعلانات مشابهة: نفس القسم، باستثناء الإعلان الحالي، المنشور فقط.
+        // الترتيب: إعلانات نفس المحافظة (province) أولاً ثم الأحدث.
+        // eager loading لـ category/location/user لمنع N+1 في بطاقة الإعلان
+        // (نفس نمط CategoryController::show()).
+        $similarListings = Listing::query()
+            ->with(['category', 'location', 'user'])
+            ->where('category_id', $listing->category_id)
+            ->where('id', '!=', $listing->id)
+            ->where('status', Listing::STATUS_PUBLISHED)
+            ->orderByRaw('CASE WHEN province_id = ? THEN 0 ELSE 1 END', [$listing->province_id])
+            ->latest()
+            ->limit(6)
+            ->get();
+
         return view('frontend.listings.show', [
-            'listing' => $listing,
+            'listing'         => $listing,
+            'similarListings' => $similarListings,
         ]);
     }
 
