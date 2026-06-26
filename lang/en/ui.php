@@ -643,4 +643,17 @@ return [
         'copied'   => 'Link copied!',
     ],
 
+    // Public seller trust card (shown on the listing detail page).
+    'seller_trust' => [
+        'seller'              => 'Seller',
+        'phone_verified'      => 'Phone verified',
+        'phone_unverified'    => 'Phone not verified',
+        'member_since'        => 'Member :time',
+        'active_listings'     => ':count active listings',
+        'no_ratings'          => 'No ratings yet',
+        'response_rate'       => 'Response rate',
+        'response_rate_value' => ':rate% of offers',
+        'response_insufficient' => 'Not enough data yet',
+    ],
+
 ];

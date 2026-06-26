@@ -6,12 +6,82 @@ use App\Models\Listing;
 use App\Models\ListingPhoneClick;
 use App\Models\ListingView;
 use App\Models\ListingWhatsappClick;
+use App\Models\Offer;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class SellerListingAnalyticsService
 {
+    /**
+     * Minimum number of (non-canceled) offers a seller must have received
+     * before a response rate is statistically meaningful. Below this, the
+     * methods return null ("insufficient data") instead of a misleading number.
+     */
+    public const RESPONSE_RATE_MIN_OFFERS = 5;
+
+    /**
+     * Percentage of received offers the seller has actually decided on
+     * (accepted or rejected), out of all non-canceled offers received.
+     *
+     * Canceled offers are excluded from BOTH numerator and denominator —
+     * a cancel is a buyer action, not a seller response opportunity.
+     *
+     * Returns null when fewer than RESPONSE_RATE_MIN_OFFERS offers exist.
+     */
+    public function responseRate(User $seller): ?float
+    {
+        $total = (int) Offer::query()
+            ->where('receiver_id', $seller->id)
+            ->where('status', '!=', 'canceled')
+            ->count();
+
+        if ($total < self::RESPONSE_RATE_MIN_OFFERS) {
+            return null;
+        }
+
+        $responded = (int) Offer::query()
+            ->where('receiver_id', $seller->id)
+            ->whereNotIn('status', ['pending', 'canceled'])
+            ->count();
+
+        return round(($responded / $total) * 100, 1);
+    }
+
+    /**
+     * Average seller response time, in seconds, computed from
+     * (responded_at - created_at) over offers that have a responded_at.
+     *
+     * Honors the same minimum-offers threshold as responseRate(); returns
+     * null when there is not enough data (or no responded offers).
+     */
+    public function averageResponseTime(User $seller): ?float
+    {
+        $total = (int) Offer::query()
+            ->where('receiver_id', $seller->id)
+            ->where('status', '!=', 'canceled')
+            ->count();
+
+        if ($total < self::RESPONSE_RATE_MIN_OFFERS) {
+            return null;
+        }
+
+        $offers = Offer::query()
+            ->where('receiver_id', $seller->id)
+            ->whereNotNull('responded_at')
+            ->get(['created_at', 'responded_at']);
+
+        if ($offers->isEmpty()) {
+            return null;
+        }
+
+        $totalSeconds = $offers->sum(
+            fn (Offer $offer): int => $offer->responded_at->getTimestamp() - $offer->created_at->getTimestamp()
+        );
+
+        return round($totalSeconds / $offers->count(), 1);
+    }
+
     public function totalViewsForUser(User $user): int
     {
         return (int) ListingView::query()

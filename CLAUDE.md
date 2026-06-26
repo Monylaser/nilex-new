@@ -192,7 +192,7 @@ These values are authoritative. Any view displaying points must match them — n
 
 ## Current Project Status (as of June 2026)
 
-- **Tests:** 268 passing, 0 failures
+- **Tests:** 284 passing, 0 failures
 - **SMS OTP:** Routed to `log` driver — no real SMS provider connected yet; OTPs appear in `storage/logs/laravel.log` during development
 - **Payments:** Paymob integration is in **test mode** only — no live transactions
 - **Deployment:** Not yet deployed to a production server; running locally only
@@ -293,6 +293,28 @@ An **additive** feature (no existing logic was modified) letting users save list
 **i18n:** new `ui.favorites.*` group (ar+en) — `title`, `subtitle`, `nav_link`, `back_dashboard`, `save`, `saved`, `add_tooltip`, `remove_tooltip`, `empty_title`, `empty_subtitle`, `browse_cta`.
 
 **Tests:** `tests/Feature/Favorites/FavoriteToggleTest.php` (Pest, 6 tests) — add, toggle-off, duplicate prevention (unique constraint), guest 401, favorites page shows only the user's saved listings, and the `User::isFavorited` helper. Suite: **274 passing, 0 failures** (was 268; +6).
+
+## Seller Response Rate
+
+An **additive** public trust signal showing how reliably a seller responds to received offers. Built on a **dedicated `responded_at` timestamp** — deliberately **not** `updated_at` (which is a fragile proxy: any future row update would move it and silently corrupt historical accuracy).
+
+**Data model**
+- Migration `2026_06_26_000002_add_responded_at_to_offers_table` adds `offers.responded_at` (timestamp, nullable, after `status`; `Schema::hasColumn` guarded).
+- `App\Models\Offer`: `responded_at` added to `$fillable` + a `casts()` returning `'responded_at' => 'datetime'`.
+
+**Capture point (the only logic change)**
+- `UserDashboard::acceptOffer()` / `rejectOffer()` — the existing single `$offer->update([...])` line in each was extended in-place to `'responded_at' => $offer->responded_at ?? now()`. The `?? now()` guard writes the timestamp **once** (first decision) and **never overwrites** it on any later status change. No other lines in those methods were touched.
+
+**Service (`SellerListingAnalyticsService`, additive)**
+- `RESPONSE_RATE_MIN_OFFERS = 5` — the statistical minimum.
+- `responseRate(User $seller): ?float` — denominator = offers received (`receiver_id`) with `status != 'canceled'`; numerator = those with `status NOT IN ('pending','canceled')` (i.e. accepted **or** rejected). **`canceled` is excluded from BOTH** (a cancel is a buyer action, not a seller response opportunity). Returns `null` when the (non-canceled) denominator is `< 5` ("insufficient data" — a seller with one offer shouldn't show "100%"). Otherwise `round(%, 1)`.
+- `averageResponseTime(User $seller): ?float` — mean of `(responded_at − created_at)` **in seconds** over offers that have a `responded_at`; honors the same `< 5` threshold and returns `null` when there's no responded offer. **Computed but not yet shown in the UI** (reserved for a later iteration).
+
+**View (`resources/views/components/seller-trust-card.blade.php`)**
+- This card (rendered on `frontend/listings/show.blade.php`) was **fully Arabic-hardcoded** and is now **fully translated** — all strings moved to a new `ui.seller_trust.*` group (ar+en): `seller`, `phone_verified`, `phone_unverified`, `member_since` (`:time`), `active_listings` (`:count`), `no_ratings`, `response_rate`, `response_rate_value` (`:rate`), `response_insufficient`.
+- A new response-rate row resolves the rate live via `app(SellerListingAnalyticsService::class)->responseRate($seller)`; shows the percentage when available, or the **"insufficient data"** message (never a misleading number) below the threshold.
+
+**Tests:** `tests/Feature/Offers/ResponseRateTest.php` (Pest, 10 tests) — rate calc at/above threshold, 100% case, per-seller scoping, `null` below minimum, `canceled` excluded from numerator+denominator **and** from the threshold count, `averageResponseTime` averaging + threshold, and the `responded_at` write semantics (set on first decision, **not** overwritten on a repeat). Suite: **284 passing, 0 failures** (was 274; +10).
 
 ## Planned Next Steps
 

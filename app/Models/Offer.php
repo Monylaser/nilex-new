@@ -17,7 +17,15 @@ class Offer extends Model
         'amount',
         'message',
         'status',
+        'responded_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'responded_at' => 'datetime',
+        ];
+    }
 
     // الإعلان المربوط بيه العرض
     public function listing(): BelongsTo

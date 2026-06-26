@@ -20,7 +20,7 @@ class UserDashboard extends Component
     public function acceptOffer(int $id)
     {
         $offer = Offer::where('receiver_id', Auth::id())->findOrFail($id);
-        $offer->update(['status' => 'accepted']);
+        $offer->update(['status' => 'accepted', 'responded_at' => $offer->responded_at ?? now()]);
         session()->flash('success', __('server.dashboard.offer_accepted'));
     }
 
@@ -28,7 +28,7 @@ class UserDashboard extends Component
     public function rejectOffer(int $id)
     {
         $offer = Offer::where('receiver_id', Auth::id())->findOrFail($id);
-        $offer->update(['status' => 'rejected']);
+        $offer->update(['status' => 'rejected', 'responded_at' => $offer->responded_at ?? now()]);
         session()->flash('error', __('server.dashboard.offer_rejected'));
     }
 

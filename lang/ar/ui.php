@@ -643,4 +643,17 @@ return [
         'copied'   => 'تم نسخ الرابط!',
     ],
 
+    // Public seller trust card (shown on the listing detail page).
+    'seller_trust' => [
+        'seller'              => 'البائع',
+        'phone_verified'      => 'رقم الهاتف موثق',
+        'phone_unverified'    => 'رقم الهاتف غير موثق',
+        'member_since'        => 'عضو منذ :time',
+        'active_listings'     => ':count إعلان نشط',
+        'no_ratings'          => 'لا توجد تقييمات بعد',
+        'response_rate'       => 'نسبة الرد',
+        'response_rate_value' => ':rate% من العروض',
+        'response_insufficient' => 'لا توجد بيانات كافية بعد',
+    ],
+
 ];
