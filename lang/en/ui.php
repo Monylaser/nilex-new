@@ -618,4 +618,14 @@ return [
         'generate_ai'       => 'Generate ad with AI',
     ],
 
+    // Share button on the listing detail page (frontend-only feature).
+    'share' => [
+        'button'   => 'Share',
+        'heading'  => 'Share listing',
+        'whatsapp' => 'WhatsApp',
+        'facebook' => 'Facebook',
+        'copy'     => 'Copy link',
+        'copied'   => 'Link copied!',
+    ],
+
 ];

@@ -261,6 +261,77 @@
                             {{ number_format($listing->views_count) }} {{ __('listing.detail.views_suffix') }}
                         </span>
                     </div>
+
+                    {{-- Share button (self-contained Alpine component; no shared state with the
+                         page-level x-data above — all names are share-prefixed to avoid collision) --}}
+                    <div class="relative inline-block mt-4"
+                         x-data="{
+                             shareMenuOpen: false,
+                             shareCopied: false,
+                             shareUrl: @js(url()->current()),
+                             shareTitle: @js($listing->title),
+                             shareNative() {
+                                 if (navigator.share) {
+                                     navigator.share({ title: this.shareTitle, url: this.shareUrl }).catch(() => {});
+                                 } else {
+                                     this.shareMenuOpen = !this.shareMenuOpen;
+                                 }
+                             },
+                             whatsappShareUrl() {
+                                 return 'https://wa.me/?text=' + encodeURIComponent(this.shareTitle + ' ' + this.shareUrl);
+                             },
+                             facebookShareUrl() {
+                                 return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(this.shareUrl);
+                             },
+                             copyLink() {
+                                 const done = () => { this.shareCopied = true; setTimeout(() => this.shareCopied = false, 2000); this.shareMenuOpen = false; };
+                                 if (navigator.clipboard && window.isSecureContext) {
+                                     navigator.clipboard.writeText(this.shareUrl).then(done).catch(() => this.copyLinkFallback(done));
+                                 } else {
+                                     this.copyLinkFallback(done);
+                                 }
+                             },
+                             copyLinkFallback(done) {
+                                 try {
+                                     const t = document.createElement('textarea');
+                                     t.value = this.shareUrl; t.style.position = 'fixed'; t.style.opacity = '0';
+                                     document.body.appendChild(t); t.focus(); t.select();
+                                     document.execCommand('copy'); document.body.removeChild(t);
+                                     done();
+                                 } catch (e) { /* clipboard unavailable */ }
+                             },
+                         }"
+                         @keydown.escape.window="shareMenuOpen = false">
+                        <button type="button" @click="shareNative()"
+                                class="inline-flex items-center gap-2 border border-zinc-200 hover:border-[#1D9E75] hover:text-[#1D9E75] text-zinc-600 px-4 py-2 rounded-xl font-bold text-sm transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                            <span x-show="!shareCopied">{{ __('ui.share.button') }}</span>
+                            <span x-show="shareCopied" style="display:none;" class="text-[#1D9E75]">{{ __('ui.share.copied') }}</span>
+                        </button>
+
+                        {{-- Manual fallback menu (shown when Web Share API is unavailable) --}}
+                        <div x-show="shareMenuOpen" style="display:none;"
+                             @click.outside="shareMenuOpen = false"
+                             x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                             class="absolute z-30 mt-2 w-48 bg-white rounded-xl border border-zinc-200 shadow-lg p-1.5 start-0">
+                            <p class="text-[11px] font-bold text-zinc-400 px-2.5 py-1.5">{{ __('ui.share.heading') }}</p>
+                            <a :href="whatsappShareUrl()" target="_blank" rel="noopener"
+                               class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-zinc-50 text-sm font-semibold text-zinc-700">
+                                <svg class="w-4 h-4" fill="#25D366" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z M12.043 0C5.384 0 0 5.384 0 12.043c0 2.138.566 4.257 1.645 6.105L.057 23.814a.5.5 0 00.615.621l5.794-1.512a12.003 12.003 0 005.577 1.379h.005C18.703 24.302 24.086 18.918 24.086 12.258 24.086 5.599 18.702.214 12.043 0z"/></svg>
+                                {{ __('ui.share.whatsapp') }}
+                            </a>
+                            <a :href="facebookShareUrl()" target="_blank" rel="noopener"
+                               class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-zinc-50 text-sm font-semibold text-zinc-700">
+                                <svg class="w-4 h-4" fill="#1877F2" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                {{ __('ui.share.facebook') }}
+                            </a>
+                            <button type="button" @click="copyLink()"
+                                    class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-zinc-50 text-sm font-semibold text-zinc-700 text-start">
+                                <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 11-5.656-5.656l1.5-1.5m6.828-2.828a4 4 0 00-5.656 0l-3 3"/></svg>
+                                {{ __('ui.share.copy') }}
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Custom fields -------------------------------------------------- --}}

@@ -618,4 +618,14 @@ return [
         'generate_ai'       => 'ولّد الإعلان بالـ AI',
     ],
 
+    // Share button on the listing detail page (frontend-only feature).
+    'share' => [
+        'button'   => 'مشاركة',
+        'heading'  => 'مشاركة الإعلان',
+        'whatsapp' => 'واتساب',
+        'facebook' => 'فيسبوك',
+        'copy'     => 'نسخ الرابط',
+        'copied'   => 'تم نسخ الرابط!',
+    ],
+
 ];
