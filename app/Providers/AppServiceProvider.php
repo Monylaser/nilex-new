@@ -37,6 +37,15 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::preventLazyLoading(! app()->isProduction());
 
+        // ── Spatie Translatable fallback (config/translatable.php) ─────────────
+        // This package version ignores config/translatable.php, so wire the
+        // project-wide fallback locale into its singleton here. Prevents blank
+        // labels when a translatable attribute is missing the active locale.
+        if (config('translatable.use_fallback_locale')) {
+            app(\Spatie\Translatable\Translatable::class)
+                ->fallback(fallbackLocale: config('translatable.fallback_locale'));
+        }
+
         \App\Models\PointTransaction::observe(\App\Observers\PointTransactionObserver::class);
         \App\Models\Listing::observe(\App\Observers\ListingObserver::class);
         \App\Models\ListingPhoneClick::observe(\App\Observers\ListingPhoneClickObserver::class);

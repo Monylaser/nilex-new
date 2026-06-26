@@ -11,7 +11,7 @@ class LegalPageSeeder extends Seeder
     {
         $pages = [
             [
-                'title'           => 'سياسة الخصوصية',
+                'title'           => ['ar' => 'سياسة الخصوصية', 'en' => 'Privacy Policy'],
                 'slug'            => 'privacy-policy',
                 'seo_title'       => 'سياسة الخصوصية | نايلكس',
                 'seo_description' => 'تعرّف على كيفية جمع نايلكس لبياناتك الشخصية واستخدامها وحمايتها.',
@@ -19,7 +19,7 @@ class LegalPageSeeder extends Seeder
                 'content'         => $this->privacyPolicy(),
             ],
             [
-                'title'           => 'الشروط والأحكام',
+                'title'           => ['ar' => 'الشروط والأحكام', 'en' => 'Terms and Conditions'],
                 'slug'            => 'terms-and-conditions',
                 'seo_title'       => 'الشروط والأحكام | نايلكس',
                 'seo_description' => 'اقرأ الشروط والأحكام التي تنظّم استخدامك لمنصة نايلكس للإعلانات المبوّبة.',
@@ -27,7 +27,7 @@ class LegalPageSeeder extends Seeder
                 'content'         => $this->termsAndConditions(),
             ],
             [
-                'title'           => 'سياسة الاستخدام المقبول',
+                'title'           => ['ar' => 'سياسة الاستخدام المقبول', 'en' => 'Acceptable Use Policy'],
                 'slug'            => 'acceptable-use-policy',
                 'seo_title'       => 'سياسة الاستخدام المقبول | نايلكس',
                 'seo_description' => 'تعرّف على المحتوى والسلوكيات المسموح بها وغير المسموح بها على منصة نايلكس.',
@@ -35,7 +35,7 @@ class LegalPageSeeder extends Seeder
                 'content'         => $this->acceptableUsePolicy(),
             ],
             [
-                'title'           => 'من نحن',
+                'title'           => ['ar' => 'من نحن', 'en' => 'About Us'],
                 'slug'            => 'about-us',
                 'seo_title'       => 'من نحن | نايلكس',
                 'seo_description' => 'تعرّف على منصة نايلكس، رسالتنا، رؤيتنا، وقصة تأسيسنا.',
@@ -43,7 +43,7 @@ class LegalPageSeeder extends Seeder
                 'content'         => $this->aboutUs(),
             ],
             [
-                'title'           => 'تواصل معنا',
+                'title'           => ['ar' => 'تواصل معنا', 'en' => 'Contact Us'],
                 'slug'            => 'contact-us',
                 'seo_title'       => 'تواصل معنا | نايلكس',
                 'seo_description' => 'تواصل مع فريق دعم نايلكس عبر البريد الإلكتروني أو وسائل التواصل الاجتماعي.',
@@ -51,7 +51,7 @@ class LegalPageSeeder extends Seeder
                 'content'         => $this->contactUs(),
             ],
             [
-                'title'           => 'سياسة الاسترجاع والاسترداد',
+                'title'           => ['ar' => 'سياسة الاسترجاع والاسترداد', 'en' => 'Refund and Return Policy'],
                 'slug'            => 'refund-policy',
                 'seo_title'       => 'سياسة الاسترجاع والاسترداد | نايلكس',
                 'seo_description' => 'تعرّف على سياسة استرجاع واسترداد المدفوعات وشحن النقاط على منصة نايلكس وفق قانون حماية المستهلك وشروط Paymob.',

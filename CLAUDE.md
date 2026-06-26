@@ -395,6 +395,26 @@ The **DB/model foundation** for the dual sale-confirmation + ratings system. **U
 
 **Deferred (next phase — UI):** Modal Step 2 buyer-selection wired to `confirmClosing()`'s `sold_platform` stub (with the `SellerLead` IDOR validation + `canInitiateForListing` guard), the buyer-side confirm/seller-side cancel actions calling `confirmByBuyer()`/`cancelBySeller()`, the rating form, the `seller-trust-card` rating display, and the `ui.sale_confirmation.*` / `ui.reviews.*` lang groups (AR/EN).
 
+## UI Fixes — Homepage Search & Footer Plans Column
+
+Two small **corrective** frontend fixes (no logic/route changes, no new lang keys):
+
+**1. Duplicate homepage search bars (Bug 1):** The homepage showed two search inputs — one in the shared navbar (`layouts/frontend.blade.php`) and one in the hero (`frontend/home.blade.php`) — both plain GET forms to `route('listings.search')` with param `q` (independent, no shared state). The **navbar search is now hidden on the homepage only** by wrapping **both** navbar forms (desktop ~L57 and mobile-dropdown ~L134) in `@unless(request()->routeIs('home')) … @endunless`. The hero search becomes the sole homepage search; on all other pages (category, search-results, listing-detail) the navbar search stays visible unchanged.
+
+**2. Empty "خطط النقاط" footer column (Bug 2):** `components/footer.blade.php` Col 4 had a header but a blank body — even though `$footerPlans = PointPlan::active()->orderBy('price')->get()` was **already queried at the top of the file but never used**, and the lang keys (`ui.footer.points_suffix`/`view_all_plans`/`view_point_plans`, AR/EN) already existed. Wired the column to loop over `$footerPlans`: each plan shows the **locale-aware name** (`name_ar` for `ar`, else `name_en` with `name_ar` fallback) + its point count (`number_format($plan->points)` + existing `ui.footer.points_suffix`), each linking to `route('pricing')` (no per-plan anchor — the pricing page has none), followed by a "view all plans" link (`ui.footer.view_all_plans`). Empty-state fallback shows the existing `view_point_plans` link. **No `name` accessor on `PointPlan`** (unlike Category/Location), hence the manual locale ternary. Tests: **322 passing, 0 failures** (unchanged — presentation-only).
+
+## Footer Legal Pages — EN labels fix + global translation fallback
+
+**Bug:** In EN locale the footer "Legal Pages" column rendered 6 file icons with **blank text labels**. Root cause was a **data gap** (not a code bug, and unrelated to the navbar/footer-plans edit): `LegalPageSeeder` wrote each `title` as a **plain Arabic string**, so Spatie `HasTranslations` stored `{"ar":"…"}` with **no `en` key**; `{{ $lp->title }}` (`components/footer.blade.php:148`) returned `''` in EN. (`CookiePolicySeeder` was unaffected — it already wrote explicit `['ar'=>…,'en'=>…]` arrays.)
+
+**Discovery surprise:** the installed `spatie/laravel-translatable` (via `laravel-package-tools`) **does not read a `config/translatable.php` file at all** — its `Translatable` config object is a bare `new Translatable` (no config binding), and the trait only consults `config('app.fallback_locale')` (= `en`, also empty here) / `config('app.locale')`. So a published `config/translatable.php` alone would be a **no-op dead file**.
+
+**Fix (Option 3 — both layers):**
+1. **Global fallback safety net.** Created `config/translatable.php` with `use_fallback_locale => true` + `fallback_locale => 'ar'`, and — because the package ignores that file — **wired it into the Spatie `Translatable` singleton in `AppServiceProvider::boot()`** (`->fallback(fallbackLocale: config('translatable.fallback_locale'))`, guarded by `config('translatable.use_fallback_locale')`). Now any translatable attribute (any model, any page) missing the active locale falls back to `ar` instead of rendering blank. `HasTranslations::useFallbackLocale()` already defaults to `true`; the previous blank was because the resolved fallback was `app.fallback_locale=en` (also missing).
+2. **Real EN titles.** Converted the 6 `LegalPageSeeder` titles from plain strings to explicit `['ar'=>…,'en'=>…]` arrays (Privacy Policy / Terms and Conditions / Acceptable Use Policy / About Us / Contact Us / Refund and Return Policy). Re-ran the seeder (idempotent via `updateOrCreate` on `slug`).
+
+**Scope note:** page **`content`** is deliberately left Arabic-only for now (separate future decision); thanks to the new `fallback_locale => 'ar'`, EN visitors see the Arabic body (readable) instead of an empty page — same data-gap-with-fallback pattern as the B.4 city-names gap. `cookies-policy` is not seeded in the current DB (footer shows exactly the 6 `LegalPageSeeder` pages). Tests: **322 passing, 0 failures** (unchanged).
+
 ## Planned Next Steps
 
 - **Hosting:** Deploy via **Laravel Forge** (planned)

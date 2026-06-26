@@ -53,7 +53,8 @@
                      alt="Nilex نايلكس">
             </a>
 
-            {{-- Search — desktop --}}
+            {{-- Search — desktop (hidden on homepage; the hero search is the primary search there) --}}
+            @unless(request()->routeIs('home'))
             <form action="{{ route('listings.search') }}" method="GET"
                   class="hidden md:block flex-1 max-w-md mx-auto">
                 <div class="search-pill flex items-center">
@@ -69,6 +70,7 @@
                     </button>
                 </div>
             </form>
+            @endunless
 
             {{-- Right actions --}}
             <div class="flex items-center gap-2 ms-auto">
@@ -131,6 +133,7 @@
          class="sm:hidden bg-white border-t border-zinc-100"
          style="display:none;">
         <div class="px-4 py-3 space-y-1">
+            @unless(request()->routeIs('home'))
             <form action="{{ route('listings.search') }}" method="GET" class="mb-3">
                 <div class="search-pill flex items-center">
                     <input type="text" name="q"
@@ -145,6 +148,7 @@
                     </button>
                 </div>
             </form>
+            @endunless
 
             @guest
                 <a href="{{ route('login') }}" class="block px-3 py-2.5 text-sm font-semibold text-zinc-700 hover:text-[#1D9E75] rounded-lg hover:bg-zinc-50">

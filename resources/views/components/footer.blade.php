@@ -163,7 +163,31 @@
                         {{ __('ui.footer.point_plans') }}
                     </a>
                 </h4>
-             
+                @if($footerPlans->isNotEmpty())
+                    <ul class="space-y-3 text-sm">
+                        @foreach($footerPlans as $plan)
+                            <li>
+                                <a href="{{ route('pricing') }}"
+                                   class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2 line-clamp-1">
+                                    <svg class="w-3.5 h-3.5 opacity-50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    <span class="line-clamp-1">{{ app()->getLocale() === 'ar' ? $plan->name_ar : ($plan->name_en ?: $plan->name_ar) }}</span>
+                                    <span class="text-xs shrink-0" style="color:#475569;">· {{ number_format($plan->points) }} {{ __('ui.footer.points_suffix') }}</span>
+                                </a>
+                            </li>
+                        @endforeach
+                        <li class="pt-1">
+                            <a href="{{ route('pricing') }}"
+                               class="text-xs font-semibold text-[#1D9E75] hover:text-[#9FE1CB] transition-colors duration-200">
+                                {{ __('ui.footer.view_all_plans') }}
+                            </a>
+                        </li>
+                    </ul>
+                @else
+                    <a href="{{ route('pricing') }}"
+                       class="text-sm hover:text-[#1D9E75] transition-colors duration-200">
+                        {{ __('ui.footer.view_point_plans') }}
+                    </a>
+                @endif
             </div>
 
             {{-- Col 5 — Contact --}}
