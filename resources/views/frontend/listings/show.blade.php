@@ -14,6 +14,123 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $listing->title }}">
     <meta name="twitter:image" content="{{ $listing->getFirstMediaUrl('images', 'full_hd') }}">
+
+    {{-- JSON-LD structured data (schema.org) — additive, SEO only. --}}
+    {{-- Cars use the multi-type ["Product","Car"] (Car is a Product subtype, so --}}
+    {{-- price/offer rich results still work); every other category uses Product. --}}
+    {{-- Built here independently because this meta stack renders before the --}}
+    {{-- content block (its display variables are not available at this point). --}}
+    @php
+        $ldImages = $listing->getMedia('images')
+            ->map(fn ($m) => $m->getUrl('full_hd'))
+            ->values()->all();
+
+        $isCar = $listing->category?->slug === 'cars';
+        $cfv   = $listing->custom_fields_values ?? [];
+
+        $ld = [
+            '@context'    => 'https://schema.org',
+            '@type'       => $isCar ? ['Product', 'Car'] : 'Product',
+            'name'        => $listing->title,
+            'description' => \Illuminate\Support\Str::limit(trim(strip_tags($listing->description)), 5000, ''),
+            'url'         => url()->current(),
+            'sku'         => 'NILEX-'.$listing->id,
+        ];
+
+        if (! empty($ldImages)) {
+            $ld['image'] = $ldImages;
+        }
+        if ($listing->category) {
+            $ld['category'] = $listing->category->name;
+        }
+        // itemCondition uses the top-level new/used column (not the car custom field).
+        if ($listing->condition === 'new') {
+            $ld['itemCondition'] = 'https://schema.org/NewCondition';
+        } elseif ($listing->condition === 'used') {
+            $ld['itemCondition'] = 'https://schema.org/UsedCondition';
+        }
+
+        // Offers — omitted when the price is "on contact" (no real numeric price).
+        if ($listing->price_type !== 'on_contact') {
+            $ld['offers'] = [
+                '@type'         => 'Offer',
+                'price'         => number_format((float) $listing->price, 2, '.', ''),
+                'priceCurrency' => 'EGP',
+                'availability'  => 'https://schema.org/InStock',
+                'url'           => url()->current(),
+            ];
+            if ($listing->user?->name) {
+                $ld['offers']['seller'] = ['@type' => 'Person', 'name' => $listing->user->name];
+            }
+        }
+
+        if ($isCar) {
+            // Brand: real CarBrand name, or the manual "other" free-text value.
+            $brandName = ($listing->carBrand && $listing->carBrand->slug !== 'other')
+                ? $listing->carBrand->name
+                : ($cfv['car_brand_other'] ?? $listing->carBrand?->name);
+            if ($brandName) {
+                $ld['brand'] = ['@type' => 'Brand', 'name' => $brandName];
+            }
+            if ($listing->carModel?->name) {
+                $ld['model'] = $listing->carModel->name;
+            }
+            if (! empty($cfv['year'])) {
+                $ld['vehicleModelDate'] = (string) $cfv['year'];
+            }
+            if (! empty($cfv['mileage'])) {
+                $ld['mileageFromOdometer'] = [
+                    '@type'    => 'QuantitativeValue',
+                    'value'    => (float) $cfv['mileage'],
+                    'unitCode' => 'KMT',
+                ];
+            }
+            // fuel/transmission stored as locale-neutral codes → translate for display.
+            if (! empty($cfv['fuel'])) {
+                $t = __('wizard.options.fuel.'.$cfv['fuel']);
+                $ld['fuelType'] = $t === 'wizard.options.fuel.'.$cfv['fuel'] ? $cfv['fuel'] : $t;
+            }
+            if (! empty($cfv['transmission'])) {
+                $t = __('wizard.options.transmission.'.$cfv['transmission']);
+                $ld['vehicleTransmission'] = $t === 'wizard.options.transmission.'.$cfv['transmission'] ? $cfv['transmission'] : $t;
+            }
+            if (! empty($cfv['color'])) {
+                $ld['color'] = $cfv['color'];
+            }
+        } elseif (! empty($cfv)) {
+            // Non-car coded specs (e.g. real estate) → additionalProperty. Labels +
+            // values reuse the same wizard.* keys the content block uses for display.
+            $ldReLabels = [
+                'property_type' => __('wizard.realestate.property_type_label'),
+                'listing_type'  => __('wizard.realestate.listing_type_label'),
+                'rooms'         => __('wizard.realestate.rooms_label'),
+                'bathrooms'     => __('wizard.realestate.bathrooms_label'),
+                'floor'         => __('wizard.realestate.floor_label'),
+                'finishing'     => __('wizard.realestate.finishing_label'),
+                'area'          => __('wizard.realestate.area_label'),
+                'compound'      => __('listing.detail.label_compound'),
+            ];
+            $ldProps = [];
+            foreach ($cfv as $key => $val) {
+                if ($val === null || $val === '' || ! is_scalar($val)) {
+                    continue;
+                }
+                $optTrans = __('wizard.options.'.$key.'.'.$val);
+                $value    = $optTrans === 'wizard.options.'.$key.'.'.$val ? (string) $val : $optTrans;
+                $ldProps[] = [
+                    '@type' => 'PropertyValue',
+                    'name'  => $ldReLabels[$key] ?? $key,
+                    'value' => $value,
+                ];
+            }
+            if (! empty($ldProps)) {
+                $ld['additionalProperty'] = $ldProps;
+            }
+        }
+    @endphp
+    <script type="application/ld+json">
+{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+    </script>
 @endpush
 
 @push('styles')
