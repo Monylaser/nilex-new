@@ -75,6 +75,10 @@ return [
         'self' => 'You cannot send a message to yourself.',
     ],
 
+    'account' => [
+        'delete_blocked' => 'Your account cannot be deleted because it has sales or reviews linked to it. These records are kept permanently.',
+    ],
+
     'ai' => [
         'photo_max'              => 'Image size must not exceed 5 MB',
         'photo_image'            => 'The file must be an image',

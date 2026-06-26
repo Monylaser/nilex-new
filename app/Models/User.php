@@ -52,6 +52,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'plan_tier',
         'plan_type',
         'locale',
+        'ratings_avg',
+        'ratings_count',
     ];
 
     protected $hidden = [
@@ -68,6 +70,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'otp_expires_at'    => 'datetime',
         'is_phone_verified' => 'boolean',
         'otp_attempts'      => 'integer',
+        'ratings_avg'       => 'float',
+        'ratings_count'     => 'integer',
     ];
 
     // ── Panel Access ──────────────────────────────────────────────────────────
@@ -155,6 +159,44 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         $id = $listing instanceof Listing ? $listing->id : $listing;
 
         return in_array($id, $this->favoritedListingIds(), true);
+    }
+
+    // ── Sale confirmations & reviews ────────────────────────────────────────
+
+    public function saleConfirmationsAsSeller(): HasMany
+    {
+        return $this->hasMany(SaleConfirmation::class, 'seller_id');
+    }
+
+    public function saleConfirmationsAsBuyer(): HasMany
+    {
+        return $this->hasMany(SaleConfirmation::class, 'buyer_id');
+    }
+
+    // التقييمات التي كتبها هذا المستخدم (كمشتري)
+    public function reviewsWritten(): HasMany
+    {
+        return $this->hasMany(Review::class, 'reviewer_id');
+    }
+
+    // التقييمات التي استلمها هذا المستخدم (كبائع) — محور ratings_avg/ratings_count
+    public function reviewsReceived(): HasMany
+    {
+        return $this->hasMany(Review::class, 'reviewee_id');
+    }
+
+    /**
+     * هل المستخدم طرف في أي عملية بيع (بائعاً أو مشترياً) أو أي تقييم
+     * (كاتباً أو مُقيَّماً)؟ يُستخدم لحراسة حذف الحساب: قيود restrictOnDelete
+     * على هذه الجداول تمنع الحذف الفيزيائي بغض النظر عن status، لذا يطابق
+     * الحارس app-level سلوك القيد تماماً (يشمل pending و canceled).
+     */
+    public function hasSalesOrReviews(): bool
+    {
+        return $this->saleConfirmationsAsSeller()->exists()
+            || $this->saleConfirmationsAsBuyer()->exists()
+            || $this->reviewsWritten()->exists()
+            || $this->reviewsReceived()->exists();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -61,6 +61,14 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // حارس: قيود restrictOnDelete على sale_confirmations/reviews تمنع الحذف
+        // الفيزيائي لأي مستخدم طرف في عملية بيع أو تقييم (أي حالة، شامل
+        // pending/canceled). نمنعه هنا برسالة واضحة بدل خطأ DB غير مُعالَج.
+        if ($user->hasSalesOrReviews()) {
+            return Redirect::route('profile.edit')
+                ->withErrors(['password' => __('server.account.delete_blocked')], 'userDeletion');
+        }
+
         Auth::logout();
         $user->delete();
 

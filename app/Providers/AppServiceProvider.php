@@ -42,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\ListingPhoneClick::observe(\App\Observers\ListingPhoneClickObserver::class);
         \App\Models\ListingWhatsappClick::observe(\App\Observers\ListingWhatsappClickObserver::class);
         \App\Models\Offer::observe(\App\Observers\OfferLeadObserver::class);
+        \App\Models\Review::observe(\App\Observers\ReviewObserver::class);
         AdCampaign::observe(AdCampaignObserver::class);
 
         // ── Auth Activity Listeners ───────────────────────────────────────────

@@ -232,6 +232,16 @@ class Listing extends Model implements HasMedia
         return $this->hasMany(Favorite::class);
     }
 
+    public function saleConfirmations(): HasMany
+    {
+        return $this->hasMany(SaleConfirmation::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
     /**
      * هل هذا الإعلان محفوظ في مفضلة المستخدم المعطى (أو المسجّل حالياً)؟
      */
