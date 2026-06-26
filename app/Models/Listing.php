@@ -225,6 +225,25 @@ class Listing extends Model implements HasMedia
         return $this->hasMany(Offer::class);
     }
 
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    /**
+     * هل هذا الإعلان محفوظ في مفضلة المستخدم المعطى (أو المسجّل حالياً)؟
+     */
+    public function isFavorited(?User $user = null): bool
+    {
+        $user ??= auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $user->isFavorited($this->id);
+    }
+
     // ── Scopes ────────────────────────────────────────────────────────────────
 
     public function scopeActive(Builder $query)

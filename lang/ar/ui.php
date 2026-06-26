@@ -618,6 +618,21 @@ return [
         'generate_ai'       => 'ولّد الإعلان بالـ AI',
     ],
 
+    // Favorites system (heart toggle on cards + detail page + "My Favorites" dashboard page).
+    'favorites' => [
+        'title'          => 'مفضلتي',
+        'subtitle'       => 'الإعلانات اللي حفظتها للرجوع إليها لاحقاً',
+        'nav_link'       => 'مفضلتي',
+        'back_dashboard' => 'رجوع للوحة التحكم',
+        'save'           => 'حفظ',
+        'saved'          => 'محفوظ',
+        'add_tooltip'    => 'أضف إلى المفضلة',
+        'remove_tooltip' => 'إزالة من المفضلة',
+        'empty_title'    => 'لا توجد إعلانات في مفضلتك بعد',
+        'empty_subtitle' => 'اضغط على القلب في أي إعلان لحفظه هنا',
+        'browse_cta'     => 'تصفّح الإعلانات',
+    ],
+
     // Share button on the listing detail page (frontend-only feature).
     'share' => [
         'button'   => 'مشاركة',

@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -122,6 +123,38 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function entitlementUsage(): HasMany
     {
         return $this->hasMany(UserEntitlementUsage::class);
+    }
+
+    // ── Favorites ─────────────────────────────────────────────────────────────
+
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    public function favoriteListings(): BelongsToMany
+    {
+        return $this->belongsToMany(Listing::class, 'favorites')->withTimestamps();
+    }
+
+    /**
+     * كل معرّفات الإعلانات المحفوظة — مخزّنة (memoized) لتفادي N+1 عند رسم
+     * بطاقات متعددة على نفس الصفحة (استعلام واحد فقط لكل request).
+     */
+    protected ?array $favoritedListingIdsCache = null;
+
+    public function favoritedListingIds(): array
+    {
+        return $this->favoritedListingIdsCache ??= $this->favorites()
+            ->pluck('listing_id')
+            ->all();
+    }
+
+    public function isFavorited(Listing|int $listing): bool
+    {
+        $id = $listing instanceof Listing ? $listing->id : $listing;
+
+        return in_array($id, $this->favoritedListingIds(), true);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

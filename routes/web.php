@@ -7,6 +7,7 @@ use App\Http\Controllers\Frontend\CategoryController;
 use App\Http\Controllers\Frontend\LegalPageController;
 use App\Http\Controllers\Frontend\PaymentController;
 use App\Http\Controllers\PaymobController;
+use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
@@ -110,6 +111,9 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
     // 7. عروض الشراء
     Route::post('/listings/{listing}/offer', [ListingController::class, 'makeOffer'])->name('listings.offer');
 
+    // 8. المفضلة — صفحة "مفضلتي" (نفس حماية باقي صفحات لوحة التحكم)
+    Route::get('/dashboard/favorites', [FavoriteController::class, 'index'])->name('dashboard.favorites');
+
 }); // ✅ إغلاق الـ middleware group
 
 // ✅ مسار عرض تفاصيل الإعلان (تم نقله هنا لأسفل لتفادي تعارض الـ 404 مع listings/create)
@@ -120,6 +124,10 @@ Route::post('/listings/{listing}/reveal-phone', [ListingController::class, 'reve
     ->name('listings.reveal-phone');
 Route::post('/listings/{listing}/whatsapp-click', [ListingController::class, 'trackWhatsappClick'])
     ->name('listings.whatsapp-click');
+
+// ❤️ تبديل المفضلة (AJAX) — يتحقق من الـ auth داخلياً مثل reveal-phone
+Route::post('/listings/{listing}/favorite', [FavoriteController::class, 'toggle'])
+    ->name('listings.favorite');
 
 // 🤝 Paymob server callbacks (no auth / no CSRF)
 Route::post('/payments/callback', [PaymobController::class, 'callback'])->name('payments.callback');

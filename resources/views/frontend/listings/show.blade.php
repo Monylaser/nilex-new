@@ -379,6 +379,36 @@
                         </span>
                     </div>
 
+                    {{-- Favorite (heart) toggle — self-contained Alpine island (fav*-prefixed,
+                         no shared state with the page-level x-data). Guests → /login (revealPhone pattern). --}}
+                    <div class="inline-block mt-4 me-2"
+                         x-data="{
+                             fav: {{ (auth()->check() && auth()->user()->isFavorited($listing->id)) ? 'true' : 'false' }},
+                             favLoading: false,
+                             favToggle() {
+                                 @guest window.location.href = '{{ route('login') }}'; return; @endguest
+                                 if (this.favLoading) return;
+                                 this.favLoading = true;
+                                 fetch('{{ route('listings.favorite', $listing->id) }}', {
+                                     method: 'POST',
+                                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                                 })
+                                 .then(r => r.status === 401 ? (window.location.href = '{{ route('login') }}', null) : r.json())
+                                 .then(d => { if (d) this.fav = d.favorited; })
+                                 .finally(() => this.favLoading = false);
+                             }
+                         }">
+                        <button type="button" @click="favToggle()" :disabled="favLoading"
+                                :aria-pressed="fav"
+                                class="inline-flex items-center gap-2 border px-4 py-2 rounded-xl font-bold text-sm transition-colors disabled:opacity-60"
+                                :class="fav ? 'border-red-200 text-red-500 bg-red-50' : 'border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-500'">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" :fill="fav ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            <span x-text="fav ? '{{ __('ui.favorites.saved') }}' : '{{ __('ui.favorites.save') }}'"></span>
+                        </button>
+                    </div>
+
                     {{-- Share button (self-contained Alpine component; no shared state with the
                          page-level x-data above — all names are share-prefixed to avoid collision) --}}
                     <div class="relative inline-block mt-4"

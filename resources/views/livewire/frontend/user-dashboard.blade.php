@@ -39,6 +39,11 @@
                    class="flex items-center justify-center gap-2 bg-white border border-nilex/30 text-nilex hover:bg-nilex/5 font-bold py-3 px-5 rounded-xl transition-all text-sm">
                     {{ __('ui.leads.nav_link') }}
                 </a>
+                <a href="{{ route('dashboard.favorites') }}"
+                   class="flex items-center justify-center gap-2 bg-white border border-red-200 text-red-500 hover:bg-red-50 font-bold py-3 px-5 rounded-xl transition-all text-sm">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                    {{ __('ui.favorites.nav_link') }}
+                </a>
                 <a href="{{ route('listings.create') }}"
                    class="flex items-center justify-center gap-2 bg-nilex hover:bg-nilex-dark text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 text-sm"
                    style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">

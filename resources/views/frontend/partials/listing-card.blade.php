@@ -9,6 +9,38 @@
 
     {{-- Image area --}}
     <div class="relative bg-zinc-50 overflow-hidden" style="height:180px;">
+        {{-- Favorite (heart) toggle — additive, self-contained Alpine island.
+             The card root is a single <a>, so @click.prevent.stop keeps the heart
+             from navigating. Guests are sent to /login (same pattern as revealPhone). --}}
+        <div class="absolute top-2 start-2 z-10"
+             x-data="{
+                 fav: {{ (auth()->check() && auth()->user()->isFavorited($listing->id)) ? 'true' : 'false' }},
+                 loading: false,
+                 toggle() {
+                     @guest window.location.href = '{{ route('login') }}'; return; @endguest
+                     if (this.loading) return;
+                     this.loading = true;
+                     fetch('{{ route('listings.favorite', $listing->id) }}', {
+                         method: 'POST',
+                         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                     })
+                     .then(r => r.status === 401 ? (window.location.href = '{{ route('login') }}', null) : r.json())
+                     .then(d => { if (d) this.fav = d.favorited; })
+                     .finally(() => this.loading = false);
+                 }
+             }">
+            <button type="button" @click.prevent.stop="toggle()" :disabled="loading"
+                    :aria-pressed="fav"
+                    :aria-label="fav ? '{{ __('ui.favorites.remove_tooltip') }}' : '{{ __('ui.favorites.add_tooltip') }}'"
+                    :title="fav ? '{{ __('ui.favorites.remove_tooltip') }}' : '{{ __('ui.favorites.add_tooltip') }}'"
+                    class="w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center transition-all hover:scale-110 active:scale-95 disabled:opacity-60">
+                <svg class="w-5 h-5 transition-colors" viewBox="0 0 24 24"
+                     :fill="fav ? '#ef4444' : 'none'" :stroke="fav ? '#ef4444' : '#71717a'" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </button>
+        </div>
+
         @if($listing->hasMedia('images'))
             <img src="{{ $listing->getFirstMediaUrl('images', 'card') }}"
                  alt="{{ $listing->title }}"

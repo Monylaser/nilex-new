@@ -266,6 +266,34 @@ Two parallel ad systems coexist:
 - Seeded slugs (`LegalPageSeeder`): `privacy-policy`, `terms-and-conditions`, `acceptable-use-policy`, `about-us`, `contact-us`, `refund-policy`. (`cookies-policy` via `CookiePolicySeeder`.)
 - Added **`refund-policy`** ("سياسة الاسترجاع والاسترداد", Arabic only) — required by the Paymob merchant agreement. The points checkout (`pricing.blade.php`) now has a single mandatory agreement checkbox above the plans grid; an Alpine `refundAccepted` flag disables all "شحن الرصيد" buttons until checked, and each form posts a hidden `refund_policy_accepted=1`. `PaymentController::checkout()` enforces it server-side (`accepted` rule, Arabic error) as a fallback.
 
+## Favorites System
+
+An **additive** feature (no existing logic was modified) letting users save listings to revisit later.
+
+**Data model**
+- Table `favorites` (`2026_06_26_000001_create_favorites_table`): `user_id` + `listing_id` (both FK `cascadeOnDelete`), `timestamps`, **`unique(['user_id','listing_id'])`** to prevent duplicates + an index on `user_id`.
+- `App\Models\Favorite` — `$fillable = ['user_id','listing_id']`, `belongsTo` `user()` / `listing()`.
+
+**Model relations / helpers (additive only)**
+- `User`: `favorites()` (HasMany), `favoriteListings()` (BelongsToMany via `favorites` pivot, `withTimestamps`), `favoritedListingIds()` and `isFavorited(Listing|int)`.
+- `Listing`: `favorites()` (HasMany), `isFavorited(?User $user = null)` (delegates to `User::isFavorited`).
+- **N+1 avoidance:** `favoritedListingIds()` is **memoized on the User instance** (`$favoritedListingIdsCache`) — one query per request regardless of how many cards render. The card partial calls `auth()->user()->isFavorited($listing->id)`, so existing controllers (home/category/search) were **not** modified to preload anything.
+
+**Controller / routes** (`App\Http\Controllers\FavoriteController`)
+- `POST /listings/{listing}/favorite` → `toggle()`, name `listings.favorite`. Defined **outside** the auth group (next to `listings.reveal-phone`); checks `Auth::check()` internally and returns **401** for guests (mirrors `ListingController::revealPhone`). Returns JSON `{ favorited: true|false }`.
+- `GET /dashboard/favorites` → `index()`, name `dashboard.favorites`, placed **inside** the existing `['auth','otp.verified']` group (same protection as other dashboard pages). Paginates `favoriteListings()` (eager-loads `category,location,user`), ordered by `favorites.created_at` desc.
+
+**Views**
+- Heart toggle is a **self-contained Alpine island** (own `x-data`, no shared state):
+  - `frontend/partials/listing-card.blade.php` — absolutely positioned over the image (`top-2 start-2`); since the card root is a single `<a>`, the button uses `@click.prevent.stop`. Guests → `/login` (`@guest` redirect + 401 handling, revealPhone pattern). Filled red heart when favorited.
+  - `frontend/listings/show.blade.php` — a `fav*`-prefixed island next to the share button in the title card (Save/Saved pill).
+- `dashboard/favorites.blade.php` — new "My Favorites" page (`<x-app-layout>`, conditional `dir`), **reuses `listing-card.blade.php`** in a grid + empty state + pagination (mirrors `dashboard/ads/index` styling).
+- Discoverability: a red "مفضلتي" link was added to `user-dashboard` next to "حملاتي"/"العملاء".
+
+**i18n:** new `ui.favorites.*` group (ar+en) — `title`, `subtitle`, `nav_link`, `back_dashboard`, `save`, `saved`, `add_tooltip`, `remove_tooltip`, `empty_title`, `empty_subtitle`, `browse_cta`.
+
+**Tests:** `tests/Feature/Favorites/FavoriteToggleTest.php` (Pest, 6 tests) — add, toggle-off, duplicate prevention (unique constraint), guest 401, favorites page shows only the user's saved listings, and the `User::isFavorited` helper. Suite: **274 passing, 0 failures** (was 268; +6).
+
 ## Planned Next Steps
 
 - **Hosting:** Deploy via **Laravel Forge** (planned)

@@ -618,6 +618,21 @@ return [
         'generate_ai'       => 'Generate ad with AI',
     ],
 
+    // Favorites system (heart toggle on cards + detail page + "My Favorites" dashboard page).
+    'favorites' => [
+        'title'          => 'My Favorites',
+        'subtitle'       => 'Listings you saved to revisit later',
+        'nav_link'       => 'My Favorites',
+        'back_dashboard' => 'Back to dashboard',
+        'save'           => 'Save',
+        'saved'          => 'Saved',
+        'add_tooltip'    => 'Add to favorites',
+        'remove_tooltip' => 'Remove from favorites',
+        'empty_title'    => 'No favorites yet',
+        'empty_subtitle' => 'Tap the heart on any listing to save it here',
+        'browse_cta'     => 'Browse listings',
+    ],
+
     // Share button on the listing detail page (frontend-only feature).
     'share' => [
         'button'   => 'Share',
