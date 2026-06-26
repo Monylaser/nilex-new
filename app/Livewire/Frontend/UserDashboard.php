@@ -16,6 +16,19 @@ class UserDashboard extends Component
 {
     use WithPagination;
 
+    // ── Listing-closing modal state (Step 1: type selection) ──────────────
+    // Foundation for the upcoming sale-confirmation flow. Before a seller
+    // "closes" (soft-deletes) a listing they must pick HOW it was closed.
+    // `closingListingId` is the single source of truth for which listing is
+    // being closed and (re)verified server-side on every action.
+    public bool $closingModalOpen = false;
+
+    public ?int $closingListingId = null;
+
+    public ?string $closingListingTitle = null;
+
+    public ?string $closingType = null;
+
     // ✅ قبول العرض (تم إضافة int)
     public function acceptOffer(int $id)
     {
@@ -43,6 +56,55 @@ class UserDashboard extends Component
         $listing->delete();
 
         session()->flash('success', __('server.dashboard.listing_deleted'));
+    }
+
+    // فتح نافذة "نوع الإغلاق" — تتحقق من الملكية وتُثبّت هوية الإعلان المحدد
+    public function openClosingModal(int $id)
+    {
+        $listing = Listing::where('user_id', Auth::id())->findOrFail($id);
+
+        $this->closingListingId    = $listing->id;
+        $this->closingListingTitle = $listing->title;
+        $this->closingType         = null;
+        $this->closingModalOpen    = true;
+    }
+
+    // إغلاق النافذة وتصفير الحالة (يمنع تنفيذ إجراء على إعلان خاطئ لاحقاً)
+    public function closeClosingModal()
+    {
+        $this->reset(['closingModalOpen', 'closingListingId', 'closingListingTitle', 'closingType']);
+    }
+
+    // تأكيد الإغلاق حسب النوع المختار
+    public function confirmClosing()
+    {
+        if ($this->closingListingId === null) {
+            return;
+        }
+
+        // إعادة التحقق من الملكية خادمياً — لا نثق بأي قيمة من الواجهة
+        $listing = Listing::where('user_id', Auth::id())->findOrFail($this->closingListingId);
+
+        switch ($this->closingType) {
+            case 'sold_external':
+            case 'canceled':
+                // حذف ناعم عادي (الإعلان يبقى في النظام، الاسترجاع للأدمن فقط)
+                $listing->delete();
+                session()->flash('success', __('server.dashboard.listing_deleted'));
+                $this->closeClosingModal();
+                break;
+
+            case 'sold_platform':
+                // TODO: Step 2 — buyer list filtered strictly by $this->closingListingId
+                // (SellerLead::where('listing_id', $this->closingListingId)
+                //   ->whereIn('source_type', ['phone_reveal','offer'])->whereNotNull('buyer_id')).
+                // Intentionally no delete in this step.
+                break;
+
+            default:
+                // نوع غير صالح / لم يُختر — لا إجراء (الزر معطّل في الواجهة أصلاً)
+                break;
+        }
     }
 
     // دالة تمييز الإعلان باستخدام النقاط (تم إضافة int)

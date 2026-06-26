@@ -341,6 +341,31 @@ An **additive** public trust signal showing how reliably a seller responds to re
 
 **Deferred (noted, not done here):** `RestoreAction` is currently visible to all panel users; if finer-grained control is desired later it can be gated via **FilamentShield** permissions per role (the `ForceDeleteAction` super_admin gate is already in place). No bulk Restore/ForceDelete actions were added (single-record row actions only).
 
+## Listing Closing Flow (Step 1 — closing-type modal)
+
+**Why:** A **foundation step** for the upcoming **sale-confirmation + ratings** system. Before a seller "deletes" a listing they must now declare **how** it was closed, so a future sale/rating record can be tied to the right outcome (and the right buyer). This is **Step 1 only** — the closing-type selection modal; the buyer-selection sub-flow and any new DB tables are deliberately **not** built yet.
+
+**Replaces the native `wire:confirm`.** Browser-native `window.confirm()` (`wire:confirm`) can only show plain text + OK/Cancel — it cannot host a 3-option choice or a buyer list. It was therefore removed **from the two delete buttons only** (mobile card + desktop table in `user-dashboard.blade.php`); the **feature buttons keep their `wire:confirm`** (`confirm_feature`) untouched. The old `ui.dashboard.confirm_delete` / `confirm_delete_listing` keys are now unused but left in place.
+
+**UI (single shared modal):** A custom Livewire + Alpine modal is rendered **once** outside the mobile/desktop `@foreach` loops (no per-row duplication). Both delete buttons now call `wire:click="openClosingModal($listing->id)"`. The modal (`x-show` entangled to `closingModalOpen`, backdrop-click + Escape close, conditional `dir`) presents **three radio-card options**:
+1. **`sold_platform`** — "تم البيع عن طريق المنصة" → **stub** in this step (no delete; Step 2 will show the buyer list).
+2. **`sold_external`** — "تم البيع خارج المنصة" → soft-deletes (normal flow).
+3. **`canceled`** — "إلغاء بدون بيع" → soft-deletes (normal flow).
+
+The confirm button is **disabled until a type is selected** (`@disabled(is_null($closingType))`).
+
+**Livewire state (kept inside `UserDashboard`, no new component):** Livewire 4 multi-step lives comfortably in the existing component. Added public props `closingModalOpen` (bool), `closingListingId` (?int — **the single source of truth** for which listing is being closed), `closingListingTitle` (?string, display only), `closingType` (?string). Methods: `openClosingModal(int $id)` (verifies ownership via `where('user_id', Auth::id())->findOrFail`, pins the id, resets type), `closeClosingModal()` (resets all four props), `confirmClosing()` (**re-verifies ownership** off `closingListingId` — never trusts the client; soft-deletes for `sold_external`/`canceled`, no-op stub for `sold_platform`). The existing `deleteListing()` is unchanged.
+
+**Buyer-list source (confirmed, used in Step 2 — not built yet):** The `SellerLead` model already captures per-listing contacts. The Step 1 stub carries `closingListingId` so Step 2's buyer query will be **strictly scoped to the exact listing being closed** (`SellerLead::where('listing_id', $closingListingId)->whereIn('source_type', ['phone_reveal','offer'])->whereNotNull('buyer_id')`) — **not** all of the seller's contacts across all listings.
+
+**Wording note (UX):** because deletion is a **soft delete** (the row survives; restore is **admin-only**, not seller-facing), the option descriptions deliberately say **"سيُزال الإعلان من المنصة"** ("the listing will be removed from the platform"), never "حذف", to avoid implying a seller-accessible undo.
+
+**i18n:** all new strings are bilingual from the start under `ui.dashboard.*` (ar+en): `close_modal_title`, `close_modal_subtitle` (`:title` placeholder), `close_opt_{sold_platform,sold_external,canceled}` + matching `_desc`, `close_confirm`, `close_cancel`. No hardcoded text in any language.
+
+**Tests:** `tests/Feature/Listings/ListingClosingModalTest.php` (Pest, 5 cases) — `openClosingModal` sets state + pins the exact id, IDOR rejected (other user's listing), `confirmClosing` soft-deletes for **both** `sold_external` and `canceled` (parametrized), and `sold_platform` does **not** delete (Step 1 stub). Suite: **298 passing, 0 failures** (was 293; +5).
+
+**Deferred (next phase):** the buyer-selection sub-flow for `sold_platform`, the sale-confirmation/ratings DB schema, and persisting the chosen closing reason — all to come **after** the UI direction is fully locked.
+
 ## Planned Next Steps
 
 - **Hosting:** Deploy via **Laravel Forge** (planned)
