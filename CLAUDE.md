@@ -192,7 +192,7 @@ These values are authoritative. Any view displaying points must match them — n
 
 ## Current Project Status (as of June 2026)
 
-- **Tests:** 284 passing, 0 failures
+- **Tests:** 293 passing, 0 failures
 - **SMS OTP:** Routed to `log` driver — no real SMS provider connected yet; OTPs appear in `storage/logs/laravel.log` during development
 - **Payments:** Paymob integration is in **test mode** only — no live transactions
 - **Deployment:** Not yet deployed to a production server; running locally only
@@ -315,6 +315,31 @@ An **additive** public trust signal showing how reliably a seller responds to re
 - A new response-rate row resolves the rate live via `app(SellerListingAnalyticsService::class)->responseRate($seller)`; shows the percentage when available, or the **"insufficient data"** message (never a misleading number) below the threshold.
 
 **Tests:** `tests/Feature/Offers/ResponseRateTest.php` (Pest, 10 tests) — rate calc at/above threshold, 100% case, per-seller scoping, `null` below minimum, `canceled` excluded from numerator+denominator **and** from the threshold count, `averageResponseTime` averaging + threshold, and the `responded_at` write semantics (set on first decision, **not** overwritten on a repeat). Suite: **284 passing, 0 failures** (was 274; +10).
+
+## Listing Soft Deletes
+
+**Why:** A foundation step before the upcoming **sale-confirmation + ratings** system. A rating will permanently reference the listing it was about, so a listing must **survive in the DB after the seller "deletes" it** — the previous behavior was a **hard delete** (`$listing->delete()` with no `SoftDeletes`), which would orphan/erase any future rating. This change is purely foundational: **no sale-confirmation/ratings tables or features were added here.**
+
+**Model + schema**
+- `App\Models\Listing` now uses `Illuminate\Database\Eloquent\SoftDeletes` (same pattern as `AdCampaign`). Added `'deleted_at' => 'datetime'` to `casts()`.
+- Migration `2026_06_26_000003_add_deleted_at_to_listings_table` adds `deleted_at` via `$table->softDeletes()` (`Schema::hasColumn` guarded; `down()` uses `dropSoftDeletes`). No index added (consistent with `AdCampaign`; the `listings` table has no composite indexes — only implicit FK indexes + a single `price_type` index).
+
+**Behavior change (the only logic change to deletion)**
+- `UserDashboard::deleteListing()` (`app/Livewire/Frontend/UserDashboard.php`) — the `clearMediaCollection('images')` call was **removed**. The seller-facing "delete" is now a **soft delete**, and the listing's **media (images) are intentionally preserved** so a deleted listing can still be rendered in a later record (sale/rating history). Spatie only auto-purges media on **force delete**, not soft delete, so the rows survive until an explicit force delete.
+
+**Public surfaces (no code change needed — verified)**
+- All public reads go through Eloquent, so the SoftDeletes global scope excludes trashed automatically: home, category page, search (Scout `collection`/Meilisearch — `scout.soft_delete=false` ⇒ a soft delete fires the `deleted` event and Scout `unsearchable()` removes it from the index), and the detail page (`listings.show` route-model-binding returns **404** for trashed).
+
+**Filament admin (`ListingResource` / `ListingTable`)**
+- Added `Filament\Tables\Filters\TrashedFilter` to the table filters (Filament v5's TrashedFilter is self-contained: it strips the `SoftDeletingScope` via `baseQuery(...)` and toggles `withTrashed`/`onlyTrashed`/`withoutTrashed` — no `getEloquentQuery()` override or separate page needed).
+- Added `RestoreAction` and `ForceDeleteAction` to the row `ActionGroup`. **`ForceDeleteAction` is restricted to `super_admin`** (`->visible(fn () => Auth::user()?->hasRole('super_admin'))`) because force delete is irreversible; `RestoreAction` is available to any panel user (admin/moderator/super_admin). The default `ListListings` tabs/badges (all/pending/published/flagged/rejected) now naturally exclude trashed via the global scope.
+
+**Analytics scope fix (`CategoryPerformanceWidget`)**
+- The 4 aggregation subqueries (`buildAggregatedCategoriesSubquery`) start from the **event** models (`ListingView`/`ListingPhoneClick`/`ListingWhatsappClick`/`Offer`) and `join` `listings`, so the Listing SoftDeletes global scope does **not** apply. Added an explicit `->whereNull('listings.deleted_at')` to each so deleted-listing events are excluded from admin category analytics. (All other listing analytics — `CategoriesChartWidget`, `GovernoratesChartWidget`, `SellerListingAnalyticsService::getCategoryPerformance` — use `Listing::query()` as the base, so the scope already applies; no change needed.)
+
+**Tests:** `tests/Feature/Listings/ListingSoftDeleteTest.php` (Pest, 9 tests) — delete is now soft (row survives + `deleted_at` set, found only via `withTrashed`), owner-only IDOR still rejected, trashed listing hidden from home/search/category and 404 on detail, **media rows preserved** after delete, admin `TrashedFilter` query semantics (default hides / `withTrashed` reveals / `onlyTrashed` isolates), and `CategoryPerformanceWidget` aggregation excludes soft-deleted. Suite: **293 passing, 0 failures** (was 284; +9).
+
+**Deferred (noted, not done here):** `RestoreAction` is currently visible to all panel users; if finer-grained control is desired later it can be gated via **FilamentShield** permissions per role (the `ForceDeleteAction` super_admin gate is already in place). No bulk Restore/ForceDelete actions were added (single-record row actions only).
 
 ## Planned Next Steps
 

@@ -36,10 +36,10 @@ class UserDashboard extends Component
     public function deleteListing(int $id)
     {
         $listing = Listing::where('user_id', Auth::id())->findOrFail($id);
-        
-        // مسح الصور المرتبطة بالإعلان قبل مسحه (Spatie Media Library)
-        $listing->clearMediaCollection('images'); 
-        
+
+        // حذف ناعم (soft delete): يبقى الصف في الجدول مع deleted_at.
+        // الصور تبقى محفوظة عمداً (لا نستدعي clearMediaCollection) حتى
+        // يظل الإعلان المحذوف قابلاً للعرض في سجلّات لاحقة (تأكيد البيع/التقييمات).
         $listing->delete();
 
         session()->flash('success', __('server.dashboard.listing_deleted'));

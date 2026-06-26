@@ -117,26 +117,33 @@ class CategoryPerformanceWidget extends BaseWidget
 
     protected function buildAggregatedCategoriesSubquery(Carbon $startDate): Builder
     {
+        // ملاحظة: هذه الاستعلامات تبدأ من جداول الأحداث (وليس من Listing)،
+        // لذا لا يُطبَّق global scope الخاص بـ SoftDeletes تلقائياً — نستبعد
+        // الإعلانات المحذوفة ناعماً يدوياً بـ whereNull('listings.deleted_at').
         $viewsByCat = ListingView::query()
             ->join('listings', 'listings.id', '=', 'listing_views.listing_id')
+            ->whereNull('listings.deleted_at')
             ->where('listing_views.created_at', '>=', $startDate)
             ->selectRaw('listings.category_id AS category_id, COUNT(*) AS views_count')
             ->groupBy('listings.category_id');
 
         $phoneByCat = ListingPhoneClick::query()
             ->join('listings', 'listings.id', '=', 'listing_phone_clicks.listing_id')
+            ->whereNull('listings.deleted_at')
             ->where('listing_phone_clicks.created_at', '>=', $startDate)
             ->selectRaw('listings.category_id AS category_id, COUNT(*) AS phone_clicks_count')
             ->groupBy('listings.category_id');
 
         $whatsappByCat = ListingWhatsappClick::query()
             ->join('listings', 'listings.id', '=', 'listing_whatsapp_clicks.listing_id')
+            ->whereNull('listings.deleted_at')
             ->where('listing_whatsapp_clicks.created_at', '>=', $startDate)
             ->selectRaw('listings.category_id AS category_id, COUNT(*) AS whatsapp_clicks_count')
             ->groupBy('listings.category_id');
 
         $offersByCat = Offer::query()
             ->join('listings', 'listings.id', '=', 'offers.listing_id')
+            ->whereNull('listings.deleted_at')
             ->where('offers.created_at', '>=', $startDate)
             ->selectRaw('listings.category_id AS category_id, COUNT(*) AS offers_count')
             ->groupBy('listings.category_id');

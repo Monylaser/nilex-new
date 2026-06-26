@@ -7,6 +7,8 @@ use App\Models\Listing;
 use App\Notifications\ListingStatusNotification;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -16,6 +18,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Illuminate\Support\Facades\Auth;
 
 class ListingTable
@@ -123,6 +126,9 @@ class ListingTable
                     ->placeholder('الكل')
                     ->trueLabel('مُبلَّغ عنها فقط')
                     ->falseLabel('غير مُبلَّغ عنها'),
+
+                // فلتر المحذوف ناعماً (يعرض/يخفي الإعلانات المحذوفة)
+                TrashedFilter::make(),
             ])
             ->recordActions([
                 ActionGroup::make([
@@ -304,6 +310,17 @@ class ListingTable
                                 ->title('🚩 تم تحديد الإعلان للمراجعة الأمنية')
                                 ->warning()->send();
                         }),
+
+                    // ══════════════════════════════════════════
+                    // ♻️ استرجاع إعلان محذوف (soft delete)
+                    // ══════════════════════════════════════════
+                    RestoreAction::make(),
+
+                    // ══════════════════════════════════════════
+                    // 🗑️ حذف نهائي — لا رجعة فيه (super_admin فقط)
+                    // ══════════════════════════════════════════
+                    ForceDeleteAction::make()
+                        ->visible(fn () => Auth::user()?->hasRole('super_admin') ?? false),
 
                 ])->icon('heroicon-m-ellipsis-vertical'),
             ]);

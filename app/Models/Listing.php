@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
@@ -18,7 +19,7 @@ use Laravel\Scout\Searchable;
 
 class Listing extends Model implements HasMedia
 {
-    use InteractsWithMedia, Searchable, LogsActivity;
+    use InteractsWithMedia, Searchable, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -100,6 +101,7 @@ class Listing extends Model implements HasMedia
             'is_flagged'           => 'boolean',
             'created_at'           => 'datetime',
             'updated_at'           => 'datetime',
+            'deleted_at'           => 'datetime',
         ];
     }
 
