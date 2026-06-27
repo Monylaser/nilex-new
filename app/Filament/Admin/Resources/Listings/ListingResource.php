@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Listings;
 
 use App\Models\Listing;
 use App\Filament\Admin\Resources\Listings\Schemas\ListingForm;
+use App\Filament\Admin\Resources\Listings\Schemas\ListingInfolist;
 use App\Filament\Admin\Resources\Listings\Schemas\ListingTable;
 use App\Filament\Admin\Resources\Listings\Pages\CreateListing;
 use App\Filament\Admin\Resources\Listings\Pages\EditListing;
@@ -32,6 +33,12 @@ class ListingResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return ListingForm::configure($schema);
+    }
+
+    // ✅ صفحة العرض تستخدم infolist مخصص للمراجعة (gallery + وصف كامل)
+    public static function infolist(Schema $schema): Schema
+    {
+        return ListingInfolist::configure($schema);
     }
 
     // ✅ table يستقبل Table — طبيعي

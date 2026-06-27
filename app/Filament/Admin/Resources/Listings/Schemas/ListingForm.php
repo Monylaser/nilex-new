@@ -131,7 +131,7 @@ class ListingForm
                 ->schema([
                     SpatieMediaLibraryFileUpload::make('images')
                         ->label('')
-                        ->collection('listings')
+                        ->collection('images')
                         ->multiple()
                         ->reorderable()
                         ->image()

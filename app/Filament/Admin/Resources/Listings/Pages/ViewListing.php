@@ -3,13 +3,13 @@
 namespace App\Filament\Admin\Resources\Listings\Pages;
 
 use App\Filament\Admin\Resources\Listings\ListingResource;
+use App\Filament\Admin\Resources\Listings\Support\ListingModeration;
 use App\Models\Listing;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\Auth; // 👈 ضفنا الـ Facade هنا
 
 class ViewListing extends ViewRecord
 {
@@ -24,12 +24,12 @@ class ViewListing extends ViewRecord
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                // الزرار يختفي لو الإعلان أصلاً منشور
-                ->visible(fn (Listing $record) => $record->status !== Listing::STATUS_PUBLISHED)
+                // الزرار يختفي لو الإعلان أصلاً منشور أو لا يملك صلاحية القبول
+                ->visible(fn (Listing $record) => $record->status !== Listing::STATUS_PUBLISHED && (auth()->user()?->can('approve_listings') ?? false))
                 ->action(function (Listing $record) {
-                    // 👈 استخدمنا Auth::id() بدلاً من auth()->id()
-                    $record->approve(Auth::id());
-                    
+                    // نفس المسار الكامل المستخدم في الجدول (AuditLog + إشعار المعلن)
+                    ListingModeration::approve($record);
+
                     Notification::make()
                         ->title('تم نشر الإعلان بنجاح!')
                         ->success()
@@ -41,8 +41,8 @@ class ViewListing extends ViewRecord
                 ->label('رفض الإعلان ⛔')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                // الزرار يختفي لو الإعلان أصلاً مرفوض
-                ->visible(fn (Listing $record) => $record->status !== Listing::STATUS_REJECTED)
+                // الزرار يختفي لو الإعلان أصلاً مرفوض أو لا يملك صلاحية الرفض
+                ->visible(fn (Listing $record) => $record->status !== Listing::STATUS_REJECTED && (auth()->user()?->can('reject_listings') ?? false))
                 ->form([ // 👈 تحذير المحرر هنا كاذب وتقدر تتجاهله تماماً
                     Select::make('reason')
                         ->label('سبب الرفض')
@@ -53,18 +53,15 @@ class ViewListing extends ViewRecord
                         ->nullable(),
                 ])
                 ->action(function (array $data, Listing $record) {
-                    // 👈 استخدمنا Auth::id() هنا كمان
-                    $record->reject(Auth::id(), $data['reason']);
+                    // نفس المسار الكامل المستخدم في الجدول (AuditLog + إشعار + strikes)
+                    $causesStrike = $record->rejectionCausesStrike($data['reason']);
 
-                    // 2. التحقق من الـ Strikes (المخالفات)
-                    if ($record->rejectionCausesStrike($data['reason'])) {
-                        $user = $record->user;
-                        $user->addStrike(); 
-                        
+                    ListingModeration::reject($record, $data['reason'], $data['notes'] ?? null);
+
+                    if ($causesStrike) {
                         $msg = 'تم رفض الإعلان وتسجيل مخالفة (Strike) على المستخدم.';
-                        
-                        // لو اليوزر اتعمله حظر تلقائي
-                        if ($user->strike_count >= 3) {
+
+                        if ($record->user->fresh()->strike_count >= 3) {
                             $msg .= ' 🚨 تم حظر المستخدم تلقائياً لتخطيه 3 مخالفات!';
                         }
                     } else {

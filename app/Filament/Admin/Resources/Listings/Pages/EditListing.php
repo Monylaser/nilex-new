@@ -53,7 +53,7 @@ class EditListing extends EditRecord
             // إضافة صور الإعلان المحفوظة من الـ Media Library
             $record = $this->getRecord();
             if ($record && method_exists($record, 'getMedia')) {
-                foreach ($record->getMedia('listings')->take(5) as $media) {
+                foreach ($record->getMedia('images')->take(5) as $media) {
                     $path = $media->getPath();
                     if (file_exists($path)) {
                         $parts[] = [
