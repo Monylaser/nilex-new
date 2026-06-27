@@ -2,13 +2,14 @@
 
 namespace App\Filament\Admin\Resources\Listings\Schemas;
 
+use App\Filament\Admin\Resources\Listings\Support\ListingModeration;
 use App\Models\AuditLog;
 use App\Models\Listing;
-use App\Notifications\ListingStatusNotification;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -29,7 +30,7 @@ class ListingTable
             ->columns([
                 SpatieMediaLibraryImageColumn::make('images')
                     ->label('الصورة')
-                    ->collection('listings')
+                    ->collection('images')
                     ->conversion('thumb')
                     ->circular(),
 
@@ -131,25 +132,29 @@ class ListingTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ActionGroup::make([
+                // 👁️ مراجعة الإعلان (صفحة العرض: gallery + وصف كامل) — زر ظاهر
+                // ->button() ليتساوى بصرياً مع قبول/رفض ويشجّع فتح المراجعة قبل الإجراء
+                ViewAction::make()
+                    ->label('مراجعة')
+                    ->icon('heroicon-m-eye')
+                    ->color('info')
+                    ->button(),
 
                     // ══════════════════════════════════════════
-                    // ✅ قبول ونشر
+                    // ✅ قبول ونشر — زر ظاهر مباشر (خارج قائمة ⋮)
                     // ══════════════════════════════════════════
                     Action::make('approve')
                         ->label('قبول ونشر')
                         ->icon('heroicon-m-check-circle')
                         ->color('success')
-                        ->visible(fn ($record) => $record->status !== Listing::STATUS_PUBLISHED)
+                        ->button()
+                        ->visible(fn ($record) => $record->status !== Listing::STATUS_PUBLISHED && (Auth::user()?->can('approve_listings') ?? false))
                         ->requiresConfirmation()
                         ->modalHeading('تأكيد نشر الإعلان')
                         ->modalDescription(fn ($record) => "هل تريد نشر إعلان \"{$record->title}\"؟")
                         ->modalIcon('heroicon-o-check-circle')
                         ->action(function ($record): void {
-                            $record->approve(Auth::id());
-
-                            AuditLog::record('approve_ad', $record, ['title' => $record->title]);
-                            static::notifyUser($record, 'published');
+                            ListingModeration::approve($record);
 
                             Notification::make()
                                 ->title('✅ تم نشر الإعلان')
@@ -164,7 +169,8 @@ class ListingTable
                         ->label('رفض')
                         ->icon('heroicon-m-x-circle')
                         ->color('danger')
-                        ->visible(fn ($record) => $record->status !== Listing::STATUS_REJECTED)
+                        ->button()
+                        ->visible(fn ($record) => $record->status !== Listing::STATUS_REJECTED && (Auth::user()?->can('reject_listings') ?? false))
                         ->modalHeading(fn ($record) => 'رفض إعلان: ' . $record->title)
                         ->modalIcon('heroicon-o-x-circle')
                         ->modalWidth('lg')
@@ -181,35 +187,22 @@ class ListingTable
                                 ->rows(2),
                         ])
                         ->action(function (array $data, $record): void {
-                            $reason = $data['rejection_reason'];
-                            $note   = $data['extra_note'] ?? null;
+                            $label = ListingModeration::reject(
+                                $record,
+                                $data['rejection_reason'],
+                                $data['extra_note'] ?? null,
+                            );
 
-                            $record->reject(Auth::id(), $reason);
-
-                            if ($record->rejectionCausesStrike($reason)) {
-                                $record->user->addStrike();
-                                AuditLog::record('auto_strike', $record->user, [
-                                    'reason'       => $reason,
-                                    'listing_id'   => $record->id,
-                                    'strike_count' => $record->user->fresh()->strike_count,
-                                ]);
-                            }
-
-                            AuditLog::record('reject_ad', $record, [
-                                'title'            => $record->title,
-                                'rejection_reason' => $reason,
-                                'extra_note'       => $note,
-                                'causes_strike'    => $record->rejectionCausesStrike($reason) ? 'yes' : 'no',
-                            ]);
-
-                            static::notifyUser($record, 'rejected', $reason, $note);
-
-                            $label = Listing::rejectionReasonOptions()[$reason] ?? $reason;
                             Notification::make()
                                 ->title('❌ تم رفض الإعلان')
                                 ->body("\"{$record->title}\" — {$label}")
                                 ->danger()->send();
                         }),
+
+                    // ══════════════════════════════════════════
+                    // باقي الإجراءات داخل قائمة ⋮
+                    // ══════════════════════════════════════════
+                    ActionGroup::make([
 
                     // ══════════════════════════════════════════
                     // 🌟 تمييز الإعلان بالنقاط
@@ -324,25 +317,5 @@ class ListingTable
 
                 ])->icon('heroicon-m-ellipsis-vertical'),
             ]);
-    }
-
-    // ══════════════════════════════════════════
-    // إشعار المعلن
-    // ══════════════════════════════════════════
-    protected static function notifyUser(
-        Listing $listing,
-        string  $status,
-        ?string $reason = null,
-        ?string $note   = null
-    ): void {
-        try {
-            $listing->user->notify(
-                new ListingStatusNotification($listing, $status, $reason, $note)
-            );
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error(
-                "Notify failed [{$listing->user->email}]: " . $e->getMessage()
-            );
-        }
     }
 }
