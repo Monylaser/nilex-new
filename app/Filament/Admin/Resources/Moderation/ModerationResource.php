@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\Moderation;
 
+use App\Filament\Admin\Resources\Listings\Support\ListingModeration;
 use App\Models\AuditLog;
 use App\Models\Listing;
 use App\Filament\Admin\Resources\Moderation\Pages;
@@ -164,34 +165,20 @@ class ModerationResource extends Resource
 
     protected static function handleApprove(Listing $listing, int $adminId): void
     {
-        $listing->approve($adminId);
-        
-        // تسجيل في سجل العمليات
-        if (class_exists(AuditLog::class)) {
-            AuditLog::record('approve_ad', $listing, ['title' => $listing->title]);
-        }
+        // مسار موحّد مع ListingResource: تغيير الحالة + AuditLog + إشعار المالك
+        // (database + mail). كان طابور المراجعة سابقاً لا يُرسل أي إشعار للمستخدم.
+        ListingModeration::approve($listing);
 
         Notification::make()->title('تم نشر الإعلان بنجاح ✅')->success()->send();
     }
 
     protected static function handleReject(Listing $listing, int $adminId, string $reason, ?string $notes = null): void
     {
-        // 1. تنفيذ الرفض في الموديل
-        $listing->reject($adminId, $reason);
-
-        // 2. التحقق من المخالفات (Strikes) تلقائياً
-        if ($listing->rejectionCausesStrike($reason)) {
-            $listing->user->addStrike();
-        }
-
-        // 3. التسجيل في السجل
-        if (class_exists(AuditLog::class)) {
-            AuditLog::record('reject_ad', $listing, [
-                'title' => $listing->title, 
-                'reason' => $reason, 
-                'notes' => $notes
-            ]);
-        }
+        // مسار موحّد مع ListingResource عبر ListingModeration::reject، الذي يتكفّل بـ:
+        // الرفض + addStrike (عند اللزوم) + AuditLog (reject_ad + auto_strike) +
+        // إشعار المالك (database + mail) بسبب الرفض. لا تكرار للمنطق هنا.
+        // إصلاح باگ: التوست القديم كان يقول "وإبلاغ المستخدم" دون إرسال أي إشعار فعلاً.
+        ListingModeration::reject($listing, $reason, $notes);
 
         Notification::make()->title('تم رفض الإعلان وإبلاغ المستخدم')->danger()->send();
     }
