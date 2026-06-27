@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Listing;
 use App\Models\Location;
 use App\Models\PointPlan;
+use App\Models\SaleConfirmation;
 use App\Services\EntitlementService;
 use App\Services\GeminiService;
 use App\Services\PointService;
@@ -52,6 +53,24 @@ class HomeController extends Controller
      */
     public function create()
     {
+        $reference        = $this->wizardReferenceData();
+        $user             = Auth::user();
+        $isPhoneVerified  = (bool) $user->is_phone_verified;
+        $userPoints       = (int)  $user->points;
+
+        return view('frontend.listings.create', array_merge($reference, [
+            'isPhoneVerified' => $isPhoneVerified,
+            'userPoints'      => $userPoints,
+            'mode'            => 'create',
+        ]));
+    }
+
+    /**
+     * البيانات المرجعية المشتركة للويزارد (الأقسام + المحافظات + ماركات السيارات).
+     * تُستخدم في وضعي الإنشاء (create) والتعديل (edit) دون تكرار.
+     */
+    private function wizardReferenceData(): array
+    {
         $categories = Category::whereNull('parent_id')
             ->where('is_active', true)
             ->orderBy('sort_order')
@@ -87,11 +106,7 @@ class HomeController extends Controller
             }])
             ->get(['id', 'name_ar', 'name_en', 'slug']);
 
-        $user             = Auth::user();
-        $isPhoneVerified  = (bool) $user->is_phone_verified;
-        $userPoints       = (int)  $user->points;
-
-        return view('frontend.listings.create', compact('categories', 'governorates', 'carBrands', 'isPhoneVerified', 'userPoints'));
+        return compact('categories', 'governorates', 'carBrands');
     }
 
     /**
@@ -123,78 +138,10 @@ class HomeController extends Controller
 
         $category = Category::findOrFail($validated['category_id']);
 
-        // ── Car-specific validation (cars category only) ──
-        // Brand & Model are stored as FK columns; fuel & transmission live in
-        // custom_fields_values. When the "أخرى/Other" brand is chosen, a manual
-        // brand name (car_brand_other) becomes required.
-        if ($category->slug === 'cars') {
-            $request->validate([
-                'car_brand_id'                      => 'required|exists:car_brands,id',
-                'car_model_id'                      => [
-                    'required',
-                    \Illuminate\Validation\Rule::exists('car_models', 'id')
-                        ->where('car_brand_id', $request->input('car_brand_id')),
-                ],
-                'custom_fields_values.fuel'         => 'required|string',
-                'custom_fields_values.transmission' => 'required|string',
-                'custom_fields_values.year'         => 'required',
-                'custom_fields_values.condition'    => 'required|string|max:255',
-            ], [
-                'car_brand_id.required'                      => __('wizard.server.car_brand_required'),
-                'car_model_id.required'                      => __('wizard.server.car_model_required'),
-                'car_model_id.exists'                        => __('wizard.server.car_model_not_in_brand'),
-                'custom_fields_values.fuel.required'         => __('wizard.server.fuel_required'),
-                'custom_fields_values.transmission.required' => __('wizard.server.transmission_required'),
-                'custom_fields_values.year.required'         => __('wizard.server.year_required'),
-                'custom_fields_values.condition.required'    => __('wizard.server.condition_required'),
-            ]);
-
-            $brand = CarBrand::find($validated['car_brand_id'] ?? $request->input('car_brand_id'));
-            if ($brand && $brand->slug === 'other') {
-                $request->validate([
-                    'custom_fields_values.car_brand_other' => 'required|string|max:255',
-                ], [
-                    'custom_fields_values.car_brand_other.required' => __('wizard.server.car_brand_other_required'),
-                ]);
-            }
-        }
-
-        // ── Real-estate-specific validation (real-estate category only) ──
-        // Mirrors the admin RealEstateFields schema: property_type & listing_type
-        // are required; the remaining property fields are optional. All values
-        // are stored in custom_fields_values to stay consistent with the admin.
-        if ($category->slug === 'real-estate') {
-            $request->validate([
-                'custom_fields_values.property_type' => 'required|string',
-                'custom_fields_values.listing_type'  => 'required|string',
-            ], [
-                'custom_fields_values.property_type.required' => __('wizard.server.property_type_required'),
-                'custom_fields_values.listing_type.required'  => __('wizard.server.listing_type_required'),
-            ]);
-        }
-
-        if (!empty($category->custom_fields_schema)) {
-            $customRules    = [];
-            $customMessages = [];
-
-            foreach ($category->custom_fields_schema as $field) {
-                if (!empty($field['required'])) {
-                    $key                            = "custom_fields_values.{$field['name']}";
-                    $customRules[$key]              = 'required';
-                    // Locale-aware field label: prefer label_en in non-Arabic locales,
-                    // falling back to label_ar then the raw field name. The Arabic
-                    // suffix is gone — the ":field is required" template handles it.
-                    $label = app()->getLocale() === 'ar'
-                        ? ($field['label_ar'] ?? $field['name'])
-                        : ($field['label_en'] ?? $field['label_ar'] ?? $field['name']);
-                    $customMessages[$key . '.required'] = __('wizard.server.field_required', ['field' => $label]);
-                }
-            }
-
-            if (!empty($customRules)) {
-                $request->validate($customRules, $customMessages);
-            }
-        }
+        // ── Category-specific validation (cars / real-estate / dynamic schema) ──
+        // Extracted into a shared helper so the edit flow (HomeController::update)
+        // reuses the exact same conditional rules without duplicating them.
+        $this->validateCategorySpecificFields($request, $category);
 
         // Sanitize free-text input: trim and collapse duplicate spaces.
         $phone = preg_replace('/\s+/', ' ', trim($validated['phone']));
@@ -251,6 +198,274 @@ class HomeController extends Controller
         }
 
         return redirect()->route('dashboard')->with('success', __('wizard.server.created_success'));
+    }
+
+    /**
+     * التحقق الشرطي حسب القسم (سيارات / عقارات / حقول مخصّصة ديناميكية).
+     * مشترك بين الإنشاء (store) والتعديل (update) — القسم يُمرَّر كوسيط، لذا
+     * في التعديل يأتي من الإعلان نفسه (مقفول) وليس من الطلب.
+     */
+    private function validateCategorySpecificFields(Request $request, Category $category): void
+    {
+        // ── Cars (cars category only) ──
+        if ($category->slug === 'cars') {
+            $request->validate([
+                'car_brand_id'                      => 'required|exists:car_brands,id',
+                'car_model_id'                      => [
+                    'required',
+                    \Illuminate\Validation\Rule::exists('car_models', 'id')
+                        ->where('car_brand_id', $request->input('car_brand_id')),
+                ],
+                'custom_fields_values.fuel'         => 'required|string',
+                'custom_fields_values.transmission' => 'required|string',
+                'custom_fields_values.year'         => 'required',
+                'custom_fields_values.condition'    => 'required|string|max:255',
+            ], [
+                'car_brand_id.required'                      => __('wizard.server.car_brand_required'),
+                'car_model_id.required'                      => __('wizard.server.car_model_required'),
+                'car_model_id.exists'                        => __('wizard.server.car_model_not_in_brand'),
+                'custom_fields_values.fuel.required'         => __('wizard.server.fuel_required'),
+                'custom_fields_values.transmission.required' => __('wizard.server.transmission_required'),
+                'custom_fields_values.year.required'         => __('wizard.server.year_required'),
+                'custom_fields_values.condition.required'    => __('wizard.server.condition_required'),
+            ]);
+
+            $brand = CarBrand::find($request->input('car_brand_id'));
+            if ($brand && $brand->slug === 'other') {
+                $request->validate([
+                    'custom_fields_values.car_brand_other' => 'required|string|max:255',
+                ], [
+                    'custom_fields_values.car_brand_other.required' => __('wizard.server.car_brand_other_required'),
+                ]);
+            }
+        }
+
+        // ── Real estate (real-estate category only) ──
+        if ($category->slug === 'real-estate') {
+            $request->validate([
+                'custom_fields_values.property_type' => 'required|string',
+                'custom_fields_values.listing_type'  => 'required|string',
+            ], [
+                'custom_fields_values.property_type.required' => __('wizard.server.property_type_required'),
+                'custom_fields_values.listing_type.required'  => __('wizard.server.listing_type_required'),
+            ]);
+        }
+
+        // ── Dynamic custom_fields_schema (any category that defines one) ──
+        if (!empty($category->custom_fields_schema)) {
+            $customRules    = [];
+            $customMessages = [];
+
+            foreach ($category->custom_fields_schema as $field) {
+                if (!empty($field['required'])) {
+                    $key                            = "custom_fields_values.{$field['name']}";
+                    $customRules[$key]              = 'required';
+                    // Locale-aware field label: prefer label_en in non-Arabic locales,
+                    // falling back to label_ar then the raw field name.
+                    $label = app()->getLocale() === 'ar'
+                        ? ($field['label_ar'] ?? $field['name'])
+                        : ($field['label_en'] ?? $field['label_ar'] ?? $field['name']);
+                    $customMessages[$key . '.required'] = __('wizard.server.field_required', ['field' => $label]);
+                }
+            }
+
+            if (!empty($customRules)) {
+                $request->validate($customRules, $customMessages);
+            }
+        }
+    }
+
+    /**
+     * عرض صفحة تعديل إعلان موجود (نفس الويزارد، وضع "تعديل").
+     *
+     * - الملكية مفروضة: 404 لغير المالك (لا نسرّب وجود السجل)، والإعلان المغلق
+     *   (soft-deleted) مستبعَد تلقائياً بالـ global scope فيرجع 404 كذلك.
+     * - حارس احترازي: يُمنع التعديل لو للإعلان عملية بيع قيد التأكيد (pending).
+     * - القسم مقفول، فلا حاجة لاختياره — لكن نمرّر شجرة الأقسام كاملة ليتمكّن
+     *   Alpine من اشتقاق القسم النشط + حقوله الديناميكية من category_id.
+     */
+    public function edit(Listing $listing)
+    {
+        abort_unless($listing->user_id === Auth::id(), 404);
+
+        if ($this->hasPendingSale($listing)) {
+            return redirect()->route('dashboard')
+                ->with('error', __('server.listing.edit_blocked_sale_pending'));
+        }
+
+        $listing->loadMissing(['category', 'location']);
+
+        // DTO مطابق لشكل formData في Alpine (تحويل DB → formData).
+        $editData = [
+            'category_id'    => $listing->category_id,
+            'title'          => $listing->title,
+            'description'    => $listing->description,
+            'condition'      => $listing->condition,
+            'price'          => (string) $listing->price,
+            'price_type'     => $listing->price_type,
+            // كائن (لا مصفوفة) ليعمل Object.assign + الوصول بالمفتاح في Alpine.
+            'custom_fields'  => $listing->custom_fields_values ?: (object) [],
+            'car_brand_id'   => $listing->car_brand_id ? (string) $listing->car_brand_id : '',
+            'car_model_id'   => $listing->car_model_id ? (string) $listing->car_model_id : '',
+            'phone'          => $listing->phone,
+            // المحافظة مشتقّة من والد المدينة (الـ DB يخزّن المدينة فقط في location_id).
+            'governorate_id' => $listing->location?->parent_id ? (string) $listing->location->parent_id : '',
+            'location_id'    => $listing->location_id ? (string) $listing->location_id : '',
+            'feature_days'   => 0, // التمييز مستثنى تماماً من التعديل
+        ];
+
+        // جذر القسم (لإظهار القسم الفرعي + اشتقاق الحقول الديناميكية client-side).
+        $editRootId = $listing->category
+            ? ($listing->category->parent_id ?? $listing->category->id)
+            : null;
+
+        // الصور الحالية (كتلة ثابتة أولى) — id + رابط النسخة المائية card.
+        $editImages = $listing->getMedia('images')->map(fn ($media) => [
+            'id'  => $media->id,
+            'url' => $media->getUrl('card'),
+        ])->values();
+
+        $reference        = $this->wizardReferenceData();
+        $user             = Auth::user();
+        $isPhoneVerified  = (bool) $user->is_phone_verified;
+        $userPoints       = (int)  $user->points;
+
+        return view('frontend.listings.create', array_merge($reference, [
+            'isPhoneVerified' => $isPhoneVerified,
+            'userPoints'      => $userPoints,
+            'mode'            => 'edit',
+            'listing'         => $listing,
+            'editData'        => $editData,
+            'editImages'      => $editImages,
+            'editRootId'      => $editRootId,
+        ]));
+    }
+
+    /**
+     * حفظ تعديل إعلان موجود.
+     *
+     * فروق جوهرية عن store():
+     *  - القسم مقفول: مصدره الإعلان نفسه، وأي category_id من الطلب يُتجاهَل.
+     *  - لا منح نقاط (+3) — النقاط فقط عند الإنشاء الأول.
+     *  - الـ slug يبقى كما هو (لا توليد جديد).
+     *  - الحالة تعود pending دائماً (مراجعة أدمن لكل تعديل، بلا استثناء).
+     *  - التمييز مستثنى: لا نلمس is_featured / featured_until.
+     *  - الصور: حذف من الكتلة الحالية + إلحاق الجديدة (مع تحقق mime/حجم خادمي).
+     *  - حارس احترازي ضد SaleConfirmation pending.
+     */
+    public function update(Request $request, Listing $listing)
+    {
+        abort_unless($listing->user_id === Auth::id(), 404);
+
+        if ($this->hasPendingSale($listing)) {
+            $message = __('server.listing.edit_blocked_sale_pending');
+
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $message], 422)
+                : redirect()->route('dashboard')->with('error', $message);
+        }
+
+        // القسم مقفول: مصدره الإعلان نفسه — لا نثق بأي category_id قادم من الطلب.
+        $listing->loadMissing('category');
+        $category = $listing->category;
+
+        $validated = $request->validate([
+            'title'        => 'required|string|max:255',
+            'description'  => 'required|string',
+            // max يطابق عمود السعر decimal(12,2) لتفادي خطأ خارج النطاق 22003.
+            'price'        => 'required|numeric|min:0|max:9999999999.99',
+            'condition'    => 'required|string|max:50',
+            'price_type'   => 'required|string|max:50',
+            'phone'        => 'required|string|max:20',
+            'location_id'  => 'nullable|exists:locations,id',
+            'car_brand_id' => 'nullable|exists:car_brands,id',
+            'car_model_id' => 'nullable|exists:car_models,id',
+            // ── أمان الصور: تحقق خادمي من النوع والحجم (لا نعتمد على الـ client) ──
+            'images'              => 'nullable|array|max:10',
+            'images.*'           => 'image|mimes:jpeg,png,webp|max:5120',
+            'removed_image_ids'   => 'nullable|array',
+            'removed_image_ids.*' => 'integer',
+        ], [
+            'price.max'      => __('wizard.server.price_max'),
+            'images.max'     => __('wizard.server.images_max'),
+            'images.*.image' => __('wizard.server.image_invalid'),
+            'images.*.mimes' => __('wizard.server.image_mimes'),
+            'images.*.max'   => __('wizard.server.image_max'),
+        ]);
+
+        // التحقق الشرطي بالقسم المقفول (من الإعلان، ليس من الطلب).
+        if ($category) {
+            $this->validateCategorySpecificFields($request, $category);
+        }
+
+        $phone = preg_replace('/\s+/', ' ', trim($validated['phone']));
+
+        DB::transaction(function () use ($request, $validated, $phone, $listing, $category) {
+            $listing->title       = $validated['title'];
+            // الـ slug يبقى كما هو — لا توليد جديد.
+            $listing->description = $validated['description'];
+            $listing->price       = $validated['price'];
+            $listing->condition   = $validated['condition'];
+            $listing->price_type  = $validated['price_type'];
+            $listing->phone       = $phone;
+            $listing->location_id = $validated['location_id'] ?? null;
+
+            // FK السيارات: تُحدَّث فقط لو القسم (المقفول) سيارات.
+            if ($category && $category->slug === 'cars') {
+                $listing->car_brand_id = $validated['car_brand_id'] ?? null;
+                $listing->car_model_id = $validated['car_model_id'] ?? null;
+            }
+
+            $listing->custom_fields_values = $request->input('custom_fields_values', []);
+
+            // الحالة تعود pending دائماً — مراجعة أدمن لكل تعديل بلا استثناء.
+            $listing->status = Listing::STATUS_PENDING;
+
+            // category_id مقفول، والتمييز (is_featured/featured_until) لا يُلمس.
+            $listing->save();
+
+            // حذف الصور الحالية المحدّدة (الكتلة الثابتة الأولى).
+            $removedIds = $validated['removed_image_ids'] ?? [];
+            if (!empty($removedIds)) {
+                $listing->getMedia('images')
+                    ->whereIn('id', $removedIds)
+                    ->each
+                    ->delete();
+            }
+
+            // إلحاق الصور الجديدة بعد الحالية (Spatie يرفع order_column تلقائياً).
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $listing->addMedia($image)->toMediaCollection('images');
+                }
+            }
+
+            // لا منح نقاط في التعديل.
+        });
+
+        $message = __('server.listing.updated_success');
+
+        if ($request->expectsJson()) {
+            // فلاش للجلسة حتى تظهر الرسالة بعد انتقال المتصفح للوحة التحكم.
+            session()->flash('success', $message);
+
+            return response()->json([
+                'success'  => true,
+                'redirect' => route('dashboard'),
+            ]);
+        }
+
+        return redirect()->route('dashboard')->with('success', $message);
+    }
+
+    /**
+     * هل للإعلان عملية بيع قيد التأكيد (pending)؟ حارس احترازي رخيص قبل التعديل.
+     */
+    private function hasPendingSale(Listing $listing): bool
+    {
+        return SaleConfirmation::where('listing_id', $listing->id)
+            ->where('status', SaleConfirmation::STATUS_PENDING)
+            ->exists();
     }
 
     /**

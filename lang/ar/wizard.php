@@ -139,6 +139,24 @@ return [
         'opt_14'         => '14 يوم',
     ],
 
+    // Listing-edit mode (reuses the same wizard view). Only the chrome differs;
+    // category is locked, no points, slug preserved, and any save → re-moderation.
+    'edit' => [
+        'page_title'           => 'تعديل الإعلان',
+        'header_title'         => 'تعديل إعلانك',
+        'header_subtitle'      => 'عدّل بيانات إعلانك — سيُعاد للمراجعة قبل ظهوره من جديد',
+        'remoderation_notice'  => 'تنبيه: أي تعديل يعيد الإعلان لقائمة المراجعة قبل ظهوره مرة أخرى.',
+        'category_locked'      => 'لا يمكن تغيير القسم بعد نشر الإعلان.',
+        'existing_images_title' => 'الصور الحالية',
+        'existing_images_hint' => 'يمكنك حذف صور حالية. الصور الجديدة التي ترفعها تُضاف بعدها.',
+        'img_existing_badge'   => 'حالية',
+        'img_new_badge'        => 'جديدة',
+        'img_delete_existing'  => 'حذف الصورة',
+        'submitting'           => 'جاري الحفظ...',
+        'submit_btn'           => 'حفظ التعديلات',
+        'submit_hint'          => 'سيُعاد إعلانك للمراجعة بعد الحفظ',
+    ],
+
     // Select-option labels for the listing wizard (B.3b). Keys are locale-neutral
     // and match the `value` stored in custom_fields_values — except `condition`,
     // whose stored value remains an Arabic literal (see create.blade.php).
@@ -295,6 +313,11 @@ return [
         'created_success'        => 'تم حفظ الإعلان بنجاح، وكسبت 3 نقاط! 🚀',
         // AI assistant failure (overrides the JS fallback when present).
         'ai_failed'              => 'تعذّر توليد الإعلان حالياً (قد يكون بسبب تجاوز حد الاستخدام). يمكنك إكمال البيانات يدوياً والمتابعة.',
+        // Server-side image validation (used by HomeController::update — the edit flow).
+        'image_invalid'          => 'كل ملف مرفوع يجب أن يكون صورة صالحة.',
+        'image_mimes'            => 'صيغ الصور المدعومة: JPG، PNG، WEBP.',
+        'image_max'              => 'حجم كل صورة يجب ألا يتجاوز 5 ميجابايت.',
+        'images_max'             => 'الحد الأقصى المسموح به هو 10 صور.',
     ],
 
 ];

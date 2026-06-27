@@ -139,6 +139,24 @@ return [
         'opt_14'         => '14 days',
     ],
 
+    // Listing-edit mode (reuses the same wizard view). Only the chrome differs;
+    // category is locked, no points, slug preserved, and any save → re-moderation.
+    'edit' => [
+        'page_title'           => 'Edit Listing',
+        'header_title'         => 'Edit Your Listing',
+        'header_subtitle'      => 'Update your listing details — it will be re-reviewed before showing again',
+        'remoderation_notice'  => 'Note: any edit returns the listing to the review queue before it shows again.',
+        'category_locked'      => 'The category cannot be changed after the listing is published.',
+        'existing_images_title' => 'Current Photos',
+        'existing_images_hint' => 'You can delete current photos. New photos you upload are added after them.',
+        'img_existing_badge'   => 'Current',
+        'img_new_badge'        => 'New',
+        'img_delete_existing'  => 'Delete photo',
+        'submitting'           => 'Saving...',
+        'submit_btn'           => 'Save Changes',
+        'submit_hint'          => 'Your listing will be re-reviewed after saving',
+    ],
+
     // Select-option labels for the listing wizard (B.3b). Keys are locale-neutral
     // and match the `value` stored in custom_fields_values — except `condition`,
     // whose stored value remains an Arabic literal (see create.blade.php).
@@ -295,6 +313,11 @@ return [
         'created_success'        => 'Your listing was saved successfully, and you earned 3 points! 🚀',
         // AI assistant failure (overrides the JS fallback when present).
         'ai_failed'              => 'Could not generate the listing right now (possibly due to usage limits). You can fill in the data manually and continue.',
+        // Server-side image validation (used by HomeController::update — the edit flow).
+        'image_invalid'          => 'Each uploaded file must be a valid image.',
+        'image_mimes'            => 'Supported image formats: JPG, PNG, WEBP.',
+        'image_max'              => 'Each image must not exceed 5 MB.',
+        'images_max'             => 'The maximum allowed is 10 photos.',
     ],
 
 ];

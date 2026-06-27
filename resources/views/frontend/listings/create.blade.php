@@ -1,6 +1,6 @@
 @extends('layouts.frontend')
 
-@section('title', __('wizard.page_title'))
+@section('title', ($mode ?? 'create') === 'edit' ? __('wizard.edit.page_title') : __('wizard.page_title'))
 
 @push('styles')
 <style>
@@ -32,6 +32,15 @@
 @endpush
 
 @section('content')
+@php
+    // وضع الويزارد: 'create' (افتراضي) أو 'edit'. متغيّرات التعديل تأخذ قيماً افتراضية
+    // آمنة حتى لا يفشل العرض في وضع الإنشاء (حيث لا تُمرَّر من الكنترولر).
+    $mode       = $mode ?? 'create';
+    $isEdit     = $mode === 'edit';
+    $editData   = $editData   ?? null;
+    $editImages = $editImages ?? collect();
+    $editRootId = $editRootId ?? null;
+@endphp
 <div class="bg-gray-50 min-h-screen pt-24 pb-20" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}" style="font-family:'Cairo',sans-serif;">
 
     <div class="max-w-3xl mx-4 md:mx-auto"
@@ -43,9 +52,19 @@
              PAGE HEADER
         ══════════════════════════════════════════ --}}
         <div class="text-center mb-6">
-            <h1 class="text-2xl md:text-3xl font-black text-zinc-900">{{ __('wizard.header_title') }}</h1>
-            <p class="text-sm text-zinc-400 mt-1">{{ __('wizard.header_subtitle') }}</p>
+            <h1 class="text-2xl md:text-3xl font-black text-zinc-900">{{ $isEdit ? __('wizard.edit.header_title') : __('wizard.header_title') }}</h1>
+            <p class="text-sm text-zinc-400 mt-1">{{ $isEdit ? __('wizard.edit.header_subtitle') : __('wizard.header_subtitle') }}</p>
         </div>
+
+        @if($isEdit)
+        {{-- تنبيه إعادة المراجعة: أي تعديل يعيد الإعلان لقائمة المراجعة --}}
+        <div class="mb-6 flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-2xl px-4 py-3">
+            <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="font-semibold">{{ __('wizard.edit.remoderation_notice') }}</span>
+        </div>
+        @endif
 
         {{-- ══════════════════════════════════════════
              PROGRESS BAR
@@ -119,6 +138,20 @@
                 <p x-show="errors.category_id" x-cloak
                    class="mb-4 text-sm text-red-600 font-semibold" x-text="errors.category_id"></p>
 
+                @if($isEdit)
+                {{-- القسم مقفول بعد النشر: عرض للقراءة فقط (لا تغيير) --}}
+                <div class="rounded-2xl border-2 border-gray-200 bg-gray-50 p-5 flex items-center gap-3">
+                    <span class="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <p class="text-sm font-bold text-zinc-800" x-text="activeCategory ? activeCategory.name : ''"></p>
+                        <p class="text-xs text-zinc-500 mt-0.5">{{ __('wizard.edit.category_locked') }}</p>
+                    </div>
+                </div>
+                @else
                 {{-- Root categories grid --}}
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <template x-for="cat in categories" :key="cat.id">
@@ -158,6 +191,7 @@
                         </template>
                     </div>
                 </div>
+                @endif
             </div>
 
             {{-- ────────────────────────────────────────
@@ -560,6 +594,34 @@
                 <h2 class="text-lg font-bold text-zinc-900 mb-1">{{ __('wizard.step3.title') }}</h2>
                 <p class="text-sm text-zinc-400 mb-5">{{ __('wizard.step3.subtitle') }}</p>
 
+                @if($isEdit)
+                {{-- الصور الحالية (كتلة ثابتة الترتيب — حذف فقط؛ الجديدة تُلحَق بعدها) --}}
+                <div x-show="existingImages.length > 0" x-cloak class="mb-6">
+                    <h3 class="text-sm font-bold text-zinc-700 mb-1 flex items-center gap-2">
+                        <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
+                        {{ __('wizard.edit.existing_images_title') }}
+                    </h3>
+                    <p class="text-xs text-zinc-400 mb-3">{{ __('wizard.edit.existing_images_hint') }}</p>
+                    <div class="grid grid-cols-3 md:grid-cols-4 gap-3">
+                        <template x-for="(img, idx) in existingImages" :key="img.id">
+                            <div class="relative group rounded-xl overflow-hidden border border-gray-200 aspect-square bg-gray-50">
+                                <img :src="img.url" class="w-full h-full object-cover" alt="">
+                                <button type="button" @click="removeExistingImage(idx)"
+                                        :title="'{{ __('wizard.edit.img_delete_existing') }}'"
+                                        class="absolute top-1.5 end-1.5 w-7 h-7 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                                <span class="absolute bottom-1.5 start-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-zinc-700 text-white">
+                                    {{ __('wizard.edit.img_existing_badge') }}
+                                </span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                @endif
+
                 {{-- Drop zone --}}
                 <div class="drop-zone border-2 border-dashed border-gray-300 rounded-2xl min-h-40 flex flex-col items-center justify-center text-center p-6 cursor-pointer transition-colors"
                      :class="{ 'dragging': isDragging }"
@@ -579,8 +641,8 @@
                            @change="addImages($event.target.files); $event.target.value=''">
                 </div>
 
-                {{-- Soft warning (not error) --}}
-                <div x-show="images.length === 0" x-cloak
+                {{-- Soft warning (not error) — يأخذ الصور الحالية في الاعتبار بوضع التعديل --}}
+                <div x-show="images.length === 0 && existingImages.length === 0" x-cloak
                      class="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-xl px-4 py-3">
                     <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
@@ -716,19 +778,23 @@
                     {{-- Images --}}
                     <div class="border border-gray-100 rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-3 mb-2">
-                            <p class="text-[11px] font-bold text-zinc-400">{{ __('wizard.step4.summary_images') }} (<span x-text="images.length"></span>)</p>
+                            <p class="text-[11px] font-bold text-zinc-400">{{ __('wizard.step4.summary_images') }} (<span x-text="images.length + existingImages.length"></span>)</p>
                             <button type="button" @click="goToStep(3)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
                         </div>
-                        <div x-show="imagePreviews.length > 0" class="flex gap-2 flex-wrap">
+                        <div x-show="imagePreviews.length > 0 || existingImages.length > 0" class="flex gap-2 flex-wrap">
+                            <template x-for="img in existingImages.slice(0,5)" :key="'ex-' + img.id">
+                                <img :src="img.url" class="w-12 h-12 rounded-lg object-cover border border-gray-200">
+                            </template>
                             <template x-for="preview in imagePreviews.slice(0,5)" :key="preview.url">
                                 <img :src="preview.url" class="w-12 h-12 rounded-lg object-cover border border-gray-200">
                             </template>
                         </div>
-                        <p x-show="imagePreviews.length === 0" x-cloak class="text-xs text-zinc-400">{{ __('wizard.step4.no_images') }}</p>
+                        <p x-show="imagePreviews.length === 0 && existingImages.length === 0" x-cloak class="text-xs text-zinc-400">{{ __('wizard.step4.no_images') }}</p>
                     </div>
                 </div>
 
-                {{-- ── ⭐ تمييز الإعلان بالنقاط ──────────────────────────── --}}
+                {{-- ── ⭐ تمييز الإعلان بالنقاط — مستثنى تماماً من وضع التعديل ── --}}
+                @unless($isEdit)
                 <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                     <div class="flex items-center justify-between gap-2 mb-1">
                         <h3 class="text-sm font-bold text-zinc-800 flex items-center gap-1.5">
@@ -761,6 +827,7 @@
                         {{ __('wizard.feature.deduct_suffix') }}
                     </p>
                 </div>
+                @endunless
             </div>
 
             {{-- ══════════════════════════════════════════
@@ -794,10 +861,10 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
-                        <span x-text="isSubmitting ? '{{ __('wizard.step4.submitting') }}' : '{{ __('wizard.step4.submit_btn') }}'"></span>
+                        <span x-text="isSubmitting ? '{{ $isEdit ? __('wizard.edit.submitting') : __('wizard.step4.submitting') }}' : '{{ $isEdit ? __('wizard.edit.submit_btn') : __('wizard.step4.submit_btn') }}'"></span>
                     </button>
                     <p class="text-[11px] text-zinc-400 flex items-center gap-1">
-                        <span>💡</span> {{ __('wizard.step4.submit_hint') }}
+                        <span>💡</span> {{ $isEdit ? __('wizard.edit.submit_hint') : __('wizard.step4.submit_hint') }}
                     </p>
                 </div>
             </div>
@@ -826,13 +893,21 @@
     const NILEX_AI_URL        = "{{ route('listings.ai-generate') }}";
     const NILEX_DASHBOARD_URL = "{{ route('dashboard') }}";
     const NILEX_PREFILL_PHONE = @json(optional(auth()->user())->phone ?? '');
-    const NILEX_WIZARD_KEY    = 'nilex_listing_wizard';
+    // مفتاح المسودة منفصل لكل إعلان في وضع التعديل (وموحّد في وضع الإنشاء).
+    const NILEX_WIZARD_KEY    = @json($isEdit ? ('nilex_listing_wizard_edit_' . $listing->id) : 'nilex_listing_wizard');
     const NILEX_PHONE_VERIFIED = @json($isPhoneVerified);
     const NILEX_USER_POINTS    = @json($userPoints);
     const NILEX_FEATURE_COSTS  = { 1: 25, 3: 60, 7: 120, 14: 220 };
     // Mirrors the listings.price column cap (decimal(12,2)) so the user gets an
     // instant client-side error before submitting, matching the server rule.
     const NILEX_MAX_PRICE      = 9999999999.99;
+
+    // ── وضع التعديل (Edit) — قيم محايدة في وضع الإنشاء ──
+    const NILEX_WIZARD_MODE   = @json($mode);
+    const NILEX_UPDATE_URL    = @json($isEdit ? route('listings.update', $listing) : null);
+    const NILEX_EDIT_DATA     = @json($editData);   // DTO معبّأ (null في الإنشاء)
+    const NILEX_EDIT_IMAGES   = @json($editImages); // [{id,url}] (مصفوفة فارغة في الإنشاء)
+    const NILEX_EDIT_ROOT_ID  = @json($editRootId); // جذر القسم لاشتقاق القسم النشط
 
     function listingWizard() {
         return {
@@ -939,6 +1014,9 @@
             errors: {},
             images: [],
             imagePreviews: [],
+            // وضع التعديل: الصور الحالية (كتلة ثابتة) + معرّفات المحذوفة منها.
+            existingImages: Array.isArray(NILEX_EDIT_IMAGES) ? NILEX_EDIT_IMAGES.map(i => ({ ...i })) : [],
+            removedImageIds: [],
             isSubmitting: false,
             submitError: '',
             isDragging: false,
@@ -965,12 +1043,37 @@
             ],
 
             init() {
+                // وضع التعديل: نعبّئ من بيانات الخادم أولاً، ثم تُتيح المسودة (per-id)
+                // الكتابة فوقها لو كان المستخدم في منتصف تعديل غير محفوظ.
+                if (NILEX_WIZARD_MODE === 'edit' && NILEX_EDIT_DATA) {
+                    this.applyEditData();
+                }
                 this.loadFromLocalStorage();
                 if (!this.formData.phone) {
                     this.formData.phone = NILEX_PREFILL_PHONE || '';
                 }
                 this.$watch('formData', () => this.saveToLocalStorage(), { deep: true });
                 this.$watch('selectedRootId', () => this.saveToLocalStorage());
+            },
+
+            // تعبئة formData من DTO الخادم (تحويل بيانات الإعلان → شكل الويزارد).
+            applyEditData() {
+                const d = NILEX_EDIT_DATA;
+                this.formData.category_id  = d.category_id ?? '';
+                this.formData.title        = d.title ?? '';
+                this.formData.description  = d.description ?? '';
+                this.formData.condition    = d.condition ?? 'new';
+                this.formData.price        = d.price ?? '';
+                this.formData.price_type   = d.price_type ?? 'fixed';
+                this.formData.custom_fields = (d.custom_fields && typeof d.custom_fields === 'object' && !Array.isArray(d.custom_fields))
+                    ? { ...d.custom_fields } : {};
+                this.formData.car_brand_id = d.car_brand_id ?? '';
+                this.formData.car_model_id = d.car_model_id ?? '';
+                this.formData.phone        = d.phone ?? '';
+                this.formData.governorate_id = d.governorate_id ?? '';
+                this.formData.location_id  = d.location_id ?? '';
+                this.formData.feature_days = 0; // التمييز مستثنى من التعديل
+                this.selectedRootId        = NILEX_EDIT_ROOT_ID;
             },
 
             // ── Derived state ──────────────────────────────────────────
@@ -1034,7 +1137,7 @@
                     { label: NILEX_WIZARD_I18N.checklist.title,       done: this.formData.title.trim().length > 0 },
                     { label: NILEX_WIZARD_I18N.checklist.description, done: this.formData.description.trim().length >= 20 },
                     { label: NILEX_WIZARD_I18N.checklist.price,       done: this.formData.price !== '' && Number(this.formData.price) >= 0 },
-                    { label: NILEX_WIZARD_I18N.checklist.images,      done: this.images.length > 0 },
+                    { label: NILEX_WIZARD_I18N.checklist.images,      done: this.images.length > 0 || this.existingImages.length > 0 },
                     { label: NILEX_WIZARD_I18N.checklist.phone,       done: this.formData.phone.trim().length > 0 },
                 ];
             },
@@ -1229,6 +1332,13 @@
                 this.images.splice(index, 1);
                 this.imagePreviews.splice(index, 1);
             },
+            // وضع التعديل: حذف صورة حالية (تُسجَّل في removedImageIds لإرسالها للخادم).
+            removeExistingImage(index) {
+                const img = this.existingImages[index];
+                if (!img) return;
+                this.removedImageIds.push(img.id);
+                this.existingImages.splice(index, 1);
+            },
 
             // ── 🤖 AI Assistant (Gemini) ───────────────────────────────
             // يعيد استخدام GeminiService عبر مسار listings.ai-generate.
@@ -1312,16 +1422,23 @@
 
                 this.isSubmitting = true;
 
+                const isEdit = NILEX_WIZARD_MODE === 'edit';
+
                 const fd = new FormData();
                 fd.append('title', this.formData.title);
                 fd.append('description', this.formData.description);
-                fd.append('category_id', this.formData.category_id);
                 fd.append('price', this.formData.price);
                 fd.append('condition', this.formData.condition);
                 fd.append('price_type', this.formData.price_type);
                 fd.append('phone', this.formData.phone);
                 fd.append('location_id', this.formData.location_id);
-                fd.append('feature_days', this.formData.feature_days);
+
+                // القسم والتمييز يُرسَلان في الإنشاء فقط — في التعديل القسم مقفول
+                // والتمييز مستثنى (والخادم يتجاهلهما أصلاً في update).
+                if (!isEdit) {
+                    fd.append('category_id', this.formData.category_id);
+                    fd.append('feature_days', this.formData.feature_days);
+                }
 
                 // 🚗 حقول السيارة (FK columns) — تُرسل فقط لقسم السيارات
                 if (this.isCarCategory) {
@@ -1334,9 +1451,15 @@
                 }
                 this.images.forEach(file => fd.append('images[]', file));
 
+                // وضع التعديل: تزييف PUT + إرسال معرّفات الصور الحالية المحذوفة.
+                if (isEdit) {
+                    fd.append('_method', 'PUT');
+                    this.removedImageIds.forEach(id => fd.append('removed_image_ids[]', id));
+                }
+
                 try {
                     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                    const res = await fetch(NILEX_STORE_URL, {
+                    const res = await fetch(isEdit ? NILEX_UPDATE_URL : NILEX_STORE_URL, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': token,
@@ -1389,6 +1512,10 @@
                     } else if (key === 'phone' || key === 'location_id') {
                         this.errors[key] = msg;
                         targetStep = 4;
+                    } else if (key === 'images' || key.startsWith('images.') || key === 'removed_image_ids' || key.startsWith('removed_image_ids.')) {
+                        // أخطاء الصور الخادمية (نوع/حجم) — أعرضها في خطوة الصور.
+                        this.errors[key] = msg;
+                        targetStep = 3;
                     } else {
                         this.errors[key] = msg;
                     }
