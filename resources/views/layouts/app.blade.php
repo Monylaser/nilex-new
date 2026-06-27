@@ -73,10 +73,11 @@
                                 </div>
                                 <div class="max-h-64 overflow-y-auto">
                                     @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
-                                        <div class="p-4 border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
+                                        @php($notifUrl = $notification->data['url'] ?? null)
+                                        <{{ $notifUrl ? 'a' : 'div' }} @if($notifUrl) href="{{ $notifUrl }}" @endif class="block p-4 border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
                                             <p class="text-xs text-gray-700 leading-tight">{{ $notification->data['message'] ?? __('ui.notifications.default') }}</p>
                                             <span class="text-[10px] text-gray-400 mt-1 block">{{ $notification->created_at->diffForHumans() }}</span>
-                                        </div>
+                                        </{{ $notifUrl ? 'a' : 'div' }}>
                                     @empty
                                         <div class="p-6 text-center text-gray-400 text-xs">{{ __('ui.notifications.empty') }}</div>
                                     @endforelse

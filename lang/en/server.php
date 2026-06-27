@@ -75,6 +75,12 @@ return [
         'self' => 'You cannot send a message to yourself.',
     ],
 
+    // Listing editing after publish (HomeController::edit/update)
+    'listing' => [
+        'updated_success'           => 'Your listing was updated and will be reviewed again before it shows. ✏️',
+        'edit_blocked_sale_pending' => 'This listing cannot be edited because it has a sale awaiting confirmation.',
+    ],
+
     'account' => [
         'delete_blocked' => 'Your account cannot be deleted because it has sales or reviews linked to it. These records are kept permanently.',
     ],
@@ -84,6 +90,26 @@ return [
         'invalid_buyer'     => 'The selected buyer is not valid for this listing.',
         'already_confirmed' => 'A sale for this listing has already been confirmed.',
         'select_required'   => 'Please select a buyer first.',
+        'buyer_confirmed'   => 'Your purchase has been confirmed successfully. ✅',
+        'confirm_failed'    => 'Could not confirm the purchase.',
+    ],
+
+    // Purchase-confirmation request notification (sent to the buyer — database + mail)
+    'sale_confirmation_notif' => [
+        'subject'    => 'Purchase confirmation on Nilex',
+        'greeting'   => 'Hi :name',
+        'line1'      => ':seller reported that you bought ":title" through the Nilex platform.',
+        'line2'      => 'Please confirm the purchase so you can rate the seller and help other buyers.',
+        'action'     => 'Confirm purchase',
+        'line3'      => 'Thank you for using Nilex!',
+        'db_message' => 'Confirm your purchase of ":title" from :seller',
+    ],
+
+    // Seller review (written by the buyer after confirming the purchase)
+    'review' => [
+        'submitted'       => 'Thank you! Your review has been submitted successfully. ⭐',
+        'rating_required' => 'Please choose a rating from 1 to 5 stars.',
+        'not_allowed'     => 'You cannot review this transaction.',
     ],
 
     'ai' => [

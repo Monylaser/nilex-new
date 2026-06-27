@@ -72,6 +72,11 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
     // 1. إدارة الإعلانات (يجب أن تكون قبل مسار عرض الإعلان العام)
     Route::get('/listings/create', [HomeController::class, 'create'])->name('listings.create');
     Route::post('/listings/store', [HomeController::class, 'store'])->name('listings.store');
+    // ✏️ تعديل إعلان موجود (نفس الويزارد، وضع "تعديل") — قبل مسار العرض العام
+    // GET يعرض النموذج معبّأً، PUT يحفظ التعديل (القسم مقفول، بلا نقاط، الـ slug ثابت،
+    // الحالة تعود pending دائماً). الملكية تُفرض في الكنترولر (404 لغير المالك/المغلق).
+    Route::get('/listings/{listing}/edit', [HomeController::class, 'edit'])->name('listings.edit');
+    Route::put('/listings/{listing}', [HomeController::class, 'update'])->name('listings.update');
     // 🤖 المساعد الذكي لتوليد بيانات الإعلان (Gemini) — يُستخدم داخل ويزارد الإضافة
     Route::post('/listings/ai-generate', [HomeController::class, 'aiGenerate'])->name('listings.ai-generate');
 
@@ -113,6 +118,10 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
 
     // 8. المفضلة — صفحة "مفضلتي" (نفس حماية باقي صفحات لوحة التحكم)
     Route::get('/dashboard/favorites', [FavoriteController::class, 'index'])->name('dashboard.favorites');
+
+    // 9. مشترياتي — تأكيد المشتري + تقييم البائع (SaleConfirmation buyer side)
+    Route::get('/dashboard/purchases', \App\Livewire\Frontend\BuyerPurchases::class)
+        ->name('dashboard.purchases');
 
 }); // ✅ إغلاق الـ middleware group
 

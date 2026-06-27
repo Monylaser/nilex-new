@@ -574,6 +574,8 @@ return [
         'tooltip_feature'        => 'تمييز الإعلان',
         'tooltip_featured'       => 'مميز',
         'tooltip_delete'         => 'حذف الإعلان',
+        'edit_listing'           => 'تعديل',
+        'tooltip_edit'           => 'تعديل الإعلان',
         // نافذة "إغلاق الإعلان" — الخطوة 1: اختيار نوع الإغلاق
         'close_modal_title'            => 'إغلاق الإعلان',
         'close_modal_subtitle'        => 'كيف تم إغلاق ":title"؟',
@@ -662,6 +664,7 @@ return [
         'member_since'        => 'عضو منذ :time',
         'active_listings'     => ':count إعلان نشط',
         'no_ratings'          => 'لا توجد تقييمات بعد',
+        'rating_summary'      => ':avg من 5 (:count تقييم)',
         'response_rate'       => 'نسبة الرد',
         'response_rate_value' => ':rate% من العروض',
         'response_insufficient' => 'لا توجد بيانات كافية بعد',
@@ -677,6 +680,30 @@ return [
         'no_buyers_subtitle' => 'لم يتواصل أحد مع هذا الإعلان (كشف هاتف أو تقديم عرض). يمكنك الرجوع واختيار "تم البيع خارج المنصة".',
         'back'               => 'رجوع',
         'confirm_select'     => 'تأكيد الاختيار',
+
+        // صفحة "مشترياتي" (/dashboard/purchases) — جانب المشتري
+        'nav_link'          => 'مشترياتي',
+        'page_title'        => 'مشترياتي',
+        'page_subtitle'     => 'عمليات الشراء التي سجّلها البائعون لك — أكّدها وقيّم البائع',
+        'back_dashboard'    => 'رجوع للوحة التحكم',
+        'from_seller'       => 'البائع: :name',
+        'pending_badge'     => 'بانتظار تأكيدك',
+        'confirmed_badge'   => 'تم تأكيد الشراء',
+        'canceled_badge'    => 'ملغاة',
+        'confirm_help'      => 'هل اشتريت هذا الإعلان فعلاً؟ أكّد العملية لتقييم البائع ومساعدة المشترين الآخرين.',
+        'confirm_purchase'  => 'تأكيد الشراء',
+        'empty_title'       => 'لا توجد عمليات شراء بعد',
+        'empty_subtitle'    => 'عندما يسجّل بائع عملية بيع لك ستظهر هنا لتأكيدها',
+        'browse_cta'        => 'تصفّح الإعلانات',
+    ],
+
+    // نموذج تقييم البائع (يظهر inline بعد تأكيد الشراء في صفحة "مشترياتي")
+    'reviews' => [
+        'title'               => 'قيّم البائع',
+        'subtitle'            => 'شاركنا تجربتك مع هذا البائع لمساعدة المشترين الآخرين',
+        'comment_placeholder' => 'اكتب تعليقاً (اختياري)',
+        'submit'              => 'إرسال التقييم',
+        'thanks_title'        => 'شكراً لتقييمك!',
     ],
 
 ];

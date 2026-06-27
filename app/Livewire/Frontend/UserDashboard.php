@@ -11,6 +11,7 @@ use App\Models\Listing;
 use App\Models\Offer;
 use App\Models\SaleConfirmation;
 use App\Models\SellerLead;
+use App\Notifications\SaleConfirmationRequested;
 use App\Services\EntitlementService;
 use App\Services\SellerListingAnalyticsService;
 
@@ -233,7 +234,14 @@ class UserDashboard extends Component
             $listing->delete();
         });
 
-        // TODO (المرحلة القادمة): إشعار المشتري (SaleConfirmationRequested) + شاشة تأكيد المشتري
+        // إشعار المشتري بطلب تأكيد الشراء (قابل للنقر إلى /dashboard/purchases)
+        $saleConfirmation = SaleConfirmation::where('listing_id', $listing->id)
+            ->where('buyer_id', $this->selectedBuyerId)
+            ->first();
+
+        if ($saleConfirmation && $saleConfirmation->buyer) {
+            $saleConfirmation->buyer->notify(new SaleConfirmationRequested($saleConfirmation));
+        }
 
         session()->flash('success', __('server.sale_confirmation.created'));
         $this->closeClosingModal();
@@ -322,6 +330,11 @@ class UserDashboard extends Component
             ? $this->buyerLeads()
             : collect();
 
+        // عدد عمليات الشراء التي تنتظر تأكيد المستخدم الحالي (للـ badge على "مشترياتي")
+        $pendingPurchasesCount = SaleConfirmation::where('buyer_id', $user->id)
+            ->where('status', SaleConfirmation::STATUS_PENDING)
+            ->count();
+
         return view('livewire.frontend.user-dashboard', compact(
             'listings',
             'stats',
@@ -330,6 +343,7 @@ class UserDashboard extends Component
             'access',
             'chartData',
             'buyerLeads',
+            'pendingPurchasesCount',
         ));
     }
 }

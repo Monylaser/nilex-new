@@ -574,6 +574,8 @@ return [
         'tooltip_feature'        => 'Feature listing',
         'tooltip_featured'       => 'Featured',
         'tooltip_delete'         => 'Delete listing',
+        'edit_listing'           => 'Edit',
+        'tooltip_edit'           => 'Edit listing',
         // "Close listing" modal — Step 1: closing-type selection
         'close_modal_title'            => 'Close listing',
         'close_modal_subtitle'        => 'How was ":title" closed?',
@@ -662,6 +664,7 @@ return [
         'member_since'        => 'Member :time',
         'active_listings'     => ':count active listings',
         'no_ratings'          => 'No ratings yet',
+        'rating_summary'      => ':avg out of 5 (:count reviews)',
         'response_rate'       => 'Response rate',
         'response_rate_value' => ':rate% of offers',
         'response_insufficient' => 'Not enough data yet',
@@ -677,6 +680,30 @@ return [
         'no_buyers_subtitle' => 'No one contacted this listing (phone reveal or offer). You can go back and choose "Sold off the platform".',
         'back'               => 'Back',
         'confirm_select'     => 'Confirm selection',
+
+        // "My Purchases" page (/dashboard/purchases) — buyer side
+        'nav_link'          => 'My Purchases',
+        'page_title'        => 'My Purchases',
+        'page_subtitle'     => 'Sales that sellers recorded for you — confirm them and rate the seller',
+        'back_dashboard'    => 'Back to dashboard',
+        'from_seller'       => 'Seller: :name',
+        'pending_badge'     => 'Awaiting your confirmation',
+        'confirmed_badge'   => 'Purchase confirmed',
+        'canceled_badge'    => 'Canceled',
+        'confirm_help'      => 'Did you actually buy this listing? Confirm it to rate the seller and help other buyers.',
+        'confirm_purchase'  => 'Confirm purchase',
+        'empty_title'       => 'No purchases yet',
+        'empty_subtitle'    => 'When a seller records a sale for you, it will appear here to confirm',
+        'browse_cta'        => 'Browse listings',
+    ],
+
+    // Seller rating form (shown inline after confirming a purchase on "My Purchases")
+    'reviews' => [
+        'title'               => 'Rate the seller',
+        'subtitle'            => 'Share your experience with this seller to help other buyers',
+        'comment_placeholder' => 'Write a comment (optional)',
+        'submit'              => 'Submit review',
+        'thanks_title'        => 'Thanks for your review!',
     ],
 
 ];
