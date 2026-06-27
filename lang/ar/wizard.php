@@ -87,6 +87,8 @@ return [
         'bathrooms_placeholder'     => 'اختر عدد الحمامات',
         'floor_label'               => 'الدور',
         'floor_placeholder'         => 'اختر الدور',
+        'floor_other_label'         => 'اكتب الدور',
+        'floor_other_placeholder'   => 'مثال: بدروم، ميزانين، الدور العاشر...',
         'finishing_label'           => 'نوع التشطيب',
         'finishing_placeholder'     => 'اختر نوع التشطيب',
         'area_label'                => 'المساحة',
@@ -218,6 +220,7 @@ return [
             '5'       => 'الخامس',
             '6+'      => 'السادس فأكثر',
             'rooftop' => 'روف',
+            'other'   => 'أخرى',
         ],
         'finishing' => [
             'super_lux'  => 'سوبر لوكس',

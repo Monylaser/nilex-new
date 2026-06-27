@@ -87,6 +87,8 @@ return [
         'bathrooms_placeholder'     => 'Select number of bathrooms',
         'floor_label'               => 'Floor',
         'floor_placeholder'         => 'Select floor',
+        'floor_other_label'         => 'Specify floor',
+        'floor_other_placeholder'   => 'e.g. Basement, Mezzanine, 10th floor...',
         'finishing_label'           => 'Finishing Type',
         'finishing_placeholder'     => 'Select finishing type',
         'area_label'                => 'Area',
@@ -218,6 +220,7 @@ return [
             '5'       => '5th',
             '6+'      => '6th or higher',
             'rooftop' => 'Rooftop',
+            'other'   => 'Other',
         ],
         'finishing' => [
             'super_lux'  => 'Super Lux',

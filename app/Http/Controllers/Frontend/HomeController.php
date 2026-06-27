@@ -114,6 +114,11 @@ class HomeController extends Controller
      */
     public function store(Request $request)
     {
+        // القسم يُحدَّد مبكراً لجعل قاعدة "الحالة" مشروطة به: مطلوبة لكل الأقسام
+        // عدا العقارات (لا معنى لجديد/مستعمل هناك)، حيث تصبح nullable.
+        $earlyCategory = Category::find($request->input('category_id'));
+        $isRealEstate  = $earlyCategory?->slug === 'real-estate';
+
         $validated = $request->validate([
             'title'        => 'required|string|max:255',
             'description'  => 'required|string',
@@ -122,7 +127,8 @@ class HomeController extends Controller
             // to return a friendly 422 instead of a DB out-of-range (22003) 500.
             'price'        => 'required|numeric|min:0|max:9999999999.99',
             // ── Multi-Step Listing Wizard fields ──
-            'condition'    => 'required|string|max:50',
+            // الحالة مطلوبة إلا للعقارات (مشروطة بالقسم).
+            'condition'    => [$isRealEstate ? 'nullable' : 'required', 'string', 'max:50'],
             'price_type'   => 'required|string|max:50',
             'phone'        => 'required|string|max:20',
             // location is reused via the existing location_id relationship
@@ -136,7 +142,8 @@ class HomeController extends Controller
             'price.max' => __('wizard.server.price_max'),
         ]);
 
-        $category = Category::findOrFail($validated['category_id']);
+        // category_id تم التحقق من وجوده أعلاه؛ نعيد الاستخدام لتفادي استعلام مكرّر.
+        $category = $earlyCategory ?? Category::findOrFail($validated['category_id']);
 
         // ── Category-specific validation (cars / real-estate / dynamic schema) ──
         // Extracted into a shared helper so the edit flow (HomeController::update)
@@ -155,7 +162,8 @@ class HomeController extends Controller
             $listing->category_id          = $validated['category_id'];
             $listing->user_id              = Auth::id();
             $listing->status               = Listing::STATUS_PENDING;
-            $listing->condition            = $validated['condition'];
+            // null للعقارات (لم تُرسَل الحالة)؛ القيمة المُدخَلة لباقي الأقسام.
+            $listing->condition            = $validated['condition'] ?? null;
             $listing->price_type           = $validated['price_type'];
             $listing->phone                = $phone;
             $listing->location_id          = $validated['location_id'] ?? null;
@@ -367,14 +375,16 @@ class HomeController extends Controller
 
         // القسم مقفول: مصدره الإعلان نفسه — لا نثق بأي category_id قادم من الطلب.
         $listing->loadMissing('category');
-        $category = $listing->category;
+        $category     = $listing->category;
+        // الحالة مشروطة بالقسم (المقفول): مطلوبة إلا للعقارات.
+        $isRealEstate = $category?->slug === 'real-estate';
 
         $validated = $request->validate([
             'title'        => 'required|string|max:255',
             'description'  => 'required|string',
             // max يطابق عمود السعر decimal(12,2) لتفادي خطأ خارج النطاق 22003.
             'price'        => 'required|numeric|min:0|max:9999999999.99',
-            'condition'    => 'required|string|max:50',
+            'condition'    => [$isRealEstate ? 'nullable' : 'required', 'string', 'max:50'],
             'price_type'   => 'required|string|max:50',
             'phone'        => 'required|string|max:20',
             'location_id'  => 'nullable|exists:locations,id',
@@ -405,7 +415,8 @@ class HomeController extends Controller
             // الـ slug يبقى كما هو — لا توليد جديد.
             $listing->description = $validated['description'];
             $listing->price       = $validated['price'];
-            $listing->condition   = $validated['condition'];
+            // null للعقارات (لم تُرسَل الحالة)؛ القيمة المُدخَلة لباقي الأقسام.
+            $listing->condition   = $validated['condition'] ?? null;
             $listing->price_type  = $validated['price_type'];
             $listing->phone       = $phone;
             $listing->location_id = $validated['location_id'] ?? null;

@@ -261,8 +261,8 @@
                         </div>
                     </div>
 
-                    {{-- Condition --}}
-                    <div>
+                    {{-- Condition (جديد/مستعمل) — مخفي لقسم العقارات (لا معنى له هناك) --}}
+                    <div x-show="!isRealEstateCategory" x-cloak>
                         <label class="block text-sm font-semibold text-zinc-700 mb-2">{{ __('wizard.step2.condition_label') }} <span class="text-red-500">*</span></label>
                         <div class="grid grid-cols-2 gap-3">
                             <div @click="formData.condition = 'new'"
@@ -483,15 +483,21 @@
                                 </select>
                             </div>
 
-                            {{-- Floor (الدور) --}}
+                            {{-- Floor (الدور) — قائمة + خيار "أخرى" يفتح نص حر --}}
                             <div>
                                 <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.floor_label') }}</label>
-                                <select x-model="formData.custom_fields.floor" class="wizard-input">
+                                <select x-model="floorSelection" @change="onFloorChange()" class="wizard-input">
                                     <option value="">{{ __('wizard.realestate.floor_placeholder') }}</option>
                                     <template x-for="opt in floorOptions" :key="opt.value">
                                         <option :value="opt.value" x-text="opt.label"></option>
                                     </template>
                                 </select>
+                                {{-- نص حر يظهر عند اختيار "أخرى"؛ يُخزَّن مباشرةً في custom_fields.floor --}}
+                                <div x-show="floorIsOther" x-cloak class="mt-2">
+                                    <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('wizard.realestate.floor_other_label') }}</label>
+                                    <input type="text" x-model="floorOther" @input="onFloorOtherInput()" maxlength="100"
+                                           class="wizard-input" placeholder="{{ __('wizard.realestate.floor_other_placeholder') }}">
+                                </div>
                             </div>
 
                             {{-- Finishing (نوع التشطيب) --}}
@@ -997,6 +1003,7 @@
                 { value: '5',       label: NILEX_WIZARD_I18N.options.floor['5'] },
                 { value: '6+',      label: NILEX_WIZARD_I18N.options.floor['6+'] },
                 { value: 'rooftop', label: NILEX_WIZARD_I18N.options.floor.rooftop },
+                { value: 'other',   label: NILEX_WIZARD_I18N.options.floor.other },
             ],
             finishingOptions: [
                 { value: 'super_lux',  label: NILEX_WIZARD_I18N.options.finishing.super_lux },
@@ -1012,6 +1019,11 @@
             ],
 
             errors: {},
+            // 🏠 حقل الدور: قيمة القائمة المنسدلة + النص الحر عند اختيار "أخرى".
+            // متغيّران مساعدان (خارج formData) — القيمة النهائية تُكتب في
+            // formData.custom_fields.floor مباشرةً (نصاً حراً أو قيمة مرمّزة).
+            floorSelection: '',
+            floorOther: '',
             images: [],
             imagePreviews: [],
             // وضع التعديل: الصور الحالية (كتلة ثابتة) + معرّفات المحذوفة منها.
@@ -1049,6 +1061,8 @@
                     this.applyEditData();
                 }
                 this.loadFromLocalStorage();
+                // اشتقاق حالة قائمة الدور بعد تعبئة formData (تعديل + مسودة محلية).
+                this.syncFloorFromFormData();
                 if (!this.formData.phone) {
                     this.formData.phone = NILEX_PREFILL_PHONE || '';
                 }
@@ -1108,6 +1122,10 @@
                 const cat = this.activeCategory;
                 return !!(cat && cat.slug === 'real-estate');
             },
+            // 🏠 هل اختار المستخدم "أخرى" في قائمة الدور؟ (يُظهر حقل النص الحر)
+            get floorIsOther() {
+                return this.floorSelection === 'other';
+            },
             // سنوات الصنع — من السنة الحالية وحتى 1970 (يطابق لوحة الأدمن)
             get yearOptions() {
                 const years = [];
@@ -1148,12 +1166,14 @@
                 this.formData.category_id = cat.id;
                 this.formData.custom_fields = {};
                 this.resetCarFields();
+                this.resetFloorFields();
                 delete this.errors.category_id;
             },
             selectSub(sub) {
                 this.formData.category_id = sub.id;
                 this.formData.custom_fields = {};
                 this.resetCarFields();
+                this.resetFloorFields();
                 delete this.errors.category_id;
             },
             // ── Car selection ──────────────────────────────────────────
@@ -1171,6 +1191,11 @@
                 this.formData.car_brand_id = '';
                 this.formData.car_model_id = '';
             },
+            // إعادة ضبط حالة حقل الدور عند تغيير القسم (custom_fields صُفِّرت).
+            resetFloorFields() {
+                this.floorSelection = '';
+                this.floorOther = '';
+            },
             categoryIconUrl(cat) {
                 return cat.icon ? (NILEX_STORAGE_BASE + '/' + cat.icon) : null;
             },
@@ -1181,6 +1206,40 @@
             onGovernorateChange() {
                 this.formData.location_id = '';
                 delete this.errors.location_id;
+            },
+
+            // ── 🏠 Floor (الدور) ───────────────────────────────────────
+            // تغيير القائمة: لو "أخرى" نكتب النص الحر الحالي (قد يكون فارغاً)،
+            // وإلا نكتب القيمة المرمّزة مباشرةً في custom_fields.floor.
+            onFloorChange() {
+                if (this.floorSelection === 'other') {
+                    this.formData.custom_fields.floor = this.floorOther || '';
+                } else {
+                    this.floorOther = '';
+                    this.formData.custom_fields.floor = this.floorSelection;
+                }
+            },
+            // كتابة النص الحر: تُخزَّن القيمة كما هي (لا نخزّن 'other' إطلاقاً).
+            onFloorOtherInput() {
+                this.formData.custom_fields.floor = this.floorOther;
+            },
+            // اشتقاق حالة القائمة/النص من القيمة المخزّنة (مسودة محلية أو تعديل).
+            // قيمة غير معروفة في floorOptions ⇒ نص حر ⇒ وضع "أخرى".
+            syncFloorFromFormData() {
+                const v = this.formData.custom_fields ? this.formData.custom_fields.floor : '';
+                if (v === undefined || v === null || v === '') {
+                    this.floorSelection = '';
+                    this.floorOther = '';
+                    return;
+                }
+                const isKnown = this.floorOptions.some(o => o.value !== 'other' && o.value === v);
+                if (isKnown) {
+                    this.floorSelection = v;
+                    this.floorOther = '';
+                } else {
+                    this.floorSelection = 'other';
+                    this.floorOther = v;
+                }
             },
 
             // ── Navigation ─────────────────────────────────────────────
@@ -1428,7 +1487,10 @@
                 fd.append('title', this.formData.title);
                 fd.append('description', this.formData.description);
                 fd.append('price', this.formData.price);
-                fd.append('condition', this.formData.condition);
+                // الحالة (جديد/مستعمل) لا تُرسَل لقسم العقارات — الخادم يقبلها null هناك.
+                if (!this.isRealEstateCategory) {
+                    fd.append('condition', this.formData.condition);
+                }
                 fd.append('price_type', this.formData.price_type);
                 fd.append('phone', this.formData.phone);
                 fd.append('location_id', this.formData.location_id);
