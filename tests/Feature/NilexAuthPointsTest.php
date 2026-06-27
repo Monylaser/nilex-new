@@ -4,7 +4,7 @@
  * Nilex Platform — Pest Feature Tests
  *
  * Covers:
- *   1. Registration  → 100 welcome points, is_phone_verified=false, redirect /verify-otp
+ *   1. Registration  → 50 welcome points, is_phone_verified=false, redirect /verify-otp
  *   2. Points        → listing creation credits 3 pts; featureWithPoints deducts correctly
  *   3. Admin ACL     → normal user blocked (403); super_admin allowed through
  */
@@ -40,7 +40,7 @@ describe('Registration', function () {
         $response->assertRedirect(route('otp.notice'));
     });
 
-    it('awards exactly 100 welcome points on registration', function () {
+    it('awards exactly 50 welcome points on registration (no doubled bonus)', function () {
         $this->post('/register', [
             'name'                  => 'Ahmed Hassan',
             'contact'               => 'ahmed@example.com',
@@ -50,7 +50,9 @@ describe('Registration', function () {
 
         $user = User::where('email', 'ahmed@example.com')->firstOrFail();
 
-        expect($user->points)->toBe(100);
+        // Single source of truth: RegisteredUserController credits 50.
+        // (The old dead UserObserver +50 was removed, so no 50+50=100.)
+        expect($user->points)->toBe(50);
     });
 
     it('sets is_phone_verified to false immediately after registration', function () {

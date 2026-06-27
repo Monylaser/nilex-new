@@ -257,7 +257,7 @@ return [
         'view_point_plans'=> 'عرض خطط النقاط',
         'contact'         => 'تواصل معنا',
         'address'         => 'القاهرة، مصر',
-        'gift_teaser'     => 'احصل على 100 نقطة هدية! 🎁',
+        'gift_teaser'     => 'احصل على 50 نقطة هدية! 🎁',
         'register_free'   => 'سجّل حساباً مجاناً',
         'copyright'       => 'جميع الحقوق محفوظة',
         'prices_link'     => 'الأسعار',
@@ -450,7 +450,6 @@ return [
         'earn_register'       => 'إنشاء حساب جديد',
         'earn_verify'         => 'توثيق رقم الهاتف',
         'earn_listing'        => 'نشر إعلان جديد',
-        'earn_rating'         => 'الحصول على تقييم إيجابي',
     ],
 
     'payment' => [

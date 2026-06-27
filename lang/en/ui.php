@@ -257,7 +257,7 @@ return [
         'view_point_plans'=> 'View Point Plans',
         'contact'         => 'Contact Us',
         'address'         => 'Cairo, Egypt',
-        'gift_teaser'     => 'Get 100 gift points! 🎁',
+        'gift_teaser'     => 'Get 50 gift points! 🎁',
         'register_free'   => 'Register Free',
         'copyright'       => 'All Rights Reserved',
         'prices_link'     => 'Prices',
@@ -450,7 +450,6 @@ return [
         'earn_register'       => 'Create a new account',
         'earn_verify'         => 'Verify your phone number',
         'earn_listing'        => 'Post a new listing',
-        'earn_rating'         => 'Receive a positive rating',
     ],
 
     'payment' => [
