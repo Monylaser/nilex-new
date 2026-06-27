@@ -13,6 +13,7 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            UserResource::adjustPointsAction(),
             DeleteAction::make(),
         ];
     }

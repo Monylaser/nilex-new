@@ -2,9 +2,11 @@
 
 namespace App\Filament\Admin\Resources\UserResource;
 
+use App\Exceptions\InsufficientPointsException;
 use App\Filament\Admin\Resources\UserResource\Pages;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\PointService;
 use BackedEnum;
 use UnitEnum;
 use Filament\Actions\Action;
@@ -41,11 +43,6 @@ class UserResource extends Resource
                 ->relationship('roles', 'name')
                 ->multiple()
                 ->preload(),
-            TextInput::make('points_balance')
-                ->label('رصيد النقاط')
-                ->numeric()
-                ->default(0)
-                ->helperText('تعديل يدوي لرصيد نقاط المستخدم'),
             Toggle::make('is_banned')->label('محظور'),
             Textarea::make('ban_reason')->label('سبب الحظر')->rows(2),
         ]);
@@ -117,6 +114,8 @@ class UserResource extends Resource
             ->recordActions([
                 ActionGroup::make([
 
+                    self::adjustPointsAction(),
+
                     Action::make('ban')
                         ->label('حظر')
                         ->icon('heroicon-m-no-symbol')
@@ -177,6 +176,77 @@ class UserResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    /**
+     * أكشن "تعديل الرصيد" — مشترك بين صف الجدول ورأس صفحة EditUser.
+     *
+     * يعدّل الرصيد عبر PointService::credit/deduct (وليس الكتابة المباشرة على
+     * العمود)، فيُحدّث `points` (الرصيد الحقيقي) و`points_balance` (المرآة) معاً
+     * وينشئ صف PointTransaction يظهر في سجل نقاط المستخدم تلقائياً.
+     */
+    public static function adjustPointsAction(): Action
+    {
+        return Action::make('adjust_points')
+            ->label('تعديل الرصيد')
+            ->icon('heroicon-m-banknotes')
+            ->color('warning')
+            ->modalHeading('تعديل رصيد النقاط')
+            ->modalSubmitActionLabel('تنفيذ')
+            ->form([
+                Select::make('operation')
+                    ->label('نوع العملية')
+                    ->options([
+                        'credit' => 'إضافة',
+                        'debit'  => 'خصم',
+                    ])
+                    ->default('credit')
+                    ->required(),
+                TextInput::make('amount')
+                    ->label('عدد النقاط')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(1)
+                    ->required(),
+                Textarea::make('reason')
+                    ->label('السبب')
+                    ->required()
+                    ->rows(2)
+                    ->helperText('سيظهر هذا السبب للمستخدم في سجل نقاطه'),
+            ])
+            ->action(function (array $data, User $record): void {
+                $amount      = (int) $data['amount'];
+                $reason      = $data['reason'];
+                $description = 'تعديل إداري: ' . $reason;
+                $service     = app(PointService::class);
+
+                try {
+                    if ($data['operation'] === 'debit') {
+                        $service->deduct($record, $amount, $description);
+                    } else {
+                        $service->credit($record, $amount, $description);
+                    }
+                } catch (InsufficientPointsException $e) {
+                    Notification::make()
+                        ->title('الرصيد غير كافٍ لإتمام الخصم')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                AuditLog::record('adjust_points', $record, [
+                    'operation' => $data['operation'],
+                    'amount'    => $amount,
+                    'reason'    => $reason,
+                ]);
+
+                Notification::make()
+                    ->title('تم تعديل الرصيد بنجاح')
+                    ->body('الرصيد الحالي: ' . $record->fresh()->points)
+                    ->success()
+                    ->send();
+            });
     }
 
     public static function getPages(): array
