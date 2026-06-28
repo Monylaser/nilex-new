@@ -54,6 +54,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'locale',
         'ratings_avg',
         'ratings_count',
+        'anonymized_at',
     ];
 
     protected $hidden = [
@@ -72,6 +73,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'otp_attempts'      => 'integer',
         'ratings_avg'       => 'float',
         'ratings_count'     => 'integer',
+        'anonymized_at'     => 'datetime',
     ];
 
     // ── Panel Access ──────────────────────────────────────────────────────────
@@ -186,17 +188,13 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     }
 
     /**
-     * هل المستخدم طرف في أي عملية بيع (بائعاً أو مشترياً) أو أي تقييم
-     * (كاتباً أو مُقيَّماً)؟ يُستخدم لحراسة حذف الحساب: قيود restrictOnDelete
-     * على هذه الجداول تمنع الحذف الفيزيائي بغض النظر عن status، لذا يطابق
-     * الحارس app-level سلوك القيد تماماً (يشمل pending و canceled).
+     * هل الحساب مُجمّد (anonymized)؟ التجميد يستبدل الحذف الفيزيائي: الصف يبقى
+     * موجوداً بنفس الـ ID لحماية قيود restrictOnDelete على sale_confirmations
+     * و reviews، لكن البيانات الحساسة تُستبدل بقيم مجهّلة ويُمنع تسجيل الدخول.
      */
-    public function hasSalesOrReviews(): bool
+    public function isAnonymized(): bool
     {
-        return $this->saleConfirmationsAsSeller()->exists()
-            || $this->saleConfirmationsAsBuyer()->exists()
-            || $this->reviewsWritten()->exists()
-            || $this->reviewsReceived()->exists();
+        return $this->anonymized_at !== null;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

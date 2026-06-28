@@ -288,10 +288,10 @@ describe('ReviewObserver denormalization', function () {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Account-deletion guard
+// Account-deletion = anonymization (the old hasSalesOrReviews guard was removed)
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('account-deletion guard', function () {
+describe('account-deletion anonymization', function () {
 
     beforeEach(function () {
         $this->seller   = User::factory()->create();
@@ -300,52 +300,65 @@ describe('account-deletion guard', function () {
         $this->listing  = scListing($this->seller, $this->category);
     });
 
-    it('lets a user with no sales/reviews delete their account', function () {
+    it('anonymizes a user with no sales/reviews instead of hard-deleting', function () {
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->delete(route('profile.destroy'), ['password' => 'password'])
             ->assertRedirect('/');
 
-        expect(User::find($user->id))->toBeNull();
+        $fresh = User::find($user->id);
+        expect($fresh)->not->toBeNull()
+            ->and($fresh->anonymized_at)->not->toBeNull();
     });
 
-    it('blocks deletion for a seller in a pending sale', function () {
+    it('allows a seller in a pending sale to delete (anonymize) — old block removed', function () {
         scPending($this->seller, $this->buyer, $this->listing);
 
         $this->actingAs($this->seller)
             ->from(route('profile.edit'))
             ->delete(route('profile.destroy'), ['password' => 'password'])
-            ->assertRedirect(route('profile.edit'))
-            ->assertSessionHasErrors('password', null, 'userDeletion');
+            ->assertRedirect('/');
 
-        expect(User::find($this->seller->id))->not->toBeNull();
+        // الصف يبقى (لحماية الـ FK على sale_confirmations) لكنه مُجمّد.
+        $fresh = User::find($this->seller->id);
+        expect($fresh)->not->toBeNull()
+            ->and($fresh->isAnonymized())->toBeTrue()
+            ->and($fresh->name)->toBe(__('server.account.deleted_name'));
+
+        // الـ sale_confirmation لا يزال موجوداً ويشير لنفس البائع.
+        expect(SaleConfirmation::where('seller_id', $this->seller->id)->exists())->toBeTrue();
     });
 
-    it('blocks deletion for a buyer in a canceled sale', function () {
+    it('allows a buyer in a canceled sale to delete (anonymize)', function () {
         $sc = scPending($this->seller, $this->buyer, $this->listing);
         $sc->cancelBySeller($this->seller->id);
 
         $this->actingAs($this->buyer)
             ->from(route('profile.edit'))
             ->delete(route('profile.destroy'), ['password' => 'password'])
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect('/');
 
-        expect(User::find($this->buyer->id))->not->toBeNull();
+        $fresh = User::find($this->buyer->id);
+        expect($fresh)->not->toBeNull()
+            ->and($fresh->isAnonymized())->toBeTrue();
     });
 
-    it('blocks deletion for a seller who has received a review', function () {
+    it('allows a seller who has received a review to delete (anonymize)', function () {
         $sc = scPending($this->seller, $this->buyer, $this->listing);
         $sc->confirmByBuyer();
         scReview($sc->fresh(), 5);
 
-        // reviewer (buyer) is blocked too
-        $this->actingAs($this->buyer)
+        $this->actingAs($this->seller)
             ->from(route('profile.edit'))
             ->delete(route('profile.destroy'), ['password' => 'password'])
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect('/');
 
-        expect(User::find($this->buyer->id))->not->toBeNull()
-            ->and(User::find($this->seller->id))->not->toBeNull();
+        $fresh = User::find($this->seller->id);
+        expect($fresh)->not->toBeNull()
+            ->and($fresh->isAnonymized())->toBeTrue();
+
+        // التقييم القديم لا يزال يشير للبائع المُجمّد (لم يُكسر).
+        expect(Review::where('reviewee_id', $this->seller->id)->exists())->toBeTrue();
     });
 });

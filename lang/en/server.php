@@ -82,7 +82,10 @@ return [
     ],
 
     'account' => [
-        'delete_blocked' => 'Your account cannot be deleted because it has sales or reviews linked to it. These records are kept permanently.',
+        // Display name substituted for an anonymized account after deletion.
+        'deleted_name'          => 'Deleted User',
+        // Shown when someone tries to sign in to a deleted/anonymized account.
+        'deleted_login_blocked' => 'This account has been deleted and cannot be signed in.',
     ],
 
     'sale_confirmation' => [

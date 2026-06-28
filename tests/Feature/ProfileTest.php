@@ -76,7 +76,15 @@ class ProfileTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $this->assertNull($user->fresh());
+
+        // الحذف الآن "تجميد" (anonymize): الصف يبقى موجوداً بنفس الـ ID لكن
+        // بياناته الحساسة تُستبدل بقيم مجهّلة و anonymized_at يُضبط.
+        $fresh = $user->fresh();
+        $this->assertNotNull($fresh);
+        $this->assertNotNull($fresh->anonymized_at);
+        $this->assertTrue($fresh->isAnonymized());
+        $this->assertSame(__('server.account.deleted_name'), $fresh->name);
+        $this->assertNull($fresh->phone);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void
