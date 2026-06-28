@@ -26,8 +26,8 @@
     {{-- Trust badges --}}
     <div class="flex flex-col gap-2">
 
-        {{-- Phone verified --}}
-        @if($seller->is_phone_verified ?? false)
+        {{-- Phone verified — only when a real phone exists AND it's verified --}}
+        @if($seller->phone && ($seller->is_phone_verified ?? false))
             <div class="flex items-center gap-2 text-xs">
                 <div class="w-6 h-6 bg-[#1D9E75]/10 rounded-lg flex items-center justify-center shrink-0">
                     <svg class="w-3 h-3 text-[#1D9E75]" fill="currentColor" viewBox="0 0 20 20">
