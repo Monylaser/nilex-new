@@ -30,7 +30,7 @@
                 </label>
 
                 {{-- 4 individual boxes --}}
-                <div class="flex justify-center gap-3" role="group" aria-label="{{ __('ui.auth.otp_group_aria') }}">
+                <div class="flex justify-center gap-3" dir="ltr" role="group" aria-label="{{ __('ui.auth.otp_group_aria') }}">
                     @for($i = 0; $i < 4; $i++)
                         <input type="text"
                                inputmode="numeric"
