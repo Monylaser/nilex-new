@@ -22,9 +22,10 @@ use Illuminate\Support\Facades\DB;
  *
  * Backfill rules:
  *   [A] is_phone_verified=true & phone IS NULL  (mis-flagged email/social):
- *         -> is_phone_verified=false + email_verified_at=now()
- *         -> ONLY where email_verified_at IS currently NULL (never overwrite an
- *            existing timestamp; rows that already have one are left untouched).
+ *         -> EVERY such row ends with is_phone_verified=false (regardless of
+ *            email_verified_at state).
+ *         -> email_verified_at is stamped now() ONLY where it is currently NULL;
+ *            rows that already have a timestamp keep their original value.
  *   [B] is_phone_verified=true & phone IS NOT NULL  (a real verified phone):
  *         -> phone_verified_at=now()
  *         -> ONLY where phone_verified_at IS currently NULL.
@@ -44,11 +45,11 @@ class BackfillUserVerification extends Command
 
         $anonymized = User::query()->whereNotNull('anonymized_at')->count();
 
-        // ── [A] mis-flagged: verified flag true but no real phone ──
+        // ── [A] mis-flagged: verified flag true but no real phone (ALL flip to false) ──
         $aTotal = $active()->where('is_phone_verified', true)->whereNull('phone')->count();
-        $aActionable = $active()->where('is_phone_verified', true)->whereNull('phone')
+        $aSetNow = $active()->where('is_phone_verified', true)->whereNull('phone')
             ->whereNull('email_verified_at')->count();
-        $aSkippedHasEmailVerified = $aTotal - $aActionable;
+        $aKeepExisting = $aTotal - $aSetNow;
 
         // ── [B] real verified phone: needs phone_verified_at timestamp ──
         $bTotal = $active()->where('is_phone_verified', true)->whereNotNull('phone')->count();
@@ -64,9 +65,9 @@ class BackfillUserVerification extends Command
         $this->line('total_active                                  = '.$active()->count());
         $this->line('anonymized (never touched)                    = '.$anonymized);
         $this->line('');
-        $this->line('[A] is_phone_verified=true & phone IS NULL    = '.$aTotal);
-        $this->line('      -> WILL UPDATE (email_verified_at NULL)  = '.$aActionable.'   [set is_phone_verified=false + email_verified_at=now()]');
-        $this->line('      -> skipped (email_verified_at already set)= '.$aSkippedHasEmailVerified);
+        $this->line('[A] is_phone_verified=true & phone IS NULL    = '.$aTotal.'   [WILL UPDATE ALL -> is_phone_verified=false]');
+        $this->line('      -> set email_verified_at=now() (was NULL) = '.$aSetNow);
+        $this->line('      -> keep existing email_verified_at        = '.$aKeepExisting);
         $this->line('');
         $this->line('[B] is_phone_verified=true & phone NOT NULL   = '.$bTotal);
         $this->line('      -> WILL UPDATE (phone_verified_at NULL)  = '.$bActionable.'   [set phone_verified_at=now()]');
@@ -79,15 +80,24 @@ class BackfillUserVerification extends Command
             return self::SUCCESS;
         }
 
-        if ($aActionable === 0 && $bActionable === 0) {
+        if ($aTotal === 0 && $bActionable === 0) {
             $this->info('Nothing to update — all rows are already consistent.');
 
             return self::SUCCESS;
         }
 
         // ── Actual writes (only with --execute), atomic ──
-        [$aUpdated, $bUpdated] = DB::transaction(function () {
-            $a = User::query()
+        [$aFlagOnly, $aStamped, $bUpdated] = DB::transaction(function () {
+            // [A] rows that already have a timestamp -> flip the flag only, preserve email_verified_at.
+            $aFlagOnly = User::query()
+                ->whereNull('anonymized_at')
+                ->where('is_phone_verified', true)
+                ->whereNull('phone')
+                ->whereNotNull('email_verified_at')
+                ->update(['is_phone_verified' => false]);
+
+            // [A] rows without a timestamp -> flip the flag AND stamp email_verified_at=now().
+            $aStamped = User::query()
                 ->whereNull('anonymized_at')
                 ->where('is_phone_verified', true)
                 ->whereNull('phone')
@@ -101,10 +111,10 @@ class BackfillUserVerification extends Command
                 ->whereNull('phone_verified_at')
                 ->update(['phone_verified_at' => now()]);
 
-            return [$a, $b];
+            return [$aFlagOnly, $aStamped, $b];
         });
 
-        $this->info("Done. [A] updated {$aUpdated} row(s); [B] updated {$bUpdated} row(s).");
+        $this->info("Done. [A] flag-only {$aFlagOnly} row(s); [A] flag+email_verified_at {$aStamped} row(s); [B] {$bUpdated} row(s).");
 
         return self::SUCCESS;
     }
