@@ -25,10 +25,12 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        // ملاحظة: رقم الهاتف (phone) لم يعد يُحفَظ من هذا النموذج مباشرةً —
+        // صار يُدار حصراً عبر مسار توثيق الهاتف المنفصل (PhoneVerificationController)
+        // الذي يرسل OTP للرقم الجديد ويؤكده قبل اعتماده. لذا أُزيل من قواعد التحقق هنا.
         $validated = $request->validate([
             'name'       => ['required', 'string', 'max:255'],
             'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'phone'      => ['nullable', 'string', 'max:20', 'unique:users,phone,' . $user->id],
             'whatsapp'   => ['nullable', 'string', 'max:20'],
             'avatar'     => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'governorate'=> ['nullable', 'string', 'max:100'],

@@ -4,6 +4,7 @@ namespace App\Auth\Services;
 
 use App\Auth\Jobs\SendOtpEmailJob;
 use App\Auth\Jobs\SendOtpSmsJob;
+use App\Auth\Jobs\SendPhoneVerificationSmsJob;
 use App\Auth\ValueObjects\OtpCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -22,11 +23,86 @@ class OtpService
             'otp_code' => $otp->hash,
             'otp_expires_at' => now()->addMinutes($minutes),
             'otp_attempts' => 0,
+            'otp_channel' => $viaEmail ? 'email' : 'phone',
         ]);
 
         $this->dispatchDelivery($user, $otp->plain, $viaEmail);
 
         return $otp;
+    }
+
+    /**
+     * Issue an OTP for the post-registration phone-verification flow.
+     *
+     * Stages the new number in `pending_phone` (the live verified `phone` is left
+     * untouched until confirmed) and sends the code via SMS to THAT number.
+     */
+    public function issueForPhone(User $user, string $phone): OtpCode
+    {
+        $length = config('auth-security.otp.length', 4);
+        $otp = OtpCode::generate($length);
+        $minutes = config('auth-security.otp.expires_minutes', 5);
+
+        $user->forceFill([
+            'otp_code' => $otp->hash,
+            'otp_expires_at' => now()->addMinutes($minutes),
+            'otp_attempts' => 0,
+            'otp_channel' => 'phone',
+            'pending_phone' => $phone,
+        ])->save();
+
+        SendPhoneVerificationSmsJob::dispatch($user->id, $phone, $otp->plain)
+            ->onQueue(config('auth-security.queues.sms'))
+            ->afterCommit();
+
+        return $otp;
+    }
+
+    /**
+     * Verify an OTP for the post-registration phone flow.
+     *
+     * Validates the active code (expiry / match / attempts / lock) and clears the
+     * OTP fields on success. It deliberately does NOT mutate phone /
+     * is_phone_verified / phone_verified_at / points — those phone-confirmation
+     * side effects are the caller's responsibility (PhoneVerificationController),
+     * keeping this method independent of the registration-gate verify().
+     */
+    public function verifyPhone(User $user, string $candidate): bool
+    {
+        $this->ensureNotLocked($user);
+
+        return DB::transaction(function () use ($user, $candidate) {
+            /** @var User $locked */
+            $locked = User::query()->lockForUpdate()->findOrFail($user->id);
+
+            if (! $locked->otp_code || ! $locked->otp_expires_at) {
+                $this->recordFailedAttempt($locked);
+
+                return false;
+            }
+
+            if (now()->greaterThan($locked->otp_expires_at)) {
+                $this->recordFailedAttempt($locked);
+
+                return false;
+            }
+
+            if (! OtpCode::verify($candidate, $locked->otp_code)) {
+                $this->recordFailedAttempt($locked);
+
+                return false;
+            }
+
+            $locked->update([
+                'otp_code' => null,
+                'otp_expires_at' => null,
+                'otp_attempts' => 0,
+            ]);
+
+            Cache::forget($this->lockKey($locked));
+
+            return true;
+        });
     }
 
     public function resend(User $user): void

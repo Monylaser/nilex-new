@@ -75,6 +75,15 @@ return [
         'self' => 'You cannot send a message to yourself.',
     ],
 
+    // Post-registration phone verification (PhoneVerificationController)
+    'phone' => [
+        'required'     => 'Please enter your mobile number.',
+        'invalid'      => 'Invalid Egyptian mobile number (must start with 01 and be 11 digits).',
+        'already_taken'=> 'This phone number is already registered to another account.',
+        'no_pending'   => 'There is no number awaiting confirmation. Send the verification code first.',
+        'otp_invalid'  => 'The code is incorrect or has expired.',
+    ],
+
     // Listing editing after publish (HomeController::edit/update)
     'listing' => [
         'updated_success'           => 'Your listing was updated and will be reviewed again before it shows. ✏️',

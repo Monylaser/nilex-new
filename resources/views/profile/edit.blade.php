@@ -121,22 +121,8 @@
                         @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- Phone --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-zinc-700 mb-1.5">
-                            {{ __('ui.profile.info.phone') }}
-                            @if($user->phone && ($user->is_phone_verified ?? false))
-                                <span class="text-nilex font-bold text-xs">{{ __('ui.profile.info.verified_suffix') }}</span>
-                            @endif
-                        </label>
-                        <div class="relative">
-                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-sm select-none">🇪🇬 +20</span>
-                            <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}"
-                                   placeholder="01XXXXXXXXX" dir="ltr"
-                                   class="w-full border border-zinc-200 rounded-xl py-2.5 pl-4 pr-20 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all text-start">
-                        </div>
-                        @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
+                    {{-- ملاحظة: رقم الموبايل انتقل إلى بطاقة "توثيق رقم الموبايل" المنفصلة
+                         (مسار OTP) أدناه — لم يعد يُحفَظ من هذا النموذج مباشرةً. --}}
 
                     {{-- WhatsApp --}}
                     <div>
@@ -188,6 +174,107 @@
                         {{ __('ui.profile.info.save') }}
                     </button>
                 </form>
+            </div>
+
+            {{-- ══════════════════════════════════════════════════════════════
+                 PHONE VERIFICATION (separate post-registration OTP flow)
+            ══════════════════════════════════════════════════════════════ --}}
+            <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+                <h3 class="text-base font-black text-zinc-900 mb-1">{{ __('ui.profile.phone_verify.heading') }}</h3>
+                <p class="text-sm text-zinc-500 mb-4">{{ __('ui.profile.phone_verify.description') }}</p>
+
+                {{-- Flash messages --}}
+                @if(session('status') === 'phone-verified')
+                    <div class="alert-success mb-4 text-sm">{{ __('ui.profile.phone_verify.verified_flash') }}</div>
+                @elseif(session('status') === 'phone-otp-sent')
+                    <div class="alert-success mb-4 text-sm">{{ __('ui.profile.phone_verify.sent_flash') }}</div>
+                @endif
+
+                {{-- Current verified status --}}
+                <div class="mb-4 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+                    @if($user->phone && ($user->is_phone_verified ?? false))
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <p class="text-xs text-zinc-400 mb-0.5">{{ __('ui.profile.phone_verify.current_verified') }}</p>
+                                <p class="text-sm font-bold text-zinc-800" dir="ltr">🇪🇬 +20 {{ $user->phone }}</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold text-nilex bg-nilex/8 px-2.5 py-1 rounded-full shrink-0">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                {{ __('ui.profile.phone_verify.verified_badge') }}
+                            </span>
+                        </div>
+                    @else
+                        <p class="text-sm text-zinc-500">{{ __('ui.profile.phone_verify.none_yet') }}</p>
+                    @endif
+                </div>
+
+                {{-- One-time +50 bonus hint --}}
+                @if(is_null($user->phone_bonus_claimed_at))
+                    <p class="flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl mb-4">
+                        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z"/><path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z"/></svg>
+                        {{ __('ui.profile.phone_verify.bonus_hint') }}
+                    </p>
+                @else
+                    <p class="text-xs text-zinc-400 mb-4">{{ __('ui.profile.phone_verify.bonus_claimed') }}</p>
+                @endif
+
+                @if($user->pending_phone)
+                    {{-- OTP verification step --}}
+                    <form method="POST" action="{{ route('profile.phone.verify') }}" class="space-y-3">
+                        @csrf
+                        <p class="text-sm text-zinc-600">{{ __('ui.profile.phone_verify.otp_sent_to', ['phone' => '+20 '.$user->pending_phone]) }}</p>
+                        <div>
+                            <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.phone_verify.otp_label') }}</label>
+                            <input type="text" inputmode="numeric" name="otp" maxlength="4" dir="ltr"
+                                   placeholder="{{ __('ui.profile.phone_verify.otp_placeholder') }}"
+                                   class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm tracking-[0.5em] text-center focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                            @error('otp') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <button type="submit"
+                                class="w-full bg-nilex hover:bg-nilex-dark text-white font-bold py-3 rounded-xl transition-all active:scale-[0.99] text-sm"
+                                style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                            {{ __('ui.profile.phone_verify.verify_btn') }}
+                        </button>
+                    </form>
+
+                    {{-- Resend / change number --}}
+                    <form method="POST" action="{{ route('profile.phone.send') }}" class="mt-4 pt-4 border-t border-zinc-100 space-y-3">
+                        @csrf
+                        <label class="block text-sm font-semibold text-zinc-700">{{ __('ui.profile.phone_verify.change_number') }}</label>
+                        <div class="relative">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-sm select-none">🇪🇬 +20</span>
+                            <input type="tel" name="phone" value="{{ old('phone', $user->pending_phone) }}"
+                                   placeholder="{{ __('ui.profile.phone_verify.phone_placeholder') }}" dir="ltr"
+                                   class="w-full border border-zinc-200 rounded-xl py-2.5 pl-4 pr-20 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all text-start">
+                        </div>
+                        @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        <button type="submit"
+                                class="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold py-2.5 rounded-xl transition-all text-sm">
+                            {{ __('ui.profile.phone_verify.resend') }}
+                        </button>
+                    </form>
+                @else
+                    {{-- Entry step --}}
+                    <form method="POST" action="{{ route('profile.phone.send') }}" class="space-y-3">
+                        @csrf
+                        <div>
+                            <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.phone_verify.phone_label') }}</label>
+                            <div class="relative">
+                                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-sm select-none">🇪🇬 +20</span>
+                                <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}"
+                                       placeholder="{{ __('ui.profile.phone_verify.phone_placeholder') }}" dir="ltr"
+                                       class="w-full border border-zinc-200 rounded-xl py-2.5 pl-4 pr-20 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all text-start">
+                            </div>
+                            @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            <p class="text-xs text-zinc-400 mt-1.5">{{ __('ui.profile.phone_verify.note_sms') }}</p>
+                        </div>
+                        <button type="submit"
+                                class="w-full bg-nilex hover:bg-nilex-dark text-white font-bold py-3 rounded-xl transition-all active:scale-[0.99] text-sm"
+                                style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                            {{ __('ui.profile.phone_verify.send_code') }}
+                        </button>
+                    </form>
+                @endif
             </div>
 
             {{-- ══════════════════════════════════════════════════════════════

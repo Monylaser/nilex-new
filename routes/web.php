@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymobController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;          // ✅ بدل OtpVerificationController
 use App\Http\Controllers\Auth\SocialiteController;    // ✅ بدل NilexAuthController
@@ -97,6 +98,10 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // 3.1 توثيق رقم الهاتف (مسار منفصل بعد التسجيل) — إرسال OTP للرقم الجديد ثم تأكيده
+    Route::post('/profile/phone', [PhoneVerificationController::class, 'send'])->name('profile.phone.send');
+    Route::post('/profile/phone/verify', [PhoneVerificationController::class, 'verify'])->name('profile.phone.verify');
 
     // 4. سجل النقاط
     Route::get('/points/history', function () {
