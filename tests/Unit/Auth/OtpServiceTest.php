@@ -25,7 +25,10 @@ class OtpServiceTest extends TestCase
         $this->assertTrue($service->verify($user, '4321'));
 
         $user->refresh();
-        $this->assertTrue($user->is_phone_verified);
+        // withPendingOtp() is an EMAIL-channel OTP, so confirmation stamps
+        // email_verified_at — not is_phone_verified (Phase 5.5).
+        $this->assertNotNull($user->email_verified_at);
+        $this->assertFalse($user->is_phone_verified);
         $this->assertNull($user->otp_code);
         $this->assertNull($user->otp_expires_at);
     }
@@ -37,6 +40,9 @@ class OtpServiceTest extends TestCase
 
         $user = User::factory()->create([
             'is_phone_verified' => false,
+            // Unconfirmed on both channels, else verify() short-circuits on the
+            // inherited default email_verified_at=now() (Phase 5.5).
+            'email_verified_at' => null,
             'otp_code' => Hash::make('1234'),
             'otp_expires_at' => now()->subMinute(),
         ]);

@@ -9,8 +9,9 @@
  *      source is RegisteredUserController.)
  *   - A first-time Socialite (Google) signup grants EXACTLY 50 points, matching
  *     the normal signup (no path is left at 100).
- *   - Phone OTP verification still credits +50 ON TOP, once, and that credit is
- *     recorded as a PointTransaction visible in the user's points history.
+ *   - Registration OTP confirmation grants NO extra points (Phase 2 removed the
+ *     old +50; the +50 *phone* bonus moved to the profile phone-verification
+ *     flow in Phase 5, granted once per lifetime via phone_bonus_claimed_at).
  *   - The earn-guide + footer teaser advertise 50, never 100.
  */
 
@@ -42,7 +43,7 @@ it('grants exactly 50 points on a first-time Socialite signup (matches normal si
     expect($user->points)->toBe(50);
 });
 
-it('adds +50 phone-verification points on top and records it in the points history', function () {
+it('grants no extra points on registration OTP confirmation (the +50 moved to the profile phone flow)', function () {
     Queue::fake();
 
     // Simulate a user who just registered (already holds the 50 welcome points).
@@ -52,28 +53,28 @@ it('adds +50 phone-verification points on top and records it in the points histo
         ->post(route('otp.verify'), ['otp' => '5678'])
         ->assertRedirect(route('dashboard'));
 
-    expect($user->fresh()->points)->toBe(100); // 50 welcome + 50 verification
+    // Registration confirmation grants nothing extra — balance stays 50.
+    expect($user->fresh()->points)->toBe(50);
 
-    // The verification credit must be a real transaction visible in history.
-    $this->assertDatabaseHas('point_transactions', [
+    // And it must NOT create the (now-removed) registration-time phone bonus.
+    $this->assertDatabaseMissing('point_transactions', [
         'user_id'     => $user->id,
-        'amount'      => 50,
         'description' => 'مكافأة توثيق رقم الهاتف',
     ]);
 });
 
-it('does not credit phone-verification points twice if already verified', function () {
+it('never credits extra points on repeated registration OTP verification', function () {
     Queue::fake();
 
     $user = User::factory()->withPendingOtp('4321')->create(['points' => 50]);
 
-    // First verification → +50.
+    // First verification → no extra credit.
     $this->actingAs($user)->post(route('otp.verify'), ['otp' => '4321']);
-    expect($user->fresh()->points)->toBe(100);
+    expect($user->fresh()->points)->toBe(50);
 
-    // A repeat verify attempt must not credit again.
+    // A repeat verify attempt must not credit either.
     $this->actingAs($user->fresh())->post(route('otp.verify'), ['otp' => '4321']);
-    expect($user->fresh()->points)->toBe(100);
+    expect($user->fresh()->points)->toBe(50);
 });
 
 it('advertises 50 (not 100) in the earn-guide and footer teaser', function () {
