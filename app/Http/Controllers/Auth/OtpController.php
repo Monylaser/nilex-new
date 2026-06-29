@@ -41,14 +41,11 @@ class OtpController extends Controller
 
         $this->otpService->ensureNotLocked($user);
 
-        $wasAlreadyVerified = $user->is_phone_verified;
-
         if ($this->otpService->verify($user, $request->string('otp')->toString())) {
-            // Credit +50 points once per user on first successful phone verification
-            if (! $wasAlreadyVerified) {
-                $this->pointService->credit($user, 50, 'مكافأة توثيق رقم الهاتف');
-            }
-
+            // ملاحظة: تأكيد الحساب عبر OTP (إيميل أو هاتف وقت التسجيل) لم يعد يمنح
+            // أي مكافأة منفصلة — المكافأة الترحيبية (+50) عند إنشاء الحساب تغطّيه
+            // ضمنياً. مكافأة "توثيق الهاتف +50" انتقلت إلى مسار توثيق الهاتف المنفصل
+            // من البروفايل، وتُمنح مرة واحدة فقط في عمر الحساب عبر flag دائم.
             return redirect()->route('dashboard')->with('success', __('server.auth.verified_success'));
         }
 

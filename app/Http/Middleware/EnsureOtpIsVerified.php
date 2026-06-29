@@ -18,10 +18,13 @@ class EnsureOtpIsVerified
             return $next($request);
         }
 
-        // كودك الأصلي زي ما هو بالملي بدون حذف أي حرف:
-        // لو اليوزر مسجل دخول، بس حقل is_phone_verified لسه false
-        if ($request->user() && !$request->user()->is_phone_verified) {
-            // نرجعه فوراً لصفحة إدخال الكود
+        // 🔑 بوابة "تأكيد الحساب": تقبل أيّ قناة تأكيد —
+        // توثيق هاتف فعلي (is_phone_verified) أو تأكيد بريد (email_verified_at).
+        // هذا يفصل مفهوم "تأكيد الحساب" (المطلوب للوصول) عن "توثيق هاتف حقيقي"،
+        // ويمنع حبس المستخدمين المسجَّلين بإيميل في حلقة إعادة توجيه لصفحة الـ OTP.
+        $user = $request->user();
+        if ($user && ! $user->is_phone_verified && $user->email_verified_at === null) {
+            // غير مؤكَّد بأيّ قناة → نرجعه فوراً لصفحة إدخال الكود
             return redirect()->route('otp.notice')->with('error', __('server.auth.otp_gate'));
         }
 
