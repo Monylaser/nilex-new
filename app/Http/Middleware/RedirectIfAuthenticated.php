@@ -18,8 +18,8 @@ class RedirectIfAuthenticated
             if (Auth::guard($guard)->check()) {
                 $user = Auth::guard($guard)->user();
 
-                // لو مش verified OTP يروح لصفحة الـ OTP
-                if (! $user->is_phone_verified) {
+                // لو الحساب غير مؤكَّد بأيّ قناة (لا هاتف ولا بريد) يروح لصفحة الـ OTP
+                if (! $user->is_phone_verified && $user->email_verified_at === null) {
                     return redirect()->route('otp.notice');
                 }
 

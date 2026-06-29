@@ -111,6 +111,21 @@ class OtpService
         $this->issue($user, $viaEmail);
     }
 
+    /**
+     * Verify the registration OTP — CHANNEL-AWARE (Phase 5.5).
+     *
+     * The registration code is sent over email (when the user signed up with an
+     * email, phone = null) or SMS (phone signup). The successful confirmation now
+     * stamps the matching column instead of always flipping is_phone_verified:
+     *   - email channel  -> email_verified_at = now()  (is_phone_verified stays false)
+     *   - phone channel  -> is_phone_verified = true + phone_verified_at = now()
+     *
+     * This stops email registrants from being mis-flagged as "phone verified"
+     * (the root bug Phase 4's backfill cleaned). The account-confirmation gate
+     * accepts either channel (EnsureOtpIsVerified + the 3 redirect gates), so
+     * email users still reach the dashboard. The dedicated +50 *phone* bonus now
+     * lives only in the profile phone-verification flow (Phase 5).
+     */
     public function verify(User $user, string $candidate): bool
     {
         $this->ensureNotLocked($user);
@@ -119,7 +134,8 @@ class OtpService
             /** @var User $locked */
             $locked = User::query()->lockForUpdate()->findOrFail($user->id);
 
-            if ($locked->is_phone_verified) {
+            // Already confirmed by EITHER channel — nothing to do.
+            if ($locked->is_phone_verified || $locked->email_verified_at !== null) {
                 return true;
             }
 
@@ -141,12 +157,26 @@ class OtpService
                 return false;
             }
 
-            $locked->update([
-                'is_phone_verified' => true,
+            // Resolve the channel; fall back to inferring from the contact on
+            // file for any legacy in-flight OTP issued before otp_channel existed.
+            $channel = $locked->otp_channel ?? ($locked->phone ? 'phone' : 'email');
+
+            $updates = [
                 'otp_code' => null,
                 'otp_expires_at' => null,
                 'otp_attempts' => 0,
-            ]);
+                'otp_channel' => null,
+            ];
+
+            if ($channel === 'phone') {
+                $updates['is_phone_verified'] = true;
+                $updates['phone_verified_at'] = now();
+            } else {
+                // email_verified_at is not in $fillable, so write via forceFill.
+                $updates['email_verified_at'] = now();
+            }
+
+            $locked->forceFill($updates)->save();
 
             Cache::forget($this->lockKey($locked));
 

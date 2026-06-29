@@ -32,7 +32,8 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended('/admin');
         }
 
-        if (! $request->user()->is_phone_verified) {
+        $authUser = $request->user();
+        if (! $authUser->is_phone_verified && $authUser->email_verified_at === null) {
             return redirect()->intended(route('otp.notice', absolute: false));
         }
 

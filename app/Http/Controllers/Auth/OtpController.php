@@ -20,7 +20,8 @@ class OtpController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        if ($user->is_phone_verified) {
+        // الحساب مؤكَّد بأيّ قناة (هاتف فعلي أو بريد) → لا داعي لصفحة الـOTP.
+        if ($user->is_phone_verified || $user->email_verified_at !== null) {
             return redirect()->route('dashboard');
         }
 
