@@ -4,22 +4,16 @@
 
 @push('styles')
     <style>
-        .cat-pill {
+        .hero-search-bar {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 6px;
-            padding: 10px 6px 8px;
-            border-radius: 10px;
-            border: 1.5px solid transparent;
-            cursor: pointer;
             background: #fff;
+            border-radius: 0.75rem;
+            padding: 0.375rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
         }
-        .cat-pill:hover {
-            border-color: #222222;
-        }
-        .cat-pill.active {
-            border-color: #222222;
+        .hero-search-bar:focus-within {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22), 0 0 0 2px rgba(20, 165, 168, 0.35);
         }
 
         .listing-card {
@@ -44,32 +38,62 @@
 
 @section('content')
 
+@php
+    $iconMap = [
+        'سيار'   => 'car.png',
+        'عقار'   => 'buildings.png', 'شقة' => 'buildings.png', 'منزل' => 'buildings.png',
+        'موبايل' => 'mobile.png', 'هاتف' => 'mobile.png', 'إلكترون' => 'mobile.png', 'جوال' => 'mobile.png',
+        'جهاز'  => 'appliance.png', 'أجهزة' => 'appliance.png', 'منزلي' => 'appliance.png',
+        'ملابس' => 'fashion.png', 'أزياء' => 'fashion.png', 'موضة' => 'fashion.png',
+        'حيوان' => 'pets.png',
+        'أطفال' => 'kids.png', 'طفل' => 'kids.png',
+        'هواية' => 'hobbies.png', 'رياضة' => 'hobbies.png', 'هوايات' => 'hobbies.png',
+        'صناع'  => 'industrial.png', 'معدات' => 'industrial.png', 'تجهيز' => 'industrial.png',
+    ];
+@endphp
+
 {{-- ══════════════════════════════════════════
-     HERO — minimal centered search
+     HERO — Lovable navy gradient
 ══════════════════════════════════════════ --}}
-<section class="bg-white" style="padding-top:64px; border-bottom:1px solid #ebebeb;">
+<section class="relative overflow-hidden text-white"
+         style="padding-top:64px; background: radial-gradient(ellipse at top, #1a3a6b 0%, #0f1f3d 70%);">
+    {{-- Decorative depth circles --}}
+    <div class="pointer-events-none absolute -top-24 -end-16 w-72 h-72 rounded-full bg-white/[0.18]" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute top-32 -start-20 w-56 h-56 rounded-full bg-nilex-teal/[0.15]" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute -bottom-16 end-1/4 w-40 h-40 rounded-full bg-white/[0.12]" aria-hidden="true"></div>
+
     @if(config('features.self_service_ads'))
-        <x-ad-banner placement="hero_top" wrapper-class="max-w-7xl mx-auto px-4 pb-4" />
+        <x-ad-banner placement="hero_top" wrapper-class="relative max-w-7xl mx-auto px-4 pb-4" />
     @endif
-    <div class="max-w-2xl mx-auto px-4 py-10 text-center">
-        <h1 class="text-2xl sm:text-3xl font-black text-zinc-900 mb-1 leading-tight">
+
+    <div class="relative max-w-2xl mx-auto px-4 py-10 sm:py-12 text-center">
+        <div class="trust-badge mb-5">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <span>{{ __('ui.hero.badge') ?? 'منصة إعلانات مبوبة موثوقة في مصر' }}</span>
+        </div>
+
+        <h1 class="text-4xl sm:text-[2.5rem] font-bold text-white mb-3 leading-tight">
             {{ __('ui.hero.title_1') ?? 'بيع واشتري' }}
-            <span class="text-nilex">{{ __('ui.hero.title_2') ?? 'بثقة وسهولة' }}</span>
+            {{ __('ui.hero.title_2') ?? 'بثقة وسهولة' }}
         </h1>
-        <p class="text-sm text-zinc-400 mb-6">
-            {{ __('ui.hero.badge') ?? 'منصة إعلانات مبوبة موثوقة في مصر' }}
+
+        <p class="text-sm sm:text-base text-white/70 mb-8 leading-relaxed max-w-lg mx-auto">
+            {!! __('ui.hero.subtitle') ?? 'منصة إعلانات مبوبة موثوقة في مصر' !!}
         </p>
 
-        {{-- Main search bar --}}
+        {{-- Main search bar — button inside white bar on the right --}}
         <form action="{{ route('listings.search') }}" method="GET">
-            <div class="search-pill flex items-center">
+            <div class="hero-search-bar" dir="ltr">
                 <input type="text" name="q"
                        placeholder="{{ __('ui.hero.search_placeholder') ?? 'بتدور على إيه؟' }}"
-                       class="flex-1 bg-transparent text-zinc-800 placeholder-zinc-400 py-3.5 px-5 text-sm focus:outline-none"
-                       style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}; min-width:0;">
+                       class="flex-1 bg-transparent text-zinc-800 placeholder-zinc-400 py-3 px-4 text-sm focus:outline-none min-w-0"
+                       style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                 <button type="submit"
-                        class="btn-nilex-primary flex items-center gap-1.5 text-sm px-5 py-3 me-1 rounded-3xl shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="btn-nilex-primary flex items-center gap-1.5 text-sm px-5 py-2.5 rounded-lg shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     {{ __('ui.hero.search_btn') ?? 'بحث' }}
@@ -78,20 +102,20 @@
         </form>
 
         {{-- Stats row --}}
-        <div class="flex items-center justify-center gap-6 mt-5">
+        <div class="flex items-center justify-center gap-6 mt-6">
             <div>
-                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_1_num') ?? '12000+' }}</span>
-                <span class="text-xs text-zinc-400 ms-1">{{ __('ui.hero.stat_1_label') ?? 'إعلان' }}</span>
+                <span class="text-sm font-bold text-white">{{ __('ui.hero.stat_1_num') ?? '12000+' }}</span>
+                <span class="text-xs text-white/60 ms-1">{{ __('ui.hero.stat_1_label') ?? 'إعلان' }}</span>
             </div>
-            <div class="w-px h-4 bg-zinc-200"></div>
+            <div class="w-px h-4 bg-white/20"></div>
             <div>
-                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_2_num') ?? '8000+' }}</span>
-                <span class="text-xs text-zinc-400 ms-1">{{ __('ui.hero.stat_2_label') ?? 'مستخدم' }}</span>
+                <span class="text-sm font-bold text-white">{{ __('ui.hero.stat_2_num') ?? '8000+' }}</span>
+                <span class="text-xs text-white/60 ms-1">{{ __('ui.hero.stat_2_label') ?? 'مستخدم' }}</span>
             </div>
-            <div class="w-px h-4 bg-zinc-200"></div>
+            <div class="w-px h-4 bg-white/20"></div>
             <div>
-                <span class="text-sm font-black text-zinc-900">{{ __('ui.hero.stat_3_num') ?? '27' }}</span>
-                <span class="text-xs text-zinc-400 ms-1">{{ __('ui.hero.stat_3_label') ?? 'محافظة' }}</span>
+                <span class="text-sm font-bold text-white">{{ __('ui.hero.stat_3_num') ?? '27' }}</span>
+                <span class="text-xs text-white/60 ms-1">{{ __('ui.hero.stat_3_label') ?? 'محافظة' }}</span>
             </div>
         </div>
     </div>
@@ -99,24 +123,11 @@
 
 
 {{-- ══════════════════════════════════════════
-     STICKY CATEGORIES SCROLL BAR
+     STICKY CATEGORIES — horizontal scrollable pills
 ══════════════════════════════════════════ --}}
-<div class="bg-white border-b border-zinc-100 sticky top-16 z-40">
-    <div class="max-w-7xl mx-auto px-4 py-2 overflow-x-auto no-scrollbar">
-        <div class="flex gap-4 md:gap-5 justify-start md:justify-center items-center" style="min-width:max-content;">
-            @php
-                $iconMap = [
-                    'سيار'   => 'car.png',
-                    'عقار'   => 'buildings.png', 'شقة' => 'buildings.png', 'منزل' => 'buildings.png',
-                    'موبايل' => 'mobile.png', 'هاتف' => 'mobile.png', 'إلكترون' => 'mobile.png', 'جوال' => 'mobile.png',
-                    'جهاز'  => 'appliance.png', 'أجهزة' => 'appliance.png', 'منزلي' => 'appliance.png',
-                    'ملابس' => 'fashion.png', 'أزياء' => 'fashion.png', 'موضة' => 'fashion.png',
-                    'حيوان' => 'pets.png',
-                    'أطفال' => 'kids.png', 'طفل' => 'kids.png',
-                    'هواية' => 'hobbies.png', 'رياضة' => 'hobbies.png', 'هوايات' => 'hobbies.png',
-                    'صناع'  => 'industrial.png', 'معدات' => 'industrial.png', 'تجهيز' => 'industrial.png',
-                ];
-            @endphp
+<div class="bg-nilex-bg border-b border-zinc-100 sticky top-16 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 overflow-x-auto no-scrollbar">
+        <div class="flex gap-2.5 items-center w-max min-w-full">
             @foreach($categories as $cat)
                 @php
                     $ico = null;
@@ -124,24 +135,18 @@
                         if (str_contains($cat->name_ar, $kw)) { $ico = $file; break; }
                     }
                 @endphp
-                <a href="{{ route('category.show', $cat) }}"
-                   class="pill-category group">
-                    <div class="w-7 h-7 flex items-center justify-center">
-                        @if($cat->icon)
-                            <img src="{{ asset('storage/'.$cat->icon) }}" alt="{{ $cat->name }}"
-                                 class="w-6 h-6 object-contain">
-                        @elseif($ico)
-                            <img src="{{ asset('images/categories/'.$ico) }}" alt="{{ $cat->name }}"
-                                 class="w-6 h-6 object-contain">
-                        @else
-                            <span class="w-6 h-6 rounded-full bg-white/70 flex items-center justify-center text-[11px] font-black text-nilex">
-                                {{ mb_substr($cat->name, 0, 1) }}
-                            </span>
-                        @endif
-                    </div>
-                    <span class="line-clamp-1 text-center" style="max-width:48px;">
-                        {{ $cat->name }}
-                    </span>
+                <a href="{{ route('category.show', $cat) }}" class="pill-category">
+                    @if($cat->icon)
+                        <img src="{{ asset('storage/'.$cat->icon) }}" alt="" class="pill-category-icon">
+                    @elseif($ico)
+                        <img src="{{ asset('images/categories/'.$ico) }}" alt="" class="pill-category-icon">
+                    @else
+                        <svg class="pill-category-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                    @endif
+                    <span>{{ $cat->name }}</span>
                 </a>
             @endforeach
         </div>
@@ -153,39 +158,6 @@
      MAIN CONTENT
 ══════════════════════════════════════════ --}}
 <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
-
-    {{-- ── CATEGORIES GRID ── --}}
-    <section>
-        <h2 class="text-base font-bold text-zinc-900 mb-4">{{ __('ui.sections.browse_by_category') ?? 'تصفح حسب الفئة' }}</h2>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-            @foreach($categories as $cat)
-                @php
-                    $catIco = null;
-                    foreach ($iconMap as $kw => $file) {
-                        if (str_contains($cat->name_ar, $kw)) { $catIco = $file; break; }
-                    }
-                @endphp
-                <a href="{{ route('category.show', $cat) }}" class="cat-pill group">
-                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-50 overflow-hidden">
-                        @if($cat->icon)
-                            <img src="{{ asset('storage/'.$cat->icon) }}" alt=""
-                                 class="w-7 h-7 object-contain">
-                        @elseif($catIco)
-                            <img src="{{ asset('images/categories/'.$catIco) }}" alt=""
-                                 class="w-7 h-7 object-contain">
-                        @else
-                            <span class="text-base font-black text-zinc-400">{{ mb_substr($cat->name, 0, 1) }}</span>
-                        @endif
-                    </div>
-                    <span class="text-[11px] font-semibold text-zinc-700 line-clamp-2 leading-tight w-full text-center">
-                        {{ $cat->name }}
-                    </span>
-                </a>
-            @endforeach
-        </div>
-    </section>
-
 
     {{-- ── FEATURED LISTINGS ── --}}
     @if($featuredListings->count())
