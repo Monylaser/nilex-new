@@ -89,7 +89,7 @@
             <div class="hero-search-bar" dir="ltr">
                 <input type="text" name="q"
                        placeholder="{{ __('ui.hero.search_placeholder') ?? 'بتدور على إيه؟' }}"
-                       class="flex-1 bg-transparent text-zinc-800 placeholder-zinc-400 py-3 px-4 text-sm focus:outline-none min-w-0"
+                       class="flex-1 bg-white border-0 border-transparent outline-none ring-0 focus:ring-0 focus:outline-none text-zinc-800 placeholder-zinc-400 py-3 px-4 text-sm min-w-0"
                        style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                 <button type="submit"
                         class="btn-nilex-primary flex items-center gap-1.5 text-sm px-5 py-2.5 rounded-lg shrink-0">
@@ -126,8 +126,8 @@
      STICKY CATEGORIES — horizontal scrollable pills
 ══════════════════════════════════════════ --}}
 <div class="bg-nilex-bg border-b border-zinc-100 sticky top-16 z-40">
-    <div class="max-w-7xl mx-auto px-4 py-3 overflow-x-auto no-scrollbar">
-        <div class="flex gap-2.5 items-center w-max min-w-full">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+        <div class="flex flex-nowrap gap-2 items-center overflow-x-auto no-scrollbar pb-1">
             @foreach($categories as $cat)
                 @php
                     $ico = null;
