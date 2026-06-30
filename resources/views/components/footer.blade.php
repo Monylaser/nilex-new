@@ -221,8 +221,7 @@
                 <div class="mt-6 p-4 rounded-2xl" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);">
                     <p class="text-xs font-bold text-white mb-2">{{ __('ui.footer.gift_teaser') }}</p>
                     <a href="/register"
-                       class="block text-center text-xs font-bold py-2 px-4 rounded-xl transition-all duration-200"
-                       style="background:linear-gradient(135deg,#1D9E75,#085041); color:white; box-shadow:0 4px 14px rgba(29,158,117,.3);">
+                       class="btn-nilex-primary inline-flex items-center justify-center text-center text-xs py-2 px-4 rounded-xl w-full">
                         {{ __('ui.footer.register_free') }}
                     </a>
                 </div>

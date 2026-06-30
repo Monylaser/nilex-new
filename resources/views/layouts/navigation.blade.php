@@ -11,7 +11,7 @@
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @if(config('features.self_service_ads'))
                     <a href="{{ route('ads.pricing') }}"
-                       class="text-sm text-zinc-600 hover:text-[#1D9E75] transition-colors inline-flex items-center px-1 pt-1">
+                       class="text-sm text-zinc-600 hover:text-nilex transition-colors inline-flex items-center px-1 pt-1">
                         {{ __('ui.nav.ad_spaces') }}
                     </a>
                     @endif
@@ -63,8 +63,8 @@
                 @endauth
 
                 @guest
-                    <a href="{{ route('login') }}" class="text-sm font-bold text-gray-600 hover:text-blue-600">{{ __('ui.nav.login_full') }}</a>
-                    <a href="{{ route('register') }}" class="text-sm font-bold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">{{ __('ui.nav.register') }}</a>
+                    <a href="{{ route('login') }}" class="text-sm font-bold text-gray-600 hover:text-nilex">{{ __('ui.nav.login_full') }}</a>
+                    <a href="{{ route('register') }}" class="btn-nilex-primary text-sm px-4 py-2 rounded-lg">{{ __('ui.nav.register') }}</a>
                 @endguest
 
             </div>

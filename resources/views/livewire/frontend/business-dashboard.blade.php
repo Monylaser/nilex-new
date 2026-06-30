@@ -15,8 +15,7 @@
                     {{ __('ui.leads.back_dashboard') }}
                 </a>
                 <button wire:click="exportCsv"
-                        class="flex items-center justify-center gap-2 bg-[#1D9E75] hover:bg-[#178a66] text-white font-bold py-3 px-5 rounded-xl transition-all text-sm active:scale-95"
-                        style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                        class="btn-nilex-primary flex items-center justify-center gap-2 py-3 px-5 rounded-xl text-sm">
                     {{ __('ui.analytics.export_csv') }}
                 </button>
             </div>

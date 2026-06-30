@@ -39,7 +39,7 @@
                     <button
                         id="cookie-accept-btn"
                         type="button"
-                        class="bg-[#1D9E75] hover:bg-[#085041] active:scale-95 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:ring-offset-2 focus:ring-offset-[#0f172a]">
+                        class="btn-nilex-primary text-sm px-5 py-2.5 rounded-xl whitespace-nowrap focus:ring-offset-[#0f172a]">
                         {{ trans('ui.cookies.accept') }}
                     </button>
                     <button

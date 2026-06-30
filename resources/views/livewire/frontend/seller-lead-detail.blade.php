@@ -83,7 +83,7 @@
                         </select>
                     </div>
                     <button type="submit"
-                            class="bg-nilex hover:bg-nilex-dark text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all">
+                            class="btn-nilex-primary py-2.5 px-5 rounded-xl text-sm">
                         {{ __('ui.leads.save_status') }}
                     </button>
                 </form>

@@ -27,8 +27,7 @@
                     <h3 class="text-base font-black text-zinc-800 mb-2">{{ __('ui.favorites.empty_title') }}</h3>
                     <p class="text-zinc-500 text-sm mb-5">{{ __('ui.favorites.empty_subtitle') }}</p>
                     <a href="{{ route('home') }}"
-                       class="inline-flex items-center gap-2 bg-nilex hover:bg-nilex-dark text-white px-6 py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
-                       style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                       class="btn-nilex-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm">
                         {{ __('ui.favorites.browse_cta') }}
                     </a>
                 </div>

@@ -165,7 +165,7 @@
                 </div>
 
                 <button type="submit"
-                        class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl bg-nilex text-white font-black text-sm hover:bg-nilex-dark transition">
+                        class="btn-nilex-primary w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-black">
                     {{ __('ui.ads_dashboard.create.submit') }}
                 </button>
             </form>

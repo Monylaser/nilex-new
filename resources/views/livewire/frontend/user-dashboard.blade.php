@@ -55,8 +55,7 @@
                     @endif
                 </a>
                 <a href="{{ route('listings.create') }}"
-                   class="flex items-center justify-center gap-2 bg-nilex hover:bg-nilex-dark text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 text-sm"
-                   style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                   class="btn-nilex-primary flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                     {{ __('ui.dashboard.add_listing') }}
                 </a>
@@ -273,7 +272,7 @@
                             @endif
                             <div class="flex gap-2">
                                 <button wire:click="acceptOffer({{ $offer->id }})"
-                                        class="flex-1 bg-nilex hover:bg-nilex-dark text-white text-xs font-bold py-2.5 rounded-xl transition-all active:scale-95">
+                                        class="btn-nilex-primary flex-1 text-xs py-2.5 rounded-xl">
                                     {{ __('ui.dashboard.offer_accept') }}
                                 </button>
                                 <button wire:click="rejectOffer({{ $offer->id }})"
@@ -472,8 +471,7 @@
                     <h3 class="text-base font-black text-zinc-800 mb-2">{{ __('ui.dashboard.empty_title') }}</h3>
                     <p class="text-zinc-500 text-sm mb-5">{{ __('ui.dashboard.empty_subtitle') }}</p>
                     <a href="{{ route('listings.create') }}"
-                       class="inline-flex items-center gap-2 bg-nilex hover:bg-nilex-dark text-white px-6 py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
-                       style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                       class="btn-nilex-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                         {{ __('ui.dashboard.empty_cta') }}
                     </a>
@@ -551,7 +549,7 @@
                     <button type="button"
                             wire:click="confirmClosing"
                             @disabled(is_null($closingType))
-                            class="flex-1 bg-nilex hover:bg-nilex-dark text-white font-bold py-2.5 rounded-xl text-sm transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
+                            class="btn-nilex-primary flex-1 py-2.5 rounded-xl text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
                         {{ __('ui.dashboard.close_confirm') }}
                     </button>
                 </div>
@@ -620,7 +618,7 @@
                         <button type="button"
                                 wire:click="confirmSaleToBuyer"
                                 @disabled(is_null($selectedBuyerId))
-                                class="flex-1 bg-nilex hover:bg-nilex-dark text-white font-bold py-2.5 rounded-xl text-sm transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
+                                class="btn-nilex-primary flex-1 py-2.5 rounded-xl text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
                             {{ __('ui.sale_confirmation.confirm_select') }}
                         </button>
                     @endunless

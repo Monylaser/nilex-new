@@ -54,7 +54,7 @@
     <div class="max-w-2xl mx-auto px-4 py-10 text-center">
         <h1 class="text-2xl sm:text-3xl font-black text-zinc-900 mb-1 leading-tight">
             {{ __('ui.hero.title_1') ?? 'بيع واشتري' }}
-            <span style="color:#1D9E75;">{{ __('ui.hero.title_2') ?? 'بثقة وسهولة' }}</span>
+            <span class="text-nilex">{{ __('ui.hero.title_2') ?? 'بثقة وسهولة' }}</span>
         </h1>
         <p class="text-sm text-zinc-400 mb-6">
             {{ __('ui.hero.badge') ?? 'منصة إعلانات مبوبة موثوقة في مصر' }}
@@ -68,7 +68,7 @@
                        class="flex-1 bg-transparent text-zinc-800 placeholder-zinc-400 py-3.5 px-5 text-sm focus:outline-none"
                        style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}; min-width:0;">
                 <button type="submit"
-                        class="flex items-center gap-1.5 bg-[#1D9E75] hover:bg-[#178a64] text-white font-bold text-sm px-5 py-3 me-1 rounded-3xl shrink-0">
+                        class="btn-nilex-primary flex items-center gap-1.5 text-sm px-5 py-3 me-1 rounded-3xl shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
@@ -134,12 +134,12 @@
                             <img src="{{ asset('images/categories/'.$ico) }}" alt="{{ $cat->name }}"
                                  class="w-6 h-6 object-contain">
                         @else
-                            <span class="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-[11px] font-black text-zinc-500 group-hover:bg-[#1D9E75]/10 group-hover:text-[#1D9E75]">
+                            <span class="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-[11px] font-black text-zinc-500 group-hover:bg-nilex/10 group-hover:text-nilex">
                                 {{ mb_substr($cat->name, 0, 1) }}
                             </span>
                         @endif
                     </div>
-                    <span class="text-[10px] font-semibold text-zinc-500 group-hover:text-[#1D9E75] line-clamp-1" style="max-width:48px;">
+                    <span class="text-[10px] font-semibold text-zinc-500 group-hover:text-nilex line-clamp-1" style="max-width:48px;">
                         {{ $cat->name }}
                     </span>
                 </a>
@@ -193,7 +193,7 @@
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-base font-bold text-zinc-900">{{ __('ui.sections.featured') ?? 'إعلانات مميزة' }}</h2>
             <a href="{{ route('listings.search') }}"
-               class="text-sm font-semibold text-[#1D9E75] underline underline-offset-2">
+               class="text-sm font-semibold text-nilex underline underline-offset-2">
                 {{ __('ui.sections.view_all') ?? 'كل الإعلانات' }}
             </a>
         </div>
@@ -230,7 +230,7 @@
                             @if($listing->condition)
                                 <div class="absolute bottom-2.5 start-2.5">
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                                          style="{{ $listing->condition === 'new' ? 'background:rgba(29,158,117,0.9);' : 'background:rgba(0,0,0,0.55);' }}">
+                                          style="{{ $listing->condition === 'new' ? 'background:rgba(5,150,105,0.9);' : 'background:rgba(0,0,0,0.55);' }}">
                                         {{ $listing->condition === 'new' ? (__('ui.sections.condition_new') ?? 'جديد') : (__('ui.sections.condition_used') ?? 'مستعمل') }}
                                     </span>
                                 </div>
@@ -268,7 +268,7 @@
 
                             <div class="mt-1.5">
                                 @if($listing->price > 0)
-                                    <span class="font-bold text-zinc-900 text-[14px]">
+                                    <span class="font-bold text-nilex-petrol text-[14px]">
                                         {{ number_format($listing->price) }}
                                         <span class="font-normal text-zinc-500 text-xs ms-0.5">{{ __('ui.sections.currency') ?? 'ج.م' }}</span>
                                     </span>
@@ -278,7 +278,7 @@
 
                                 @if($listing->user?->email_verified_at)
                                     <span class="inline-flex items-center gap-1 ms-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#1D9E75] shrink-0"></span>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                                     <span class="text-[10px] text-zinc-400 font-medium">{{ __('ui.sections.verified') }}</span>
                                     </span>
                                 @endif
@@ -340,7 +340,7 @@
                                 @if($listing->condition)
                                     <div class="absolute bottom-2 end-2">
                                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white"
-                                              style="{{ $listing->condition === 'new' ? 'background:rgba(29,158,117,0.9);' : 'background:rgba(0,0,0,0.55);' }}">
+                                              style="{{ $listing->condition === 'new' ? 'background:rgba(5,150,105,0.9);' : 'background:rgba(0,0,0,0.55);' }}">
                                             {{ $listing->condition === 'new' ? (__('ui.sections.condition_new') ?? 'جديد') : (__('ui.sections.condition_used') ?? 'مستعمل') }}
                                         </span>
                                     </div>
@@ -366,7 +366,7 @@
 
                                 <div class="mt-1">
                                     @if($listing->price > 0)
-                                        <span class="font-bold text-zinc-900 text-sm">
+                                        <span class="font-bold text-nilex-petrol text-sm">
                                             {{ number_format($listing->price) }}
                                             <span class="font-normal text-zinc-400 text-[10px] ms-0.5">{{ __('ui.sections.currency') ?? 'ج.م' }}</span>
                                         </span>
@@ -375,7 +375,7 @@
                                     @endif
 
                                     @if($listing->user?->email_verified_at)
-                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#1D9E75] ms-1 align-middle" title="{{ __('ui.sections.verified') }}"></span>
+                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 ms-1 align-middle" title="{{ __('ui.sections.verified') }}"></span>
                                     @endif
                                 </div>
                             </div>
@@ -422,7 +422,7 @@
                         <p class="text-zinc-400 text-xs mt-0.5">{{ __('ui.empty.no_listings_subtitle') ?? 'كن أول من ينشر إعلانه على منصة نايلكس' }}</p>
                     </div>
                     <a href="{{ route('listings.create') }}"
-                       class="sm:ms-auto inline-flex items-center gap-1.5 bg-[#1D9E75] hover:bg-[#178a64] text-white font-bold text-xs px-4 py-2 rounded-xl shrink-0">
+                       class="btn-nilex-primary sm:ms-auto inline-flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl shrink-0">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -434,7 +434,7 @@
                     <div class="flex flex-wrap gap-2 mb-4">
                         @foreach($categories->take(8) as $cat)
                             <a href="{{ route('category.show', $cat) }}"
-                               class="text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-[#1D9E75]/8 hover:text-[#1D9E75] border border-zinc-200 hover:border-[#1D9E75]/20 px-3 py-1.5 rounded-lg">
+                               class="text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-nilex/8 hover:text-nilex border border-zinc-200 hover:border-nilex/20 px-3 py-1.5 rounded-lg">
                                 {{ $cat->name }}
                             </a>
                         @endforeach
@@ -443,7 +443,7 @@
                     <div class="flex flex-wrap gap-1.5">
                         @foreach([['q'=>'شقق', 'loc'=>'القاهرة'], ['q'=>'سيارات', 'loc'=>'القاهرة'], ['q'=>'موبايل', 'loc'=>'الإسكندرية'], ['q'=>'أثاث', 'loc'=>null]] as $trend)
                             <a href="{{ route('listings.search', array_filter(['q' => $trend['q']])) }}"
-                               class="text-[10px] font-medium text-zinc-500 hover:text-[#1D9E75] bg-zinc-50 border border-zinc-100 px-2.5 py-1 rounded-lg">
+                               class="text-[10px] font-medium text-zinc-500 hover:text-nilex bg-zinc-50 border border-zinc-100 px-2.5 py-1 rounded-lg">
                                 {{ $trend['q'] }}{{ $trend['loc'] ? ' ' . __('ui.misc.in') . ' ' . $trend['loc'] : '' }}
                             </a>
                         @endforeach
@@ -481,7 +481,7 @@
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('listings.create') }}"
-                   class="inline-flex items-center gap-1.5 bg-[#1D9E75] hover:bg-[#178a64] text-white font-bold px-5 py-2.5 rounded-xl text-sm shrink-0">
+                   class="btn-nilex-primary inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm shrink-0">
                     {{ __('ui.cta.btn_primary') ?? 'أضف الآن' }}
                 </a>
                 @guest

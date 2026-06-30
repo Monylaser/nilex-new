@@ -85,9 +85,9 @@
                             @click="close()"
                             :disabled="!skipEnabled"
                             :class="skipEnabled
-                                ? 'bg-[#1D9E75] hover:bg-[#178a64] text-white cursor-pointer'
+                                ? 'btn-nilex-primary cursor-pointer'
                                 : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'"
-                            class="shrink-0 px-5 py-2 rounded-xl text-sm font-bold transition-colors">
+                            class="shrink-0 px-5 py-2 rounded-xl text-sm font-bold">
                         تخطي
                     </button>
                 </div>

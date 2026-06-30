@@ -61,7 +61,7 @@
                         <button type="button"
                                 wire:click="confirmPurchase({{ $sc->id }})"
                                 wire:loading.attr="disabled"
-                                class="inline-flex items-center justify-center gap-2 bg-nilex hover:bg-nilex-dark text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 text-sm">
+                                class="btn-nilex-primary inline-flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             {{ __('ui.sale_confirmation.confirm_purchase') }}
                         </button>
@@ -100,7 +100,7 @@
                             <button type="button"
                                     wire:click="submitReview({{ $sc->id }})"
                                     @disabled($current < 1)
-                                    class="inline-flex items-center justify-center gap-2 bg-nilex hover:bg-nilex-dark text-white font-bold py-2.5 px-6 rounded-xl transition-all active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                    class="btn-nilex-primary inline-flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 {{ __('ui.reviews.submit') }}
                             </button>
                         </div>
@@ -134,8 +134,7 @@
                 <h3 class="text-base font-black text-zinc-800 mb-2">{{ __('ui.sale_confirmation.empty_title') }}</h3>
                 <p class="text-zinc-500 text-sm mb-5">{{ __('ui.sale_confirmation.empty_subtitle') }}</p>
                 <a href="{{ route('home') }}"
-                   class="inline-flex items-center gap-2 bg-nilex hover:bg-nilex-dark text-white px-6 py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
-                   style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                   class="btn-nilex-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm">
                     {{ __('ui.sale_confirmation.browse_cta') }}
                 </a>
             </div>

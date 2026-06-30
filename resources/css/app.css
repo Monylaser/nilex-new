@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 /* ───────────────────────────────────────────────────────────
-   Nilex Design System — Phase 1
-   Primary: #1D9E75  |  Dark: #085041  |  Accent: #9FE1CB
+   Nilex Design System — navy blue brand
+   Primary: #11407A  |  Dark: #0B2F5C  |  Light: #3D8BD4
+   CTA/prices: #E8431D (nilex-orange) — distinct from semantic red
    Neutrals: zinc, slate, white, black
    Radius: rounded-xl / rounded-2xl only
    Shadows: soft and subtle
@@ -12,9 +13,9 @@
 
 /* ─── CSS Custom Properties ─── */
 :root {
-    --nilex: #1D9E75;
-    --nilex-dark: #085041;
-    --nilex-light: #9FE1CB;
+    --nilex: #11407A;
+    --nilex-dark: #0B2F5C;
+    --nilex-light: #3D8BD4;
     --nilex-bg: #f9fafb;
     --nilex-surface: #ffffff;
     --nilex-border: #e4e4e7;
@@ -52,7 +53,7 @@
     }
 
     *:focus-visible {
-        outline: 2px solid #1D9E75;
+        outline: 2px solid #11407A;
         outline-offset: 2px;
     }
 }
@@ -73,6 +74,23 @@
 
     .btn-primary {
         @apply btn-md bg-nilex text-white hover:bg-nilex-dark shadow-nilex;
+    }
+
+    /* Primary brand CTA — petrol gradient + glow (replaces flat bg-nilex / bg-nilex-petrol on main actions) */
+    .btn-nilex-primary {
+        @apply inline-flex items-center justify-center font-bold text-white
+               transition-all duration-200 focus:outline-none
+               focus:ring-2 focus:ring-[#0D3D3D]/40 focus:ring-offset-2
+               disabled:opacity-60 disabled:cursor-not-allowed select-none;
+        background: linear-gradient(135deg, #0D3D3D, #061818);
+        box-shadow: 0 4px 14px rgba(13, 61, 61, 0.35);
+    }
+    .btn-nilex-primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, #145454, #0D3D3D);
+        box-shadow: 0 6px 18px rgba(13, 61, 61, 0.45);
+    }
+    .btn-nilex-primary:active:not(:disabled) {
+        transform: scale(0.98);
     }
 
     .btn-secondary {
@@ -142,7 +160,7 @@
     .category-card:hover {
         @apply border-nilex/20;
         transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(29, 158, 117, 0.08);
+        box-shadow: 0 6px 18px rgba(17, 64, 122, 0.08);
     }
 
     /* ── Section Headers ── */
@@ -208,34 +226,34 @@
     .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 
     /* Nilex color utilities */
-    .bg-nilex         { background-color: #1D9E75; }
-    .bg-nilex-dark    { background-color: #085041; }
-    .bg-nilex-light   { background-color: #9FE1CB; }
-    .text-nilex       { color: #1D9E75; }
-    .text-nilex-dark  { color: #085041; }
-    .text-nilex-light { color: #9FE1CB; }
-    .border-nilex     { border-color: #1D9E75; }
-    .ring-nilex       { --tw-ring-color: #1D9E75; }
-    .shadow-nilex     { box-shadow: 0 4px 14px rgba(29, 158, 117, 0.22); }
+    .bg-nilex         { background-color: #11407A; }
+    .bg-nilex-dark    { background-color: #0B2F5C; }
+    .bg-nilex-light   { background-color: #3D8BD4; }
+    .text-nilex       { color: #11407A; }
+    .text-nilex-dark  { color: #0B2F5C; }
+    .text-nilex-light { color: #3D8BD4; }
+    .border-nilex     { border-color: #11407A; }
+    .ring-nilex       { --tw-ring-color: #11407A; }
+    .shadow-nilex     { box-shadow: 0 4px 14px rgba(17, 64, 122, 0.22); }
 
     /* Hover variants */
-    .hover\:bg-nilex:hover       { background-color: #1D9E75; }
-    .hover\:bg-nilex-dark:hover  { background-color: #085041; }
-    .hover\:text-nilex:hover     { color: #1D9E75; }
-    .hover\:border-nilex:hover   { border-color: #1D9E75; }
+    .hover\:bg-nilex:hover       { background-color: #11407A; }
+    .hover\:bg-nilex-dark:hover  { background-color: #0B2F5C; }
+    .hover\:text-nilex:hover     { color: #11407A; }
+    .hover\:border-nilex:hover   { border-color: #11407A; }
 
     /* Focus variants */
-    .focus\:border-nilex:focus   { border-color: #1D9E75; }
-    .focus\:ring-nilex:focus     { --tw-ring-color: rgba(29, 158, 117, 0.25); }
+    .focus\:border-nilex:focus   { border-color: #11407A; }
+    .focus\:ring-nilex:focus     { --tw-ring-color: rgba(17, 64, 122, 0.25); }
 
     /* Opacity variants of nilex */
-    .bg-nilex\/10  { background-color: rgba(29, 158, 117, 0.10); }
-    .bg-nilex\/20  { background-color: rgba(29, 158, 117, 0.20); }
-    .bg-nilex\/30  { background-color: rgba(29, 158, 117, 0.30); }
-    .border-nilex\/20 { border-color: rgba(29, 158, 117, 0.20); }
-    .border-nilex\/30 { border-color: rgba(29, 158, 117, 0.30); }
-    .ring-nilex\/20   { --tw-ring-color: rgba(29, 158, 117, 0.20); }
-    .ring-nilex\/30   { --tw-ring-color: rgba(29, 158, 117, 0.30); }
+    .bg-nilex\/10  { background-color: rgba(17, 64, 122, 0.10); }
+    .bg-nilex\/20  { background-color: rgba(17, 64, 122, 0.20); }
+    .bg-nilex\/30  { background-color: rgba(17, 64, 122, 0.30); }
+    .border-nilex\/20 { border-color: rgba(17, 64, 122, 0.20); }
+    .border-nilex\/30 { border-color: rgba(17, 64, 122, 0.30); }
+    .ring-nilex\/20   { --tw-ring-color: rgba(17, 64, 122, 0.20); }
+    .ring-nilex\/30   { --tw-ring-color: rgba(17, 64, 122, 0.30); }
 
     /* Scroll reveal */
     .fade-in {
@@ -252,12 +270,12 @@
 /* ─── Custom Scrollbar ─── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(29, 158, 117, 0.25); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(29, 158, 117, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(17, 64, 122, 0.25); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(17, 64, 122, 0.5); }
 
 /* ─── Pagination override (Laravel default) ─── */
 nav[aria-label="pagination"] .page-link:hover,
 nav[aria-label="pagination"] .active .page-link {
-    color: #1D9E75;
-    border-color: #1D9E75;
+    color: #11407A;
+    border-color: #11407A;
 }

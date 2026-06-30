@@ -63,7 +63,7 @@
                            class="flex-1 bg-transparent text-zinc-800 placeholder-zinc-400 py-2.5 px-5 text-sm focus:outline-none"
                            style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}; min-width:0;">
                     <button type="submit"
-                            class="w-8 h-8 me-1 rounded-full bg-[#1D9E75] flex items-center justify-center shrink-0">
+                            class="w-8 h-8 me-1 rounded-full bg-nilex flex items-center justify-center shrink-0">
                         <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
@@ -95,8 +95,8 @@
                 @auth
                     <a href="{{ route('dashboard') }}"
                        class="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-zinc-700 hover:text-zinc-900">
-                        <div class="w-7 h-7 rounded-full bg-[#1D9E75]/10 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-[#1D9E75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-7 h-7 rounded-full bg-nilex/10 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-nilex" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                         </div>
@@ -106,7 +106,7 @@
 
                 {{-- Add Listing CTA --}}
                 <a href="{{ route('listings.create') }}"
-                   class="flex items-center gap-1.5 bg-[#1D9E75] hover:bg-[#178a64] text-white text-sm font-bold px-4 py-2 rounded-xl shrink-0">
+                   class="btn-nilex-primary flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -141,7 +141,7 @@
                            class="flex-1 bg-transparent py-2.5 px-4 text-sm focus:outline-none placeholder-zinc-400 text-zinc-800"
                            style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                     <button type="submit"
-                            class="w-8 h-8 me-1 rounded-full bg-[#1D9E75] flex items-center justify-center shrink-0">
+                            class="w-8 h-8 me-1 rounded-full bg-nilex flex items-center justify-center shrink-0">
                         <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
@@ -151,15 +151,15 @@
             @endunless
 
             @guest
-                <a href="{{ route('login') }}" class="block px-3 py-2.5 text-sm font-semibold text-zinc-700 hover:text-[#1D9E75] rounded-lg hover:bg-zinc-50">
+                <a href="{{ route('login') }}" class="block px-3 py-2.5 text-sm font-semibold text-zinc-700 hover:text-nilex rounded-lg hover:bg-zinc-50">
                     {{ __('ui.nav.login') ?? 'تسجيل الدخول' }}
                 </a>
-                <a href="{{ route('register') }}" class="block px-3 py-2.5 text-sm font-semibold text-zinc-700 hover:text-[#1D9E75] rounded-lg hover:bg-zinc-50">
+                <a href="{{ route('register') }}" class="block px-3 py-2.5 text-sm font-semibold text-zinc-700 hover:text-nilex rounded-lg hover:bg-zinc-50">
                     {{ __('ui.nav.register') ?? 'إنشاء حساب' }}
                 </a>
             @endguest
             @auth
-                <a href="{{ route('dashboard') }}" class="block px-3 py-2.5 text-sm font-semibold text-zinc-700 hover:text-[#1D9E75] rounded-lg hover:bg-zinc-50">
+                <a href="{{ route('dashboard') }}" class="block px-3 py-2.5 text-sm font-semibold text-zinc-700 hover:text-nilex rounded-lg hover:bg-zinc-50">
                     {{ __('ui.nav.my_account') ?? 'حسابي' }}
                 </a>
             @endauth

@@ -169,8 +169,7 @@
                     </div>
 
                     <button type="submit"
-                            class="w-full bg-nilex hover:bg-nilex-dark text-white font-bold py-3 rounded-xl transition-all active:scale-[0.99] text-sm"
-                            style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                            class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
                         {{ __('ui.profile.info.save') }}
                     </button>
                 </form>
@@ -231,8 +230,7 @@
                             @error('otp') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <button type="submit"
-                                class="w-full bg-nilex hover:bg-nilex-dark text-white font-bold py-3 rounded-xl transition-all active:scale-[0.99] text-sm"
-                                style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                                class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
                             {{ __('ui.profile.phone_verify.verify_btn') }}
                         </button>
                     </form>
@@ -269,8 +267,7 @@
                             <p class="text-xs text-zinc-400 mt-1.5">{{ __('ui.profile.phone_verify.note_sms') }}</p>
                         </div>
                         <button type="submit"
-                                class="w-full bg-nilex hover:bg-nilex-dark text-white font-bold py-3 rounded-xl transition-all active:scale-[0.99] text-sm"
-                                style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+                                class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
                             {{ __('ui.profile.phone_verify.send_code') }}
                         </button>
                     </form>

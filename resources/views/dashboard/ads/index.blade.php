@@ -19,7 +19,7 @@
                         ← {{ __('ui.ads_dashboard.common.back_dashboard') }}
                     </a>
                     <a href="{{ route('dashboard.ads.create') }}"
-                       class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-nilex text-white text-sm font-bold hover:bg-nilex-dark transition">
+                       class="btn-nilex-primary inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm">
                         + {{ __('ui.ads_dashboard.index.new_campaign') }}
                     </a>
                 </div>
@@ -42,7 +42,7 @@
                     <div class="p-10 text-center">
                         <p class="text-zinc-500 font-semibold mb-4">{{ __('ui.ads_dashboard.index.empty') }}</p>
                         <a href="{{ route('dashboard.ads.create') }}"
-                           class="inline-flex items-center px-4 py-2 rounded-xl bg-nilex text-white text-sm font-bold">
+                           class="btn-nilex-primary inline-flex items-center px-4 py-2 rounded-xl text-sm">
                             {{ __('ui.ads_dashboard.index.create_first') }}
                         </a>
                     </div>

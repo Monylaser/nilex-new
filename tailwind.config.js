@@ -20,26 +20,36 @@ export default {
             },
 
             colors: {
+                // Nilex brand — navy blue (was green; remapped per visual-identity refresh).
+                // `nilex` keeps its name (alias) so existing bg-nilex/text-nilex usages turn blue.
                 nilex: {
-                    DEFAULT: '#1D9E75',
-                    dark:    '#085041',
-                    light:   '#9FE1CB',
-                    50:  '#f0faf5',
-                    100: '#d6f3e7',
-                    200: '#9FE1CB',
-                    300: '#6ecfb0',
-                    400: '#3eba95',
-                    500: '#1D9E75',
-                    600: '#178060',
-                    700: '#085041',
-                    800: '#063d30',
-                    900: '#042b22',
+                    DEFAULT: '#11407A',
+                    dark:    '#0B2F5C',
+                    light:   '#3D8BD4',
+                    50:  '#eef4fb',
+                    100: '#d5e3f4',
+                    200: '#aec8e8',
+                    300: '#7ba7d8',
+                    400: '#3D8BD4',
+                    500: '#1f63a8',
+                    600: '#11407A',
+                    700: '#0B2F5C',
+                    800: '#0a274b',
+                    900: '#081d38',
                 },
+                // CTA / prices (orange-red). Deliberately distinct from semantic red-*.
+                'nilex-orange': {
+                    DEFAULT: '#E8431D',
+                    light:   '#FF9A4D',
+                },
+                'nilex-petrol': '#0D3D3D', // listing name / title
+                'nilex-ink':    '#11203D', // secondary headings / governorate
+                'nilex-bg':     '#F4F6FB', // light page background
             },
 
             boxShadow: {
-                'nilex':      '0 4px 14px rgba(29, 158, 117, 0.22)',
-                'nilex-lg':   '0 8px 28px rgba(29, 158, 117, 0.28)',
+                'nilex':      '0 4px 14px rgba(17, 64, 122, 0.22)',
+                'nilex-lg':   '0 8px 28px rgba(17, 64, 122, 0.28)',
                 'card':       '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)',
                 'card-hover': '0 8px 24px rgba(0,0,0,0.08)',
                 'dropdown':   '0 8px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.05)',

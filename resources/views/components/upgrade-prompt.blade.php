@@ -31,8 +31,7 @@
             <p class="text-xs text-zinc-500 mb-4">{{ $featureName }}</p>
         @endif
         <a href="{{ route('pricing') }}"
-           class="inline-flex items-center gap-2 bg-[#1D9E75] hover:bg-[#178a66] text-white font-bold py-2.5 px-5 rounded-xl transition-all text-sm active:scale-95"
-           style="box-shadow:0 4px 14px rgba(29,158,117,0.22);">
+           class="btn-nilex-primary inline-flex items-center gap-2 py-2.5 px-5 rounded-xl text-sm">
             {{ __('ui.analytics.upgrade_cta') }}
         </a>
     </div>
