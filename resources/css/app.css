@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 /* ───────────────────────────────────────────────────────────
-   Nilex Design System — navy blue brand
+   Nilex Design System — navy blue brand + Sahel turquoise CTA
    Primary: #11407A  |  Dark: #0B2F5C  |  Light: #3D8BD4
-   CTA/prices: #E8431D (nilex-orange) — distinct from semantic red
+   CTA teal: #14A5A8 (deep #0D7377, light #14BDBC)
+   Prices: #E8431D (nilex-orange) — distinct from semantic red
    Neutrals: zinc, slate, white, black
    Radius: rounded-xl / rounded-2xl only
    Shadows: soft and subtle
@@ -76,21 +77,29 @@
         @apply btn-md bg-nilex text-white hover:bg-nilex-dark shadow-nilex;
     }
 
-    /* Primary brand CTA — petrol gradient + glow (replaces flat bg-nilex / bg-nilex-petrol on main actions) */
+    /* Primary brand CTA — Sahel turquoise gradient + glow */
     .btn-nilex-primary {
         @apply inline-flex items-center justify-center font-bold text-white
                transition-all duration-200 focus:outline-none
-               focus:ring-2 focus:ring-[#0D3D3D]/40 focus:ring-offset-2
                disabled:opacity-60 disabled:cursor-not-allowed select-none;
-        background: linear-gradient(135deg, #0D3D3D, #061818);
-        box-shadow: 0 4px 14px rgba(13, 61, 61, 0.35);
+        background: linear-gradient(135deg, #0C7F82, #12B5B8);
+        box-shadow:
+            0 8px 24px -6px rgba(14, 165, 168, 0.55),
+            0 4px 12px -4px rgba(13, 115, 119, 0.40);
     }
     .btn-nilex-primary:hover:not(:disabled) {
-        background: linear-gradient(135deg, #145454, #0D3D3D);
-        box-shadow: 0 6px 18px rgba(13, 61, 61, 0.45);
+        background: linear-gradient(135deg, #0E8F92, #18C8CB);
+        filter: brightness(1.05);
+        box-shadow:
+            0 12px 32px -6px rgba(14, 165, 168, 0.65),
+            0 6px 16px -4px rgba(13, 115, 119, 0.50);
     }
     .btn-nilex-primary:active:not(:disabled) {
         transform: scale(0.98);
+    }
+    .btn-nilex-primary:focus-visible {
+        outline: 2px solid #14BDBC;
+        outline-offset: 3px;
     }
 
     .btn-secondary {
@@ -176,12 +185,6 @@
         @apply inline-flex items-center gap-1 text-sm font-black text-nilex;
     }
 
-    /* ── Trust Badge ── */
-    .trust-badge {
-        @apply inline-flex items-center gap-1.5 text-xs font-semibold
-               text-nilex-dark bg-nilex/10 px-3 py-1 rounded-full;
-    }
-
     /* ── Empty State ── */
     .empty-state {
         @apply flex flex-col items-center justify-center text-center
@@ -264,6 +267,125 @@
     .fade-in.visible {
         opacity: 1;
         transform: translateY(0);
+    }
+
+    /* ── Nilex teal tokens ── */
+    .text-nilex-teal       { color: #14A5A8; }
+    .text-nilex-teal-deep  { color: #0D7377; }
+    .text-nilex-teal-light { color: #14BDBC; }
+    .text-nilex-ink        { color: #11203D; }
+    .text-muted-foreground { color: #71717a; }
+
+    /* ── Listing card system (Lovable identity) ── */
+    .card-listing {
+        background: #fff;
+        border: 1px solid #f4f4f5;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .card-listing:hover {
+        transform: translateY(-3px);
+        border-color: rgba(20, 165, 168, 0.25);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(13, 115, 119, 0.08);
+    }
+
+    .card-image {
+        aspect-ratio: 4 / 3;
+        width: 100%;
+        background: linear-gradient(135deg, #3D8BD4 0%, #11407A 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .card-image::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .badge-new {
+        display: inline-flex;
+        align-items: center;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 9999px;
+        color: #fff;
+        background: linear-gradient(135deg, #059669 0%, #34d399 100%);
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.45);
+    }
+
+    .badge-featured {
+        display: inline-flex;
+        align-items: center;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 2px 10px;
+        border-radius: 9999px;
+        color: #451a03;
+        background: linear-gradient(135deg, #fde68a 0%, #f59e0b 100%);
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.45);
+    }
+
+    .fav-icon-btn {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(4px);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease;
+    }
+    .fav-icon-btn:hover:not(:disabled) {
+        transform: scale(1.06);
+    }
+    .fav-icon-btn:hover:not(:disabled) svg {
+        stroke: #E8431D;
+    }
+
+    .pill-category {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: #E6F1FB;
+        color: #11407A;
+        border: 1px solid rgba(61, 139, 212, 0.25);
+        font-size: 10px;
+        font-weight: 600;
+        transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        flex-shrink: 0;
+    }
+    .pill-category:hover {
+        background: #d5e8f8;
+        border-color: rgba(61, 139, 212, 0.45);
+        transform: translateY(-1px);
+    }
+
+    .trust-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        color: #14BDBC;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+
+    .price-tag {
+        color: #E8431D;
+        font-weight: 800;
     }
 }
 

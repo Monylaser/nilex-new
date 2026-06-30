@@ -42,7 +42,12 @@ export default {
                     DEFAULT: '#E8431D',
                     light:   '#FF9A4D',
                 },
-                'nilex-petrol': '#0D3D3D', // listing name / title
+                // Sahel turquoise — primary CTA gradient endpoints
+                'nilex-teal': {
+                    DEFAULT: '#14A5A8',
+                    deep:    '#0D7377',
+                    light:   '#14BDBC',
+                },
                 'nilex-ink':    '#11203D', // secondary headings / governorate
                 'nilex-bg':     '#F4F6FB', // light page background
             },

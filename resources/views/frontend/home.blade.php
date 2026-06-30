@@ -27,11 +27,11 @@
             border-radius: 12px;
             overflow: hidden;
         }
-        .listing-card:hover .card-image {
+        .listing-card:hover .card-photo {
             opacity: 0.92;
         }
 
-        .card-image {
+        .card-photo {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -125,7 +125,7 @@
                     }
                 @endphp
                 <a href="{{ route('category.show', $cat) }}"
-                   class="flex flex-col items-center gap-1 group shrink-0 py-1">
+                   class="pill-category group">
                     <div class="w-7 h-7 flex items-center justify-center">
                         @if($cat->icon)
                             <img src="{{ asset('storage/'.$cat->icon) }}" alt="{{ $cat->name }}"
@@ -134,12 +134,12 @@
                             <img src="{{ asset('images/categories/'.$ico) }}" alt="{{ $cat->name }}"
                                  class="w-6 h-6 object-contain">
                         @else
-                            <span class="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-[11px] font-black text-zinc-500 group-hover:bg-nilex/10 group-hover:text-nilex">
+                            <span class="w-6 h-6 rounded-full bg-white/70 flex items-center justify-center text-[11px] font-black text-nilex">
                                 {{ mb_substr($cat->name, 0, 1) }}
                             </span>
                         @endif
                     </div>
-                    <span class="text-[10px] font-semibold text-zinc-500 group-hover:text-nilex line-clamp-1" style="max-width:48px;">
+                    <span class="line-clamp-1 text-center" style="max-width:48px;">
                         {{ $cat->name }}
                     </span>
                 </a>
@@ -208,7 +208,7 @@
                             @if($listing->getFirstMediaUrl('images', 'card'))
                                 <img src="{{ $listing->getFirstMediaUrl('images', 'card') }}"
                                      alt="{{ $listing->title }}"
-                                     class="card-image"
+                                     class="card-photo"
                                      loading="lazy">
                             @else
                                 <div class="w-full h-full flex items-center justify-center bg-zinc-50">
@@ -268,7 +268,7 @@
 
                             <div class="mt-1.5">
                                 @if($listing->price > 0)
-                                    <span class="font-bold text-nilex-petrol text-[14px]">
+                                    <span class="price-tag text-[14px]">
                                         {{ number_format($listing->price) }}
                                         <span class="font-normal text-zinc-500 text-xs ms-0.5">{{ __('ui.sections.currency') ?? 'ج.م' }}</span>
                                     </span>
@@ -326,7 +326,7 @@
                                 @if($listing->getFirstMediaUrl('images', 'card'))
                                     <img src="{{ $listing->getFirstMediaUrl('images', 'card') }}"
                                          alt="{{ $listing->title }}"
-                                         class="card-image"
+                                         class="card-photo"
                                          loading="lazy">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-zinc-50">
@@ -366,7 +366,7 @@
 
                                 <div class="mt-1">
                                     @if($listing->price > 0)
-                                        <span class="font-bold text-nilex-petrol text-sm">
+                                        <span class="price-tag text-sm">
                                             {{ number_format($listing->price) }}
                                             <span class="font-normal text-zinc-400 text-[10px] ms-0.5">{{ __('ui.sections.currency') ?? 'ج.م' }}</span>
                                         </span>
