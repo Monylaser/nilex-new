@@ -131,9 +131,7 @@
              dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
             @foreach($categories as $cat)
                 @php
-                    $iconUrl = $cat->icon
-                        ? asset('storage/'.$cat->icon)
-                        : null;
+                    $iconUrl = $cat->getFirstMediaUrl('icon') ?: null;
                     if (! $iconUrl) {
                         foreach ($iconMap as $kw => $file) {
                             if (str_contains($cat->name_ar, $kw)) {

@@ -8,7 +8,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\TextInput as NumberInput;
 use Illuminate\Support\Str;
@@ -55,15 +55,11 @@ class CategoryForm
             Section::make('الأيقونة واللون')
                 ->columns(2)
                 ->schema([
-                    // ✅ رفع صورة أيقونة من الكمبيوتر
-                    FileUpload::make('icon')
+                    SpatieMediaLibraryFileUpload::make('icon')
                         ->label('أيقونة القسم')
+                        ->collection('icon')
                         ->image()
-                        ->disk('public')
-                        ->directory('category-icons')
-                        ->imagePreviewHeight('80')
-                        ->acceptedFileTypes(['image/png', 'image/svg+xml', 'image/jpeg', 'image/webp'])
-                        ->maxSize(512)
+                        ->imageEditor()
                         ->helperText('PNG أو SVG أو JPG — الحجم الأقصى 512 كيلوبايت')
                         ->columnSpan(1),
 
