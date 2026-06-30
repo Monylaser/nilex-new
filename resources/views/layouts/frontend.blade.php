@@ -24,14 +24,16 @@
             border-bottom: 1px solid #ebebeb;
         }
 
-        .search-pill {
-            border: 1px solid #dddddd;
-            border-radius: 40px;
+        .nav-search-bar {
+            display: flex;
+            align-items: center;
             background: #fff;
+            border-radius: 0.75rem;
+            padding: 0.375rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
         }
-        .search-pill:focus-within {
-            border-color: #b0b0b0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        .nav-search-bar:focus-within {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(20, 165, 168, 0.35);
         }
     </style>
 
@@ -57,16 +59,17 @@
             @unless(request()->routeIs('home'))
             <form action="{{ route('listings.search') }}" method="GET"
                   class="hidden md:block flex-1 max-w-md mx-auto">
-                <div class="search-pill flex items-center">
+                <div class="nav-search-bar" dir="ltr">
                     <input type="text" name="q"
                            placeholder="{{ __('ui.nav.search_placeholder') ?? 'ابحث...' }}"
-                           class="flex-1 bg-transparent text-zinc-800 placeholder-zinc-400 py-2.5 px-5 text-sm focus:outline-none"
-                           style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}; min-width:0;">
+                           class="flex-1 bg-white border-0 border-transparent outline-none ring-0 focus:ring-0 focus:outline-none text-zinc-800 placeholder-zinc-400 py-2.5 px-4 text-sm min-w-0"
+                           style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                     <button type="submit"
-                            class="w-8 h-8 me-1 rounded-full bg-nilex flex items-center justify-center shrink-0">
-                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="btn-nilex-primary flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
+                        {{ __('ui.hero.search_btn') ?? 'بحث' }}
                     </button>
                 </div>
             </form>
@@ -135,16 +138,17 @@
         <div class="px-4 py-3 space-y-1">
             @unless(request()->routeIs('home'))
             <form action="{{ route('listings.search') }}" method="GET" class="mb-3">
-                <div class="search-pill flex items-center">
+                <div class="nav-search-bar" dir="ltr">
                     <input type="text" name="q"
                            placeholder="{{ __('ui.nav.search_placeholder') ?? 'ابحث...' }}"
-                           class="flex-1 bg-transparent py-2.5 px-4 text-sm focus:outline-none placeholder-zinc-400 text-zinc-800"
+                           class="flex-1 bg-white border-0 border-transparent outline-none ring-0 focus:ring-0 focus:outline-none text-zinc-800 placeholder-zinc-400 py-2.5 px-4 text-sm min-w-0"
                            style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                     <button type="submit"
-                            class="w-8 h-8 me-1 rounded-full bg-nilex flex items-center justify-center shrink-0">
-                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="btn-nilex-primary flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
+                        {{ __('ui.hero.search_btn') ?? 'بحث' }}
                     </button>
                 </div>
             </form>
