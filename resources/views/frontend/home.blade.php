@@ -127,7 +127,8 @@
 ══════════════════════════════════════════ --}}
 <div class="bg-nilex-bg border-b border-zinc-100 sticky top-16 z-40">
     <div class="max-w-7xl mx-auto px-4 py-3">
-        <div class="flex flex-nowrap gap-2 items-center overflow-x-auto no-scrollbar pb-1">
+        <div class="flex flex-nowrap gap-1.5 sm:gap-2 items-center overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-4 px-4 sm:mx-0 sm:px-0"
+             dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
             @foreach($categories as $cat)
                 @php
                     $ico = null;
@@ -135,18 +136,20 @@
                         if (str_contains($cat->name_ar, $kw)) { $ico = $file; break; }
                     }
                 @endphp
-                <a href="{{ route('category.show', $cat) }}" class="pill-category">
+                <a href="{{ route('category.show', $cat) }}"
+                   class="pill-category !py-1 !px-2 !gap-1 !text-xs shrink-0"
+                   title="{{ $cat->name }}">
                     @if($cat->icon)
-                        <img src="{{ asset('storage/'.$cat->icon) }}" alt="" class="pill-category-icon">
+                        <img src="{{ asset('storage/'.$cat->icon) }}" alt="" class="pill-category-icon w-4 h-4">
                     @elseif($ico)
-                        <img src="{{ asset('images/categories/'.$ico) }}" alt="" class="pill-category-icon">
+                        <img src="{{ asset('images/categories/'.$ico) }}" alt="" class="pill-category-icon w-4 h-4">
                     @else
-                        <svg class="pill-category-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg class="pill-category-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
                         </svg>
                     @endif
-                    <span>{{ $cat->name }}</span>
+                    <span class="hidden sm:inline">{{ $cat->name }}</span>
                 </a>
             @endforeach
         </div>
