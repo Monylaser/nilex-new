@@ -127,29 +127,26 @@
 ══════════════════════════════════════════ --}}
 <div class="bg-nilex-bg border-b border-zinc-100 sticky top-16 z-40">
     <div class="max-w-7xl mx-auto px-4 py-3">
-        <div class="flex flex-nowrap gap-1.5 sm:gap-2 items-center overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-4 px-4 sm:mx-0 sm:px-0"
+        <div class="flex flex-nowrap overflow-x-auto no-scrollbar gap-4 px-4 py-2"
              dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
             @foreach($categories as $cat)
                 @php
-                    $ico = null;
-                    foreach ($iconMap as $kw => $file) {
-                        if (str_contains($cat->name_ar, $kw)) { $ico = $file; break; }
+                    $iconUrl = $cat->icon
+                        ? asset('storage/'.$cat->icon)
+                        : null;
+                    if (! $iconUrl) {
+                        foreach ($iconMap as $kw => $file) {
+                            if (str_contains($cat->name_ar, $kw)) {
+                                $iconUrl = asset('images/categories/'.$file);
+                                break;
+                            }
+                        }
                     }
                 @endphp
                 <a href="{{ route('category.show', $cat) }}"
-                   class="pill-category !py-1 !px-2 !gap-1 !text-xs shrink-0"
-                   title="{{ $cat->name }}">
-                    @if($cat->icon)
-                        <img src="{{ asset('storage/'.$cat->icon) }}" alt="" class="pill-category-icon w-4 h-4">
-                    @elseif($ico)
-                        <img src="{{ asset('images/categories/'.$ico) }}" alt="" class="pill-category-icon w-4 h-4">
-                    @else
-                        <svg class="pill-category-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                    @endif
-                    <span class="hidden sm:inline">{{ $cat->name }}</span>
+                   class="flex flex-col items-center gap-1 shrink-0 hover:opacity-80 transition-opacity">
+                    <img src="{{ $iconUrl ?? '' }}" alt="{{ $cat->name }}" class="w-10 h-10 object-contain">
+                    <span class="text-xs text-nilex-ink font-medium whitespace-nowrap">{{ $cat->name }}</span>
                 </a>
             @endforeach
         </div>
