@@ -516,7 +516,7 @@
                 @if(Route::has('listings.offer') && auth()->id() !== $listing->user_id)
                     <div class="bg-white rounded-xl border border-zinc-200 p-5">
                         <button @click="offerOpen = true"
-                                class="w-full flex justify-center items-center gap-2.5 border-2 border-[#1D9E75]/30 hover:border-[#1D9E75] text-[#1D9E75] hover:bg-[#1D9E75] hover:text-white px-6 py-3.5 rounded-xl font-bold text-sm">
+                                class="btn-nilex-primary w-full flex justify-center items-center gap-2.5 px-6 py-3.5 rounded-xl text-sm">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
                             {{ __('listing.detail.make_offer') }}
                         </button>
@@ -563,7 +563,7 @@
                         {{-- Before reveal --}}
                         <div x-show="!revealed">
                             <button @click="revealPhone()" :disabled="loading"
-                                    class="w-full flex items-center justify-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] text-white py-3.5 rounded-xl font-bold disabled:opacity-60">
+                                    class="btn-nilex-primary w-full flex items-center justify-center gap-2 py-3.5 rounded-xl disabled:opacity-60">
                                 <span x-show="!loading">
                                     <svg class="w-4 h-4 inline me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     {{ __('listing.detail.reveal_phone') }}
@@ -649,7 +649,7 @@
             {{-- Before reveal --}}
             <div x-show="!revealed" class="flex-1">
                 <button @click="revealPhone()" :disabled="loading"
-                        class="w-full flex items-center justify-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] text-white py-3 rounded-xl font-bold text-sm disabled:opacity-60">
+                        class="btn-nilex-primary w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm disabled:opacity-60">
                     <span x-show="!loading">{{ __('listing.detail.reveal_phone_short') }}</span>
                     <span x-show="loading" style="display:none;">{{ __('listing.detail.loading_short') }}</span>
                 </button>
@@ -758,7 +758,7 @@
                 <div class="flex gap-3 mt-6">
                     <button @click="submitOffer()"
                             :disabled="offerSubmitting || !offerAmount"
-                            class="flex-1 bg-[#1D9E75] hover:bg-[#178a64] text-white py-3 rounded-xl font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+                            class="btn-nilex-primary flex-1 py-3 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed">
                         <span x-show="!offerSubmitting">{{ __('listing.detail.offer_submit') }}</span>
                         <span x-show="offerSubmitting" style="display:none;">{{ __('listing.detail.offer_submitting') }}</span>
                     </button>
