@@ -74,24 +74,22 @@
         @endif
 
         {{-- ── QUICK SEARCH IN CATEGORY ───────────────────────────────────── --}}
-        <div class="bg-white rounded-xl border border-zinc-200 p-3 mb-6">
-            <form action="{{ route('listings.search') }}" method="GET" class="flex gap-2">
-                <input type="hidden" name="category_id" value="{{ $category->id }}">
-                <div class="relative flex-1">
-                    <input type="text" name="q" value="{{ request('q') }}"
-                           placeholder="{{ __('ui.category.search_placeholder', ['name' => $category->name]) }}"
-                           class="w-full bg-white border border-zinc-200 rounded-xl py-2.5 px-4 pe-10 text-sm font-medium text-zinc-800 focus:outline-none focus:border-zinc-400"
-                           style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
-                    <svg class="w-4 h-4 absolute end-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </div>
+        <form action="{{ route('listings.search') }}" method="GET" class="mb-6">
+            <input type="hidden" name="category_id" value="{{ $category->id }}">
+            <div class="nav-search-bar" dir="ltr">
+                <input type="text" name="q" value="{{ request('q') }}"
+                       placeholder="{{ __('ui.category.search_placeholder', ['name' => $category->name]) }}"
+                       class="flex-1 bg-white border-0 border-transparent outline-none ring-0 focus:ring-0 focus:outline-none text-zinc-800 placeholder-zinc-400 py-2.5 px-4 text-sm min-w-0"
+                       style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};">
                 <button type="submit"
-                        class="bg-[#1D9E75] hover:bg-[#178a64] text-white px-5 py-2.5 rounded-xl font-bold text-sm shrink-0">
+                        class="btn-nilex-primary flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
                     {{ __('ui.hero.search_btn') }}
                 </button>
-            </form>
-        </div>
+            </div>
+        </form>
 
         {{-- ── LISTINGS GRID ───────────────────────────────────────────────── --}}
         @if(config('features.self_service_ads'))
@@ -127,7 +125,7 @@
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <a href="{{ route('listings.create') }}"
-                       class="inline-flex items-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] text-white px-5 py-2.5 rounded-xl font-bold text-sm">
+                       class="btn-nilex-primary inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                         {{ __('ui.empty.add_free') }}
                     </a>
