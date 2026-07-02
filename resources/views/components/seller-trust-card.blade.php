@@ -11,7 +11,7 @@
 
     {{-- Seller identity --}}
     <div class="flex items-center gap-2.5 mb-3.5">
-        <div class="w-10 h-10 bg-[#1D9E75]/10 rounded-xl flex items-center justify-center font-bold text-[#1D9E75] text-sm shrink-0 border border-[#1D9E75]/10">
+        <div class="w-10 h-10 bg-nilex-teal/10 rounded-xl flex items-center justify-center font-bold text-nilex-teal text-sm shrink-0 border border-nilex-teal/10">
             {{ mb_substr($seller->name, 0, 1) }}
         </div>
         <div class="flex-1 min-w-0">
@@ -29,8 +29,8 @@
         {{-- Phone verified — only when a real phone exists AND it's verified --}}
         @if($seller->phone && ($seller->is_phone_verified ?? false))
             <div class="flex items-center gap-2 text-xs">
-                <div class="w-6 h-6 bg-[#1D9E75]/10 rounded-lg flex items-center justify-center shrink-0">
-                    <svg class="w-3 h-3 text-[#1D9E75]" fill="currentColor" viewBox="0 0 20 20">
+                <div class="w-6 h-6 bg-nilex-teal/10 rounded-lg flex items-center justify-center shrink-0">
+                    <svg class="w-3 h-3 text-nilex-teal" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
                 </div>

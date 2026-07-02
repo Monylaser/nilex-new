@@ -11,7 +11,7 @@
 <footer dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}" style="background:#0f172a; color:#94a3b8;" class="mt-16">
 
     {{-- Top accent line --}}
-    <div style="height:3px; background:linear-gradient(90deg,#085041,#1D9E75,#9FE1CB,#1D9E75,#085041);"></div>
+    <div style="height:3px; background:linear-gradient(90deg,#0D7377,#14A5A8,#14BDBC,#14A5A8,#0D7377);"></div>
 
     <div class="max-w-7xl mx-auto px-6 py-16">
 
@@ -31,7 +31,7 @@
                 {{-- Social icons --}}
                 <div class="flex gap-3">
                     <a href="#" aria-label="فيسبوك"
-                       class="w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-200 hover:bg-[#1D9E75]"
+                       class="w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-200 hover:bg-nilex-teal"
                        style="background:rgba(255,255,255,0.06);">
                         <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -70,28 +70,28 @@
                 <ul class="space-y-3 text-sm">
                     <li>
                         <a href="{{ route('home') }}"
-                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                           class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             {{ __('ui.footer.link_home') }}
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('listings.create') }}"
-                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                           class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             {{ __('ui.footer.link_add_listing') }}
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('listings.search') }}"
-                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                           class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             {{ __('ui.footer.link_browse') }}
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('pricing') }}"
-                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                           class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             {{ __('ui.footer.link_pricing') }}
                         </a>
@@ -99,7 +99,7 @@
                     @if(config('features.self_service_ads'))
                     <li>
                         <a href="{{ route('ads.pricing') }}"
-                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                           class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             المساحات الإعلانية
                         </a>
@@ -108,7 +108,7 @@
                     @auth
                     <li>
                         <a href="{{ route('dashboard') }}"
-                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                           class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             {{ __('ui.footer.link_dashboard') }}
                         </a>
@@ -116,14 +116,14 @@
                     @else
                     <li>
                         <a href="/login"
-                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                           class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             {{ __('ui.footer.link_login') }}
                         </a>
                     </li>
                     <li>
                         <a href="/register"
-                           class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2">
+                           class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             {{ __('ui.footer.link_register') }}
                         </a>
@@ -143,7 +143,7 @@
                         @foreach($footerLegal as $lp)
                             <li>
                                 <a href="{{ route('legal.show', $lp->slug) }}"
-                                   class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2 line-clamp-1">
+                                   class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2 line-clamp-1">
                                     <svg class="w-3.5 h-3.5 opacity-50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     {{ $lp->title }}
                                 </a>
@@ -159,7 +159,7 @@
             <div>
                 <h4 class="text-white font-bold text-sm mb-5 flex items-center gap-2">
                     <span class="w-1 h-4 rounded-full inline-block" style="background:#085041;"></span>
-                    <a href="{{ route('pricing') }}" class="hover:text-[#1D9E75] transition-colors duration-200">
+                    <a href="{{ route('pricing') }}" class="hover:text-nilex-teal transition-colors duration-200">
                         {{ __('ui.footer.point_plans') }}
                     </a>
                 </h4>
@@ -168,7 +168,7 @@
                         @foreach($footerPlans as $plan)
                             <li>
                                 <a href="{{ route('pricing') }}"
-                                   class="hover:text-[#1D9E75] transition-colors duration-200 flex items-center gap-2 line-clamp-1">
+                                   class="hover:text-nilex-teal transition-colors duration-200 flex items-center gap-2 line-clamp-1">
                                     <svg class="w-3.5 h-3.5 opacity-50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                     <span class="line-clamp-1">{{ app()->getLocale() === 'ar' ? $plan->name_ar : ($plan->name_en ?: $plan->name_ar) }}</span>
                                     <span class="text-xs shrink-0" style="color:#475569;">· {{ number_format($plan->points) }} {{ __('ui.footer.points_suffix') }}</span>
@@ -177,14 +177,14 @@
                         @endforeach
                         <li class="pt-1">
                             <a href="{{ route('pricing') }}"
-                               class="text-xs font-semibold text-[#1D9E75] hover:text-[#9FE1CB] transition-colors duration-200">
+                               class="text-xs font-semibold text-nilex-teal hover:text-nilex-teal-light transition-colors duration-200">
                                 {{ __('ui.footer.view_all_plans') }}
                             </a>
                         </li>
                     </ul>
                 @else
                     <a href="{{ route('pricing') }}"
-                       class="text-sm hover:text-[#1D9E75] transition-colors duration-200">
+                       class="text-sm hover:text-nilex-teal transition-colors duration-200">
                         {{ __('ui.footer.view_point_plans') }}
                     </a>
                 @endif
@@ -201,7 +201,7 @@
                         <svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1D9E75;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
-                        <a href="mailto:info@nilex.com" class="hover:text-[#1D9E75] transition-colors duration-200">info@nilex.com</a>
+                        <a href="mailto:info@nilex.com" class="hover:text-nilex-teal transition-colors duration-200">info@nilex.com</a>
                     </li>
                     <li class="flex items-start gap-3">
                         <svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1D9E75;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,9 +236,9 @@
         <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs" style="color:#475569;">
             <p>© {{ date('Y') }} <span class="text-white font-bold">Nilex نايلكس</span> — {{ __('ui.footer.copyright') }}</p>
             <div class="flex items-center gap-4">
-                <a href="{{ route('pricing') }}" class="hover:text-[#1D9E75] transition-colors">{{ __('ui.footer.prices_link') }}</a>
+                <a href="{{ route('pricing') }}" class="hover:text-nilex-teal transition-colors">{{ __('ui.footer.prices_link') }}</a>
                 @foreach($footerLegal->take(3) as $lp)
-                    <a href="{{ route('legal.show', $lp->slug) }}" class="hover:text-[#1D9E75] transition-colors">{{ $lp->title }}</a>
+                    <a href="{{ route('legal.show', $lp->slug) }}" class="hover:text-nilex-teal transition-colors">{{ $lp->title }}</a>
                 @endforeach
             </div>
         </div>

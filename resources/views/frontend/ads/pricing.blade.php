@@ -43,7 +43,7 @@
 
             @if($selfServiceEnabled)
                 <a href="{{ $ctaUrl }}"
-                   class="inline-flex items-center gap-2 mt-10 bg-[#1D9E75] hover:bg-[#178a64] text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors shadow-sm">
+                   class="btn-nilex-primary inline-flex items-center gap-2 mt-10 px-6 py-3 rounded-xl text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -51,7 +51,7 @@
                 </a>
             @else
                 <a href="mailto:ads@nilex.com"
-                   class="inline-flex items-center gap-2 mt-10 bg-[#1D9E75] hover:bg-[#178a64] text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors shadow-sm">
+                   class="btn-nilex-primary inline-flex items-center gap-2 mt-10 px-6 py-3 rounded-xl text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                     </svg>

@@ -110,8 +110,8 @@
                             $isPopular = $isGrowthPlan($plan) || $loop->iteration === 2;
                             $btnClass = 'w-full text-center font-semibold text-sm py-2.5 rounded-xl min-h-[42px] leading-none transition-colors '
                                 . ($isPopular
-                                    ? 'bg-[#1D9E75] hover:bg-[#178a64] text-white shadow-sm shadow-[#1D9E75]/20'
-                                    : 'bg-zinc-100 text-zinc-700 hover:bg-[#1D9E75] hover:text-white');
+                                    ? 'btn-nilex-primary'
+                                    : 'bg-zinc-100 text-zinc-700 hover:bg-nilex-teal hover:text-white');
                         @endphp
 
                         <div class="relative flex flex-col h-full bg-white rounded-3xl border shadow-sm p-5 sm:p-6 transition-shadow hover:shadow-md
@@ -277,7 +277,7 @@
                         {{ __('ui.pricing.value_step_conversations') }}
                     </span>
                     <span class="text-[#1D9E75] hidden sm:inline" aria-hidden="true">→</span>
-                    <span class="inline-flex items-center px-4 py-2 rounded-full bg-[#1D9E75] text-white shadow-sm">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full btn-nilex-primary shadow-sm">
                         {{ __('ui.pricing.value_step_sales') }}
                     </span>
                 </div>
