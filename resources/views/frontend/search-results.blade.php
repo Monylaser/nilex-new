@@ -65,7 +65,7 @@
                         </svg>
                     </div>
                     <button type="submit"
-                            class="bg-[#1D9E75] hover:bg-[#178a64] text-white px-5 sm:px-7 py-3 rounded-xl font-bold text-sm shrink-0">
+                            class="btn-nilex-primary px-5 sm:px-7 py-3 rounded-xl text-sm shrink-0">
                         بحث
                     </button>
                 </div>
@@ -103,7 +103,7 @@
 
                     {{-- GPS button --}}
                     <button type="button" id="getLocationBtn"
-                            class="flex items-center gap-1.5 bg-[#1D9E75]/5 hover:bg-[#1D9E75]/10 text-[#1D9E75] border border-[#1D9E75]/25 hover:border-[#1D9E75]/40 px-3.5 py-2.5 rounded-xl font-bold text-sm">
+                            class="btn-nilex-primary flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
@@ -245,7 +245,7 @@
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <a href="{{ route('listings.search') }}"
-                       class="inline-flex items-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] text-white px-6 py-3 rounded-xl font-bold text-sm">
+                       class="btn-nilex-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm">
                         عرض كل الإعلانات
                     </a>
                     <a href="{{ route('listings.create') }}"
