@@ -175,6 +175,15 @@ class AdCampaignResource extends Resource
                         ->numeric()
                         ->default(0)
                         ->helperText('رقم أعلى = ظهور أولاً. نفس الأولوية = تناوب عشوائي عادل'),
+
+                    TextInput::make('display_duration_seconds')
+                        ->label('مدة العرض (ثواني)')
+                        ->numeric()
+                        ->default(5)
+                        ->minValue(3)
+                        ->maxValue(30)
+                        ->suffix('ثانية')
+                        ->helperText('المدة التي تظهر فيها الصورة قبل الانتقال للإعلان التالي'),
                 ]),
         ]);
     }

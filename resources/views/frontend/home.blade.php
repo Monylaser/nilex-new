@@ -150,23 +150,28 @@
                 x-data="{
                     current: 0,
                     total: {{ $heroSlides->count() }},
-                    interval: null,
+                    durations: @json($heroSlides->map(fn ($c) => (int) ($c->display_duration_seconds ?? 5))->values()),
+                    timer: null,
                     init() {
-                        this.interval = setInterval(() => this.next(), 5000);
+                        this.scheduleNext();
                     },
                     destroy() {
-                        if (this.interval) clearInterval(this.interval);
+                        if (this.timer) clearTimeout(this.timer);
+                    },
+                    scheduleNext() {
+                        if (this.timer) clearTimeout(this.timer);
+                        const ms = (this.durations[this.current] ?? 5) * 1000;
+                        this.timer = setTimeout(() => {
+                            this.next();
+                            this.scheduleNext();
+                        }, ms);
                     },
                     next() {
                         this.current = (this.current + 1) % this.total;
                     },
-                    prev() {
-                        this.current = (this.current - 1 + this.total) % this.total;
-                    },
                     goTo(index) {
                         this.current = index;
-                        if (this.interval) clearInterval(this.interval);
-                        this.interval = setInterval(() => this.next(), 5000);
+                        this.scheduleNext();
                     }
                 }"
                 class="relative w-full"
@@ -216,23 +221,6 @@
                         </div>
                     @endforeach
                 </div>
-
-                <button type="button"
-                        @click="prev()"
-                        class="absolute start-2 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-nilex shadow-md hover:bg-white transition-colors"
-                        aria-label="Previous slide">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                </button>
-                <button type="button"
-                        @click="next()"
-                        class="absolute end-2 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-nilex shadow-md hover:bg-white transition-colors"
-                        aria-label="Next slide">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </button>
 
                 <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
                     @foreach($heroSlides as $index => $campaign)

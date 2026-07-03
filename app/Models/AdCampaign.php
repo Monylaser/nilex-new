@@ -30,6 +30,7 @@ class AdCampaign extends Model implements HasMedia
         'views_count',
         'clicks_count',
         'priority',
+        'display_duration_seconds',
         'created_by',
         'seller_id',
         'payment_status',
@@ -52,8 +53,9 @@ class AdCampaign extends Model implements HasMedia
             'duration_days'   => 'integer',
             'views_count'     => 'integer',
             'clicks_count'    => 'integer',
-            'priority'        => 'integer',
-            'amount_paid'     => 'decimal:2',
+            'priority'                 => 'integer',
+            'display_duration_seconds' => 'integer',
+            'amount_paid'              => 'decimal:2',
         ];
     }
 
