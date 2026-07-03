@@ -11,7 +11,7 @@
     $targetUrl = $campaign?->target_url;
     $isHero = $placement === 'hero_top';
     $imgClass = $isHero
-        ? 'w-full aspect-[3/1] md:aspect-[4/1] max-h-[200px] md:max-h-[280px] object-cover'
+        ? 'w-full aspect-[3/1] md:aspect-[5/1] max-h-[160px] md:max-h-[200px] object-cover'
         : 'w-full rounded-xl object-cover shadow-sm';
     $imgLoading = $isHero ? 'eager' : 'lazy';
 @endphp
