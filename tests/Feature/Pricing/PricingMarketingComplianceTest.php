@@ -81,13 +81,15 @@ describe('Pricing Marketing Compliance', function () {
         $combined = implode(' ', $features);
 
         expect($combined)
-            ->toContain('business badge')
+            ->toContain('Seller leads')
+            ->toContain('Verified seller badge')
             ->not->toContain('CTR monitoring')
             ->not->toContain('advanced analytics')
             ->not->toContain('lead tracking');
 
         $this->get(route('pricing'))
-            ->assertSee(__('ui.pricing.plan_cards.business.monthly_reports'));
+            ->assertSee(__('ui.pricing.plan_cards.business.seller_leads'))
+            ->assertSee(__('ui.pricing.priority_support_cta'));
     });
 
     it('renders dashboard section with all eight verified seller features', function () {

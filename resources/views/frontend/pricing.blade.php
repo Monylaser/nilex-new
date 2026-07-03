@@ -31,11 +31,11 @@
 
     $planCardFeatureKeys = static function (?string $planKey): array {
         return match ($planKey) {
-            'starter' => ['featured_one', 'search_visibility', 'basic_stats', 'email_support'],
-            'growth' => ['all_starter', 'search_priority', 'event_views', 'phone_whatsapp', 'home_promotion'],
-            'pro_seller' => ['all_growth', 'multi_featured', 'analytics_charts', 'advanced_promo', 'priority_support'],
-            'business' => ['all_pro', 'business_badge', 'unlimited_listings', 'monthly_reports', 'dedicated_manager'],
-            default => [],
+            'starter'    => ['concurrent_featured', 'monthly_boosts', 'featured_section', 'basic_stats'],
+            'growth'     => ['concurrent_featured', 'monthly_boosts', 'search_priority', 'event_views', 'whatsapp_clicks'],
+            'pro_seller' => ['concurrent_featured', 'monthly_boosts', 'phone_clicks', 'analytics_charts', 'monthly_reports'],
+            'business'   => ['concurrent_featured', 'monthly_boosts', 'business_badge', 'business_dashboard', 'seller_leads'],
+            default      => [],
         };
     };
 @endphp
@@ -147,12 +147,21 @@
 
                             <ul class="flex-1 space-y-2 mb-5">
                                 @foreach ($featureKeys as $featureKey)
-                                    <li class="flex items-center gap-2 text-sm text-zinc-600">
-                                        <span class="text-nilex-teal">✓</span>
-                                        {{ __('ui.pricing.plan_cards.' . $planKey . '.' . $featureKey) }}
+                                    <li class="flex items-center gap-2 text-sm text-zinc-600 text-right">
+                                        <span class="text-nilex-teal flex-shrink-0">✓</span>
+                                        <span>{{ __('ui.pricing.plan_cards.' . $planKey . '.' . $featureKey) }}</span>
                                     </li>
                                 @endforeach
                             </ul>
+
+                            @if($planKey === 'business')
+                                <a href="{{ route('legal.show', 'contact-us') }}"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="block w-full text-center text-sm font-semibold py-2.5 rounded-xl border border-nilex-teal text-nilex-teal hover:bg-nilex-teal hover:text-white transition-colors mb-3">
+                                    {{ __('ui.pricing.priority_support_cta') }}
+                                </a>
+                            @endif
 
                             <div class="mt-auto">
                                 @auth

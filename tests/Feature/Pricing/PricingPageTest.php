@@ -99,10 +99,12 @@ describe('Pricing Page UI', function () {
         expect($business->description)->toBe('باقة الشركات');
 
         $this->get(route('pricing'))
-            ->assertSee(__('ui.pricing.plan_cards.starter.featured_one'))
+            ->assertSee(__('ui.pricing.plan_cards.starter.concurrent_featured'))
             ->assertSee(__('ui.pricing.plan_cards.growth.search_priority'))
             ->assertSee(__('ui.pricing.plan_cards.pro_seller.analytics_charts'))
-            ->assertSee(__('ui.pricing.plan_cards.business.business_badge'));
+            ->assertSee(__('ui.pricing.plan_cards.business.business_badge'))
+            ->assertSee(__('ui.pricing.priority_support_cta'))
+            ->assertSee(route('legal.show', 'contact-us'), false);
     });
 
     it('preserves checkout functionality for authenticated users', function () {
