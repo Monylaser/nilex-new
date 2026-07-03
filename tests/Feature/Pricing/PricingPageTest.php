@@ -92,14 +92,17 @@ describe('Pricing Page UI', function () {
             ->assertSee(__('ui.pricing.value_step_sales'));
     });
 
-    it('uses business positioning copy without changing database description field', function () {
+    it('renders plan card feature bullets without changing database description field', function () {
         seedPricingPlans();
 
         $business = PointPlan::query()->where('name_en', 'Business')->firstOrFail();
         expect($business->description)->toBe('باقة الشركات');
 
         $this->get(route('pricing'))
-            ->assertSee(__('ui.pricing.business_description'));
+            ->assertSee(__('ui.pricing.plan_cards.starter.featured_one'))
+            ->assertSee(__('ui.pricing.plan_cards.growth.search_priority'))
+            ->assertSee(__('ui.pricing.plan_cards.pro_seller.analytics_charts'))
+            ->assertSee(__('ui.pricing.plan_cards.business.business_badge'));
     });
 
     it('preserves checkout functionality for authenticated users', function () {
@@ -153,18 +156,20 @@ describe('Pricing Page UI', function () {
             ->assertDontSee('Business Analytics Dashboard');
     });
 
-    it('does not advertise unavailable analytics in business plan copy', function () {
+    it('does not advertise unavailable analytics in plan card copy', function () {
         seedPricingPlans();
 
-        $description = __('ui.pricing.business_description');
+        $businessFeatures = __('ui.pricing.plan_cards.business');
 
-        expect($description)
-            ->not->toContain('CTR monitoring')
-            ->not->toContain('advanced analytics')
-            ->not->toContain('lead tracking');
+        foreach ($businessFeatures as $line) {
+            expect($line)
+                ->not->toContain('CTR monitoring')
+                ->not->toContain('advanced analytics')
+                ->not->toContain('lead tracking');
+        }
 
         $this->get(route('pricing'))
-            ->assertSee($description)
+            ->assertSee(__('ui.pricing.plan_cards.business.business_badge'))
             ->assertDontSee('CTR monitoring')
             ->assertDontSee('advanced analytics, lead tracking');
     });

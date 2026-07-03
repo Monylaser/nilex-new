@@ -76,16 +76,18 @@ describe('Pricing Marketing Compliance', function () {
         }
     });
 
-    it('uses verified seller capabilities in business plan description', function () {
-        $description = __('ui.pricing.business_description');
+    it('uses verified seller capabilities in business plan card features', function () {
+        $features = __('ui.pricing.plan_cards.business');
+        $combined = implode(' ', $features);
 
-        expect($description)
-            ->toContain('verified listing analytics')
-            ->toContain('phone')
-            ->toContain('WhatsApp')
+        expect($combined)
+            ->toContain('business badge')
             ->not->toContain('CTR monitoring')
             ->not->toContain('advanced analytics')
             ->not->toContain('lead tracking');
+
+        $this->get(route('pricing'))
+            ->assertSee(__('ui.pricing.plan_cards.business.monthly_reports'));
     });
 
     it('renders dashboard section with all eight verified seller features', function () {

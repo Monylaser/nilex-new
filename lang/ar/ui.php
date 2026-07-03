@@ -351,6 +351,35 @@ return [
         'trust_first_feature'     => 'الحسابات الجديدة تحصل على نقاط ترحيبية يمكن استخدامها لتمييز أول إعلان.',
         'trust_points_validity'   => 'النقاط المشتراة حالياً بدون تاريخ انتهاء.',
         'trust_company_payment'   => 'دفع إلكتروني آمن بالبطاقة متاح لجميع البائعين المسجّلين.',
+        'plan_cards' => [
+            'starter' => [
+                'featured_one'      => 'نشر إعلان واحد مميز',
+                'search_visibility' => 'ظهور في نتائج البحث',
+                'basic_stats'       => 'إحصائيات أساسية للإعلان',
+                'email_support'     => 'دعم عبر البريد الإلكتروني',
+            ],
+            'growth' => [
+                'all_starter'       => 'كل مميزات البداية',
+                'search_priority'   => 'أولوية في نتائج البحث',
+                'event_views'       => 'تحليلات مشاهدات الأحداث',
+                'phone_whatsapp'    => 'تتبع نقرات الهاتف والواتساب',
+                'home_promotion'    => 'ظهور في الصفحة الرئيسية',
+            ],
+            'pro_seller' => [
+                'all_growth'        => 'كل مميزات النمو',
+                'multi_featured'    => 'تمييز إعلانات متعددة',
+                'analytics_charts'  => 'مخططات التحليلات',
+                'advanced_promo'    => 'أدوات الترويج المتقدمة',
+                'priority_support'  => 'دعم ذو أولوية',
+            ],
+            'business' => [
+                'all_pro'           => 'كل مميزات البائع المحترف',
+                'business_badge'    => 'شارة الأعمال الموثوقة',
+                'unlimited_listings'=> 'إدارة إعلانات غير محدودة',
+                'monthly_reports'   => 'تقارير الأداء الشهرية',
+                'dedicated_manager' => 'مدير حساب مخصص',
+            ],
+        ],
         'features' => [
             'credits'            => 'رصيد النقاط',
             'featured_listings'  => 'تمييز الإعلانات',

@@ -29,16 +29,14 @@
         return $resolvePlanKey($plan) === 'growth';
     };
 
-    $isBusinessPlan = static function ($plan) use ($resolvePlanKey): bool {
-        return $resolvePlanKey($plan) === 'business';
-    };
-
-    $planDescription = static function ($plan) use ($isBusinessPlan): string {
-        if ($isBusinessPlan($plan)) {
-            return (string) __('ui.pricing.business_description');
-        }
-
-        return (string) ($plan->description ?? '');
+    $planCardFeatureKeys = static function (?string $planKey): array {
+        return match ($planKey) {
+            'starter' => ['featured_one', 'search_visibility', 'basic_stats', 'email_support'],
+            'growth' => ['all_starter', 'search_priority', 'event_views', 'phone_whatsapp', 'home_promotion'],
+            'pro_seller' => ['all_growth', 'multi_featured', 'analytics_charts', 'advanced_promo', 'priority_support'],
+            'business' => ['all_pro', 'business_badge', 'unlimited_listings', 'monthly_reports', 'dedicated_manager'],
+            default => [],
+        };
     };
 @endphp
 
@@ -108,6 +106,8 @@
                     @foreach($plans as $plan)
                         @php
                             $isPopular = $isGrowthPlan($plan) || $loop->iteration === 2;
+                            $planKey = $resolvePlanKey($plan);
+                            $featureKeys = $planCardFeatureKeys($planKey);
                             $btnClass = 'w-full text-center font-semibold text-sm py-2.5 rounded-xl min-h-[42px] leading-none transition-colors '
                                 . ($isPopular
                                     ? 'btn-nilex-primary'
@@ -145,9 +145,14 @@
                                 </div>
                             </div>
 
-                            <p class="flex-1 text-zinc-500 text-xs leading-relaxed min-h-[3rem] mb-5">
-                                {{ $planDescription($plan) }}
-                            </p>
+                            <ul class="flex-1 space-y-2 mb-5">
+                                @foreach ($featureKeys as $featureKey)
+                                    <li class="flex items-center gap-2 text-sm text-zinc-600">
+                                        <span class="text-nilex-teal">✓</span>
+                                        {{ __('ui.pricing.plan_cards.' . $planKey . '.' . $featureKey) }}
+                                    </li>
+                                @endforeach
+                            </ul>
 
                             <div class="mt-auto">
                                 @auth

@@ -351,6 +351,35 @@ return [
         'trust_first_feature'     => 'New accounts receive welcome credits you can use toward your first listing boost.',
         'trust_points_validity'   => 'Purchased points currently have no expiry date.',
         'trust_company_payment'   => 'Secure online card payment available for all registered sellers.',
+        'plan_cards' => [
+            'starter' => [
+                'featured_one'      => 'One featured listing boost',
+                'search_visibility' => 'Search results visibility',
+                'basic_stats'       => 'Basic listing statistics',
+                'email_support'     => 'Email support',
+            ],
+            'growth' => [
+                'all_starter'       => 'Everything in Starter',
+                'search_priority'   => 'Search results priority',
+                'event_views'       => 'Event views analytics',
+                'phone_whatsapp'    => 'Phone & WhatsApp click tracking',
+                'home_promotion'    => 'Home page promotion',
+            ],
+            'pro_seller' => [
+                'all_growth'        => 'Everything in Growth',
+                'multi_featured'    => 'Multiple featured listings',
+                'analytics_charts'  => 'Analytics charts',
+                'advanced_promo'    => 'Advanced promotion tools',
+                'priority_support'  => 'Priority support',
+            ],
+            'business' => [
+                'all_pro'           => 'Everything in Pro Seller',
+                'business_badge'    => 'Verified business badge',
+                'unlimited_listings'=> 'Unlimited listing management',
+                'monthly_reports'   => 'Monthly performance reports',
+                'dedicated_manager' => 'Dedicated account manager',
+            ],
+        ],
         'features' => [
             'credits'            => 'Credits Included',
             'featured_listings'  => 'Featured Listings',
