@@ -7,10 +7,14 @@
 use App\Models\AdCampaign;
 use App\Models\PaymentAttempt;
 use App\Models\User;
+use App\Http\Requests\Dashboard\StoreSellerAdCampaignRequest;
 use App\Services\AdCampaignPaymentService;
 use App\Services\AdCampaignService;
 use App\Services\PaymobAdWebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 uses(RefreshDatabase::class);
 
@@ -150,9 +154,46 @@ describe('Campaign display rules', function () {
 
         expect(app(AdCampaignService::class)->getForPlacement('hero_top'))->not->toBeNull();
     });
+
+    it('renders admin hero banner on homepage when self-service ads are disabled', function () {
+        Storage::fake('public');
+        config(['features.self_service_ads' => false]);
+
+        $admin = User::factory()->create();
+        $campaign = AdCampaign::create([
+            'title'           => 'حملة إدارية',
+            'placement'       => 'hero_top',
+            'target_url'      => null,
+            'status'          => 'active',
+            'approval_status' => 'approved',
+            'payment_status'  => null,
+            'seller_id'       => null,
+            'created_by'      => $admin->id,
+            'starts_at'       => now()->subDay(),
+            'ends_at'         => now()->addDays(6),
+        ]);
+
+        $campaign->addMedia(UploadedFile::fake()->image('banner.jpg', 1200, 400))
+            ->toMediaCollection('ad_image');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('حملة إدارية', false);
+    });
 });
 
 describe('Seller campaign authorization', function () {
+
+    it('accepts optional target_url when creating seller campaigns', function () {
+        $rules = (new StoreSellerAdCampaignRequest())->rules();
+
+        $validator = Validator::make(
+            ['target_url' => null],
+            ['target_url' => $rules['target_url']],
+        );
+
+        expect($validator->passes())->toBeTrue();
+    });
 
     it('prevents sellers from viewing other sellers campaigns', function () {
         config(['features.self_service_ads' => true]);

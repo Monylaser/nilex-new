@@ -4,15 +4,19 @@
     'wrapperClass' => null,
 ])
 
-@if(config('features.self_service_ads'))
-    @php
-        $campaign = app(\App\Services\AdCampaignService::class)
-            ->getForPlacement($placement, $categoryId);
-        $imageUrl = $campaign?->getFirstMediaUrl('ad_image');
-        $targetUrl = $campaign?->target_url;
-    @endphp
+@php
+    $campaign = app(\App\Services\AdCampaignService::class)
+        ->getForPlacement($placement, $categoryId);
+    $imageUrl = $campaign?->getFirstMediaUrl('ad_image');
+    $targetUrl = $campaign?->target_url;
+    $isHero = $placement === 'hero_top';
+    $imgClass = $isHero
+        ? 'w-full aspect-[3/1] max-h-36 sm:max-h-44 md:max-h-52 rounded-xl object-cover shadow-lg ring-1 ring-white/20'
+        : 'w-full rounded-xl object-cover shadow-sm';
+    $imgLoading = $isHero ? 'eager' : 'lazy';
+@endphp
 
-    @if($campaign && $imageUrl)
+@if($campaign && $imageUrl)
         @if($wrapperClass)
             <div {{ $attributes->merge(['class' => $wrapperClass]) }}>
         @endif
@@ -31,8 +35,8 @@
                             srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'tablet') }}">
                     <img src="{{ $campaign->getFirstMediaUrl('ad_image', 'mobile') }}"
                          alt="{{ $campaign->title }}"
-                         loading="lazy"
-                         class="w-full rounded-xl object-cover shadow-sm">
+                         loading="{{ $imgLoading }}"
+                         class="{{ $imgClass }}">
                 </picture>
             </a>
         @else
@@ -46,8 +50,8 @@
                             srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'tablet') }}">
                     <img src="{{ $campaign->getFirstMediaUrl('ad_image', 'mobile') }}"
                          alt="{{ $campaign->title }}"
-                         loading="lazy"
-                         class="w-full rounded-xl object-cover shadow-sm">
+                         loading="{{ $imgLoading }}"
+                         class="{{ $imgClass }}">
                 </picture>
             </div>
         @endif
@@ -56,6 +60,5 @@
             </div>
         @endif
 
-        <x-ad-impression-tracker />
-    @endif
+    <x-ad-impression-tracker />
 @endif

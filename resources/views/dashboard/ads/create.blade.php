@@ -106,10 +106,10 @@
                                id="target_url"
                                name="target_url"
                                value="{{ old('target_url') }}"
-                               required
                                placeholder="https://"
                                dir="ltr"
                                class="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm focus:ring-2 focus:ring-nilex/30 focus:border-nilex outline-none text-left">
+                        <p class="text-xs text-zinc-500 mt-2">اتركه فارغاً للإعلانات التوعوية</p>
                     </div>
 
                     <div>

@@ -62,10 +62,6 @@
     <div class="pointer-events-none absolute top-32 -start-20 w-56 h-56 rounded-full bg-nilex-teal/[0.15]" aria-hidden="true"></div>
     <div class="pointer-events-none absolute -bottom-16 end-1/4 w-40 h-40 rounded-full bg-white/[0.12]" aria-hidden="true"></div>
 
-    @if(config('features.self_service_ads'))
-        <x-ad-banner placement="hero_top" wrapper-class="relative max-w-7xl mx-auto px-4 pb-4" />
-    @endif
-
     <div class="relative max-w-2xl mx-auto px-4 py-10 sm:py-12 text-center">
         <div class="trust-badge mb-5">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -100,9 +96,13 @@
                 </button>
             </div>
         </form>
+    </div>
 
+    <x-ad-banner placement="hero_top" wrapper-class="relative max-w-7xl mx-auto px-4 mt-6 mb-2" />
+
+    <div class="relative max-w-2xl mx-auto px-4 pb-10 sm:pb-12 text-center">
         {{-- Stats row --}}
-        <div class="flex items-center justify-center gap-6 mt-6">
+        <div class="flex items-center justify-center gap-6">
             <div>
                 <span class="text-sm font-bold text-white">{{ __('ui.hero.stat_1_num') ?? '12000+' }}</span>
                 <span class="text-xs text-white/60 ms-1">{{ __('ui.hero.stat_1_label') ?? 'إعلان' }}</span>

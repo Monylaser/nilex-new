@@ -62,7 +62,7 @@ class SellerAdCampaignController extends Controller
                     'category_id'      => $validated['placement'] === 'category_page'
                         ? $validated['category_id']
                         : null,
-                    'target_url'       => $validated['target_url'],
+                    'target_url'       => $validated['target_url'] ?? null,
                     'duration_days'    => $durationDays,
                     'status'           => 'draft',
                     'approval_status'  => 'pending',

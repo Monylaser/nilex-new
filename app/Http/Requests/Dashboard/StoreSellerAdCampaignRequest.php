@@ -28,7 +28,7 @@ class StoreSellerAdCampaignRequest extends FormRequest
                 'integer',
                 'exists:categories,id',
             ],
-            'target_url'    => ['required', 'url', 'max:2048'],
+            'target_url'    => ['nullable', 'string', 'url', 'max:2048'],
             'duration_days' => ['required', 'integer', Rule::in($allowedDurations)],
             'ad_image'      => [
                 'required',
@@ -37,6 +37,13 @@ class StoreSellerAdCampaignRequest extends FormRequest
                 'max:2048',
             ],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('target_url') && $this->input('target_url') === '') {
+            $this->merge(['target_url' => null]);
+        }
     }
 
     public function withValidator(Validator $validator): void
