@@ -52,7 +52,7 @@
     ];
 @endphp
 
-<section class="bg-nilex-bg px-4 py-4">
+<section class="bg-white px-4 py-3 pt-16">
     <div class="max-w-3xl mx-auto">
         <form action="{{ route('listings.search') }}" method="GET">
             <div class="hero-search-bar" dir="ltr">
