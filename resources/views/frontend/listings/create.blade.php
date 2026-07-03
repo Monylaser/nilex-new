@@ -154,23 +154,23 @@
                 @else
                 {{-- Root categories grid --}}
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <template x-for="cat in categories" :key="cat.id">
-                        <div @click="selectRoot(cat)"
+                    @foreach($categories as $cat)
+                        <div @click="selectRoot(categories.find(c => c.id === {{ $cat->id }}))"
                              class="rounded-2xl border-2 p-4 cursor-pointer flex flex-col items-center text-center gap-2 transition-all duration-200 hover:shadow-md hover:scale-105 min-h-[44px]"
-                             :class="(selectedRootId === cat.id)
+                             :class="(selectedRootId === {{ $cat->id }})
                                 ? 'border-nilex-teal bg-green-50 ring-2 ring-green-400'
                                 : 'border-gray-100 bg-white hover:border-gray-200'">
                             <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 overflow-hidden">
-                                <template x-if="categoryIconUrl(cat)">
-                                    <img :src="categoryIconUrl(cat)" :alt="cat.name" class="w-8 h-8 object-contain">
-                                </template>
-                                <template x-if="!categoryIconUrl(cat)">
-                                    <span class="text-lg font-black text-nilex-teal" x-text="cat.name ? cat.name.charAt(0) : '؟'"></span>
-                                </template>
+                                @php $iconUrl = $cat->getFirstMediaUrl('icon'); @endphp
+                                @if($iconUrl)
+                                    <img src="{{ $iconUrl }}" alt="{{ $cat->name }}" class="w-10 h-10 object-contain">
+                                @else
+                                    <span class="text-nilex-teal font-bold text-xl">{{ mb_substr($cat->name, 0, 1) }}</span>
+                                @endif
                             </div>
-                            <span class="text-[13px] font-bold text-zinc-800 leading-tight" x-text="cat.name"></span>
+                            <span class="text-[13px] font-bold text-zinc-800 leading-tight">{{ $cat->name }}</span>
                         </div>
-                    </template>
+                    @endforeach
                 </div>
 
                 {{-- Subcategories --}}
@@ -182,10 +182,18 @@
                     <div class="flex flex-wrap gap-2">
                         <template x-for="sub in subCategories" :key="sub.id">
                             <button type="button" @click="selectSub(sub)"
-                                    class="px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all duration-200 min-h-[44px]"
+                                    class="px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all duration-200 min-h-[44px] flex items-center gap-2"
                                     :class="(formData.category_id == sub.id)
                                         ? 'border-nilex-teal bg-green-50 text-nilex-teal ring-2 ring-green-300'
                                         : 'border-gray-200 text-zinc-600 hover:border-nilex-teal'">
+                                <span class="w-8 h-8 flex items-center justify-center shrink-0">
+                                    <template x-if="sub.icon_url">
+                                        <img :src="sub.icon_url" :alt="sub.name" class="w-10 h-10 object-contain">
+                                    </template>
+                                    <template x-if="!sub.icon_url">
+                                        <span class="text-nilex-teal font-bold text-xl" x-text="sub.name ? [...sub.name][0] : '?'"></span>
+                                    </template>
+                                </span>
                                 <span x-text="sub.name"></span>
                             </button>
                         </template>
@@ -888,13 +896,20 @@
 @endsection
 
 @push('scripts')
+@php
+    $categories->each(function ($category) {
+        $category->setAttribute('icon_url', $category->getFirstMediaUrl('icon') ?: null);
+        $category->children->each(function ($child) {
+            $child->setAttribute('icon_url', $child->getFirstMediaUrl('icon') ?: null);
+        });
+    });
+@endphp
 <script>
     const NILEX_CATEGORIES    = @json($categories);
     const NILEX_LOCATIONS     = @json($governorates);
     const NILEX_CAR_BRANDS    = @json($carBrands);
     // Wizard UI translations (B.3a). Consumed by the Alpine component in B.3b/B.3c.
     const NILEX_WIZARD_I18N   = @json(__('wizard'));
-    const NILEX_STORAGE_BASE  = "{{ asset('storage') }}";
     const NILEX_STORE_URL     = "{{ route('listings.store') }}";
     const NILEX_AI_URL        = "{{ route('listings.ai-generate') }}";
     const NILEX_DASHBOARD_URL = "{{ route('dashboard') }}";
@@ -1195,9 +1210,6 @@
             resetFloorFields() {
                 this.floorSelection = '';
                 this.floorOther = '';
-            },
-            categoryIconUrl(cat) {
-                return cat.icon ? (NILEX_STORAGE_BASE + '/' + cat.icon) : null;
             },
 
             // ── Location selection ─────────────────────────────────────
