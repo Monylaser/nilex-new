@@ -142,6 +142,12 @@ class AdCampaignResource extends Resource
                         ->options(static::statusOptions())
                         ->default('draft'),
 
+                    Select::make('approval_status')
+                        ->label('حالة الموافقة')
+                        ->options(static::approvalStatusOptions())
+                        ->default('pending')
+                        ->required(),
+
                     DateTimePicker::make('starts_at')
                         ->label('تاريخ البداية')
                         ->nullable()

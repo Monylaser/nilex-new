@@ -14,6 +14,13 @@ class CreateAdCampaign extends CreateRecord
     {
         $data['created_by'] = Auth::id();
 
+        $sellerId      = $data['seller_id'] ?? null;
+        $paymentStatus = $data['payment_status'] ?? null;
+
+        if ($sellerId === null && $paymentStatus === null) {
+            $data['approval_status'] = 'approved';
+        }
+
         return $data;
     }
 }
