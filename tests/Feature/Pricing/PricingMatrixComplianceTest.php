@@ -3,30 +3,11 @@
 /**
  * Pricing matrix compliance tests — audit-aligned feature states only.
  *
- * Validates config/pricing.php and rendered UI against
- * docs/reports/pricing_page_feature_audit.md findings.
+ * Validates config/pricing.php feature_matrix against audit findings.
+ * (UI matrix removed from pricing page — config tests only.)
  */
 
-use App\Models\PointPlan;
-
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
-
-function seedPricingMatrixPlans(): void
-{
-    $plans = [
-        ['name_ar' => 'مبتدئ',      'name_en' => 'Starter',    'points' => 100,  'price' => 49,  'description' => 'باقة البداية'],
-        ['name_ar' => 'نمو',        'name_en' => 'Growth',     'points' => 250,  'price' => 99,  'description' => 'باقة النمو'],
-        ['name_ar' => 'بائع محترف', 'name_en' => 'Pro Seller', 'points' => 700,  'price' => 249, 'description' => 'باقة المحترف'],
-        ['name_ar' => 'أعمال',      'name_en' => 'Business',   'points' => 1500, 'price' => 499, 'description' => 'باقة الشركات'],
-    ];
-
-    foreach ($plans as $plan) {
-        PointPlan::query()->create([
-            ...$plan,
-            'is_active' => true,
-        ]);
-    }
-}
 
 function matrixRowByKey(string $key): ?array
 {
@@ -119,92 +100,5 @@ describe('Pricing Matrix Config Compliance', function () {
                 ->and($row['status'] ?? null)->toBeNull()
                 ->and($row)->toHaveKeys(config('pricing.plan_column_keys'));
         }
-    });
-});
-
-describe('Pricing Matrix UI Compliance', function () {
-
-    beforeEach(function () {
-        seedPricingMatrixPlans();
-    });
-
-    it('renders compliance note below the matrix', function () {
-        $this->get(route('pricing'))
-            ->assertOk()
-            ->assertSee(__('ui.pricing.matrix_compliance_note'));
-    });
-
-    it('renders coming soon badges for unimplemented seller analytics', function () {
-        $response = $this->get(route('pricing'));
-
-        $response
-            ->assertSee(__('ui.pricing.features.basic_ctr'))
-            ->assertSee(__('ui.pricing.features.lead_funnel'))
-            ->assertSee(__('ui.pricing.features.advanced_ctr'))
-            ->assertSee(__('ui.pricing.features.business_dashboard'))
-            ->assertSee(__('ui.pricing.features.monthly_reports'))
-            ->assertSee(__('ui.pricing.status_coming_soon'));
-    });
-
-    it('renders admin only badges for platform BI features', function () {
-        $response = $this->get(route('pricing'));
-
-        $response
-            ->assertSee(__('ui.pricing.features.top_listings'))
-            ->assertSee(__('ui.pricing.features.category_performance'))
-            ->assertSee(__('ui.pricing.features.revenue_analytics'))
-            ->assertSee(__('ui.pricing.status_admin_only'));
-    });
-
-    it('does not render available checkmarks for coming soon feature rows', function () {
-        $response = $this->get(route('pricing'));
-        $html = $response->getContent();
-
-        $comingSoonLabels = [
-            __('ui.pricing.features.basic_ctr'),
-            __('ui.pricing.features.lead_funnel'),
-            __('ui.pricing.features.advanced_ctr'),
-            __('ui.pricing.features.business_dashboard'),
-            __('ui.pricing.features.monthly_reports'),
-        ];
-
-        foreach ($comingSoonLabels as $label) {
-            $labelPos = strpos($html, $label);
-            expect($labelPos)->not->toBeFalse("Missing label: {$label}");
-
-            $rowSlice = substr($html, $labelPos, 1200);
-
-            expect($rowSlice)
-                ->toContain(__('ui.pricing.status_coming_soon'))
-                ->not->toContain('title="' . __('ui.pricing.status_available') . '"');
-        }
-    });
-
-    it('does not render available checkmarks for admin only feature rows', function () {
-        $response = $this->get(route('pricing'));
-        $html = $response->getContent();
-
-        $adminOnlyLabels = [
-            __('ui.pricing.features.top_listings'),
-            __('ui.pricing.features.category_performance'),
-            __('ui.pricing.features.revenue_analytics'),
-        ];
-
-        foreach ($adminOnlyLabels as $label) {
-            $labelPos = strpos($html, $label);
-            expect($labelPos)->not->toBeFalse("Missing label: {$label}");
-
-            $rowSlice = substr($html, $labelPos, 1200);
-
-            expect($rowSlice)
-                ->toContain(__('ui.pricing.status_admin_only'))
-                ->not->toContain('title="' . __('ui.pricing.status_available') . '"');
-        }
-    });
-
-    it('still renders available status for tier-included features', function () {
-        $this->get(route('pricing'))
-            ->assertSee(__('ui.pricing.features.credits'))
-            ->assertSee(__('ui.pricing.status_available'));
     });
 });

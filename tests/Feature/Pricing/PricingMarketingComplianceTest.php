@@ -3,8 +3,7 @@
 /**
  * Final marketing compliance pass — pricing page seller-facing copy only.
  *
- * Ensures no unavailable analytics are advertised outside matrix
- * Coming Soon / Admin Only labels.
+ * Ensures no unavailable analytics are advertised in seller-facing copy.
  */
 
 use App\Models\PointPlan;
@@ -55,26 +54,25 @@ describe('Pricing Marketing Compliance', function () {
         }
     });
 
-    it('allows matrix labels only with compliance badges for restricted features', function () {
-        $response = $this->get(route('pricing'));
-        $html = $response->getContent();
+    it('does not render the plan comparison matrix section', function () {
+        $this->get(route('pricing'))
+            ->assertOk()
+            ->assertDontSee('id="feature-matrix"', false)
+            ->assertDontSee(__('ui.pricing.matrix_title'));
+    });
 
-        $restrictedLabels = [
+    it('does not surface restricted matrix-only feature labels on the page', function () {
+        $html = $this->get(route('pricing'))->getContent();
+
+        $matrixOnlyLabels = [
             __('ui.pricing.features.basic_ctr'),
             __('ui.pricing.features.lead_funnel'),
             __('ui.pricing.features.revenue_analytics'),
             __('ui.pricing.features.top_listings'),
         ];
 
-        foreach ($restrictedLabels as $label) {
-            $pos = strpos($html, $label);
-            expect($pos)->not->toBeFalse("Missing matrix label: {$label}");
-
-            $slice = substr($html, $pos, 1500);
-
-            expect($slice)->toMatch(
-                '/(' . preg_quote(__('ui.pricing.status_coming_soon'), '/') . '|' . preg_quote(__('ui.pricing.status_admin_only'), '/') . ')/'
-            );
+        foreach ($matrixOnlyLabels as $label) {
+            expect($html)->not->toContain($label, "Matrix-only label should not appear: {$label}");
         }
     });
 

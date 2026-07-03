@@ -180,14 +180,6 @@
 
 
         {{-- ════════════════════════════════════════════
-             SECTION 3 — FEATURE MATRIX (new, additive)
-        ════════════════════════════════════════════ --}}
-        @if($plans->isNotEmpty())
-            @include('frontend.pricing._feature-matrix')
-        @endif
-
-
-        {{-- ════════════════════════════════════════════
              SECTION 4 — ANALYTICS MARKETING (existing features only)
         ════════════════════════════════════════════ --}}
         <section id="analytics" class="scroll-mt-24">

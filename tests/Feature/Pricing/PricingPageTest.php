@@ -3,7 +3,7 @@
 /**
  * Nilex Platform — Pest Feature Tests
  *
- * Pricing page UI + feature matrix (additive UI only).
+ * Pricing page UI (plan cards + marketing sections).
  */
 
 use App\Models\PointPlan;
@@ -56,20 +56,7 @@ describe('Pricing Page UI', function () {
             ->assertSee('499');
     });
 
-    it('renders the feature comparison matrix', function () {
-        seedPricingPlans();
-
-        $response = $this->get(route('pricing'));
-
-        $response
-            ->assertSee('id="feature-matrix"', false)
-            ->assertSee(__('ui.pricing.matrix_title'))
-            ->assertSee(__('ui.pricing.features.credits'))
-            ->assertSee(__('ui.pricing.features.lead_funnel'))
-            ->assertSee(__('ui.pricing.features.business_badge'));
-    });
-
-    it('renders the Growth most popular badge on plan card and matrix', function () {
+    it('renders the Growth most popular badge on plan card', function () {
         seedPricingPlans();
 
         $response = $this->get(route('pricing'));
