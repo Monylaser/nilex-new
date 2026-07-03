@@ -52,35 +52,8 @@
     ];
 @endphp
 
-{{-- ══════════════════════════════════════════
-     HERO — Lovable navy gradient
-══════════════════════════════════════════ --}}
-<section class="relative overflow-hidden text-white"
-         style="padding-top:64px; background: radial-gradient(ellipse at top, #1a3a6b 0%, #0f1f3d 70%);">
-    {{-- Decorative depth circles --}}
-    <div class="pointer-events-none absolute -top-24 -end-16 w-72 h-72 rounded-full bg-white/[0.18]" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute top-32 -start-20 w-56 h-56 rounded-full bg-nilex-teal/[0.15]" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute -bottom-16 end-1/4 w-40 h-40 rounded-full bg-white/[0.12]" aria-hidden="true"></div>
-
-    <div class="relative max-w-2xl mx-auto px-4 py-10 sm:py-12 text-center">
-        <div class="trust-badge mb-5">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            <span>{{ __('ui.hero.badge') ?? 'منصة إعلانات مبوبة موثوقة في مصر' }}</span>
-        </div>
-
-        <h1 class="text-4xl sm:text-[2.5rem] font-bold text-white mb-3 leading-tight">
-            {{ __('ui.hero.title_1') ?? 'بيع واشتري' }}
-            {{ __('ui.hero.title_2') ?? 'بثقة وسهولة' }}
-        </h1>
-
-        <p class="text-sm sm:text-base text-white/70 mb-8 leading-relaxed max-w-lg mx-auto">
-            {!! __('ui.hero.subtitle') ?? 'منصة إعلانات مبوبة موثوقة في مصر' !!}
-        </p>
-
-        {{-- Main search bar — button inside white bar on the right --}}
+<section class="bg-nilex-bg px-4 py-4">
+    <div class="max-w-3xl mx-auto">
         <form action="{{ route('listings.search') }}" method="GET">
             <div class="hero-search-bar" dir="ltr">
                 <input type="text" name="q"
@@ -96,28 +69,6 @@
                 </button>
             </div>
         </form>
-    </div>
-
-    <x-ad-banner placement="hero_top" wrapper-class="relative max-w-7xl mx-auto px-4 mt-6 mb-2" />
-
-    <div class="relative max-w-2xl mx-auto px-4 pb-10 sm:pb-12 text-center">
-        {{-- Stats row --}}
-        <div class="flex items-center justify-center gap-6">
-            <div>
-                <span class="text-sm font-bold text-white">{{ __('ui.hero.stat_1_num') ?? '12000+' }}</span>
-                <span class="text-xs text-white/60 ms-1">{{ __('ui.hero.stat_1_label') ?? 'إعلان' }}</span>
-            </div>
-            <div class="w-px h-4 bg-white/20"></div>
-            <div>
-                <span class="text-sm font-bold text-white">{{ __('ui.hero.stat_2_num') ?? '8000+' }}</span>
-                <span class="text-xs text-white/60 ms-1">{{ __('ui.hero.stat_2_label') ?? 'مستخدم' }}</span>
-            </div>
-            <div class="w-px h-4 bg-white/20"></div>
-            <div>
-                <span class="text-sm font-bold text-white">{{ __('ui.hero.stat_3_num') ?? '27' }}</span>
-                <span class="text-xs text-white/60 ms-1">{{ __('ui.hero.stat_3_label') ?? 'محافظة' }}</span>
-            </div>
-        </div>
     </div>
 </section>
 
@@ -150,6 +101,8 @@
         </div>
     </div>
 </div>
+
+<x-ad-banner placement="hero_top" wrapper-class="w-full" />
 
 
 {{-- ══════════════════════════════════════════
