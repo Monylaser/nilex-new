@@ -918,7 +918,7 @@
     const NILEX_WIZARD_KEY    = @json($isEdit ? ('nilex_listing_wizard_edit_' . $listing->id) : 'nilex_listing_wizard');
     const NILEX_PHONE_VERIFIED = @json($isPhoneVerified);
     const NILEX_USER_POINTS    = @json($userPoints);
-    const NILEX_FEATURE_COSTS  = { 1: 25, 3: 60, 7: 120, 14: 220 };
+    const NILEX_FEATURE_COSTS  = @json(\App\Models\Listing::FEATURE_COSTS);
     // Mirrors the listings.price column cap (decimal(12,2)) so the user gets an
     // instant client-side error before submitting, matching the server rule.
     const NILEX_MAX_PRICE      = 9999999999.99;
@@ -1048,13 +1048,14 @@
             submitError: '',
             isDragging: false,
 
-            // ⭐ خيارات التمييز — يجب أن تطابق NILEX_FEATURE_COSTS وصفحة /pricing
+            // ⭐ خيارات التمييز — التكلفة من Listing::FEATURE_COSTS (مصدر واحد)
             featureOptions: [
-                { days: 0,  label: NILEX_WIZARD_I18N.feature.opt_0,  cost: 0 },
-                { days: 1,  label: NILEX_WIZARD_I18N.feature.opt_1,  cost: 25 },
-                { days: 3,  label: NILEX_WIZARD_I18N.feature.opt_3,  cost: 60 },
-                { days: 7,  label: NILEX_WIZARD_I18N.feature.opt_7,  cost: 120 },
-                { days: 14, label: NILEX_WIZARD_I18N.feature.opt_14, cost: 220 },
+                { days: 0, label: NILEX_WIZARD_I18N.feature.opt_0, cost: 0 },
+                ...Object.entries(NILEX_FEATURE_COSTS).map(([days, cost]) => ({
+                    days: Number(days),
+                    label: NILEX_WIZARD_I18N.feature['opt_' + days],
+                    cost: Number(cost),
+                })),
             ],
             userPoints: NILEX_USER_POINTS,
 
