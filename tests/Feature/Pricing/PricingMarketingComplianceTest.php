@@ -88,8 +88,7 @@ describe('Pricing Marketing Compliance', function () {
             ->not->toContain('lead tracking');
 
         $this->get(route('pricing'))
-            ->assertSee(__('ui.pricing.plan_cards.business.seller_leads'))
-            ->assertSee(__('ui.pricing.priority_support_cta'));
+            ->assertSee(__('ui.pricing.plan_cards.business.seller_leads'));
     });
 
     it('renders dashboard section with all eight verified seller features', function () {

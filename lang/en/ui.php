@@ -351,7 +351,6 @@ return [
         'trust_first_feature'     => 'New accounts receive welcome credits you can use toward your first listing boost.',
         'trust_points_validity'   => 'Purchased points currently have no expiry date.',
         'trust_company_payment'   => 'Secure online card payment available for all registered sellers.',
-        'priority_support_cta' => 'Contact us for priority support',
         'plan_cards' => [
             'starter' => [
                 'concurrent_featured' => '1 concurrent featured listing',

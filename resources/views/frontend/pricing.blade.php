@@ -154,15 +154,6 @@
                                 @endforeach
                             </ul>
 
-                            @if($planKey === 'business')
-                                <a href="{{ route('legal.show', 'contact-us') }}"
-                                   target="_blank"
-                                   rel="noopener"
-                                   class="block w-full text-center text-sm font-semibold py-2.5 rounded-xl border border-nilex-teal text-nilex-teal hover:bg-nilex-teal hover:text-white transition-colors mb-3">
-                                    {{ __('ui.pricing.priority_support_cta') }}
-                                </a>
-                            @endif
-
                             <div class="mt-auto">
                                 @auth
                                     <button
