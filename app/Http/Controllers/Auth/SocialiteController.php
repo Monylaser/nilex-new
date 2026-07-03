@@ -77,7 +77,7 @@ class SocialiteController extends Controller
                 ]);
             });
 
-            $this->pointService->credit($user, 50, 'هدية تسجيل الدخول عبر '.ucfirst($provider).' 🎁');
+            $this->pointService->credit($user, 15, 'هدية تسجيل الدخول عبر '.ucfirst($provider).' 🎁');
 
             if ($device['new']) {
                 Cookie::queue(

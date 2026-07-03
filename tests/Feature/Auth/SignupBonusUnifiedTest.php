@@ -40,7 +40,7 @@ it('grants exactly 50 points on a first-time Socialite signup (matches normal si
 
     $user = User::where('email', 'social-bonus@example.com')->firstOrFail();
 
-    expect($user->points)->toBe(50);
+    expect($user->points)->toBe(15);
 });
 
 it('grants no extra points on registration OTP confirmation (the +50 moved to the profile phone flow)', function () {
@@ -84,8 +84,8 @@ it('advertises 50 (not 100) in the earn-guide and footer teaser', function () {
 
     $html = $this->actingAs($user)->get(route('points.history'))->assertOk()->getContent();
 
-    // The register reward row now reads +50; no +100 promise remains on the page.
-    expect($html)->toContain('+50')->not->toContain('+100');
+    // The register reward row now reads +15; no +100 promise remains on the page.
+    expect($html)->toContain('+15')->not->toContain('+100');
 
     // The footer teaser string itself must read 15, not 100.
     expect(__('ui.footer.gift_teaser'))->toContain('15')->not->toContain('100');
