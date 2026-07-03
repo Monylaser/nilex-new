@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdCampaign;
 use App\Models\CarBrand;
 use App\Models\Category;
 use App\Models\Listing;
@@ -41,8 +42,18 @@ class HomeController extends Controller
             ->latest()
             ->paginate(12);
 
+        $heroCampaigns = AdCampaign::where('placement', 'hero_top')
+            ->where('status', 'active')
+            ->where('approval_status', 'approved')
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
+            ->whereNull('deleted_at')
+            ->orderByDesc('priority')
+            ->with('media')
+            ->get();
+
         return response()
-            ->view('frontend.home', compact('categories', 'featuredListings', 'latestListings'))
+            ->view('frontend.home', compact('categories', 'featuredListings', 'latestListings', 'heroCampaigns'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
             ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');

@@ -102,7 +102,153 @@
     </div>
 </div>
 
-<x-ad-banner placement="hero_top" wrapper-class="w-full" />
+@php
+    $heroSlides = $heroCampaigns->filter(fn ($c) => $c->getFirstMediaUrl('ad_image'))->values();
+    $heroImgClass = 'w-full aspect-[4/1] md:aspect-[5/1] max-h-[200px] md:max-h-[240px] object-cover rounded-xl';
+@endphp
+
+@if($heroSlides->isNotEmpty())
+    <div class="max-w-7xl mx-auto px-4 md:px-6">
+        @if($heroSlides->count() === 1)
+            @php $campaign = $heroSlides->first(); @endphp
+            @if($campaign->target_url)
+                <a href="{{ route('ads.click', $campaign) }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="block w-full"
+                   data-ad-id="{{ $campaign->id }}"
+                   data-ad-impression="{{ route('ads.impression', $campaign) }}">
+                    <picture>
+                        <source media="(min-width: 1024px)"
+                                srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'desktop') }}">
+                        <source media="(min-width: 768px)"
+                                srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'tablet') }}">
+                        <img src="{{ $campaign->getFirstMediaUrl('ad_image', 'mobile') }}"
+                             alt="{{ $campaign->title }}"
+                             loading="eager"
+                             class="{{ $heroImgClass }}">
+                    </picture>
+                </a>
+            @else
+                <div class="block w-full"
+                     data-ad-id="{{ $campaign->id }}"
+                     data-ad-impression="{{ route('ads.impression', $campaign) }}">
+                    <picture>
+                        <source media="(min-width: 1024px)"
+                                srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'desktop') }}">
+                        <source media="(min-width: 768px)"
+                                srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'tablet') }}">
+                        <img src="{{ $campaign->getFirstMediaUrl('ad_image', 'mobile') }}"
+                             alt="{{ $campaign->title }}"
+                             loading="eager"
+                             class="{{ $heroImgClass }}">
+                    </picture>
+                </div>
+            @endif
+        @else
+            <div
+                x-data="{
+                    current: 0,
+                    total: {{ $heroSlides->count() }},
+                    interval: null,
+                    init() {
+                        this.interval = setInterval(() => this.next(), 5000);
+                    },
+                    destroy() {
+                        if (this.interval) clearInterval(this.interval);
+                    },
+                    next() {
+                        this.current = (this.current + 1) % this.total;
+                    },
+                    prev() {
+                        this.current = (this.current - 1 + this.total) % this.total;
+                    },
+                    goTo(index) {
+                        this.current = index;
+                        if (this.interval) clearInterval(this.interval);
+                        this.interval = setInterval(() => this.next(), 5000);
+                    }
+                }"
+                class="relative w-full"
+            >
+                <div class="overflow-hidden rounded-xl">
+                    @foreach($heroSlides as $index => $campaign)
+                        <div x-show="current === {{ $index }}"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             @if($index > 0) style="display: none;" @endif
+                             class="w-full">
+                            @if($campaign->target_url)
+                                <a href="{{ route('ads.click', $campaign) }}"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="block w-full"
+                                   data-ad-id="{{ $campaign->id }}"
+                                   data-ad-impression="{{ route('ads.impression', $campaign) }}">
+                                    <picture>
+                                        <source media="(min-width: 1024px)"
+                                                srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'desktop') }}">
+                                        <source media="(min-width: 768px)"
+                                                srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'tablet') }}">
+                                        <img src="{{ $campaign->getFirstMediaUrl('ad_image', 'mobile') }}"
+                                             alt="{{ $campaign->title }}"
+                                             loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                                             class="{{ $heroImgClass }}">
+                                    </picture>
+                                </a>
+                            @else
+                                <div class="block w-full"
+                                     data-ad-id="{{ $campaign->id }}"
+                                     data-ad-impression="{{ route('ads.impression', $campaign) }}">
+                                    <picture>
+                                        <source media="(min-width: 1024px)"
+                                                srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'desktop') }}">
+                                        <source media="(min-width: 768px)"
+                                                srcset="{{ $campaign->getFirstMediaUrl('ad_image', 'tablet') }}">
+                                        <img src="{{ $campaign->getFirstMediaUrl('ad_image', 'mobile') }}"
+                                             alt="{{ $campaign->title }}"
+                                             loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                                             class="{{ $heroImgClass }}">
+                                    </picture>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+
+                <button type="button"
+                        @click="prev()"
+                        class="absolute start-2 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-nilex shadow-md hover:bg-white transition-colors"
+                        aria-label="Previous slide">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <button type="button"
+                        @click="next()"
+                        class="absolute end-2 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-nilex shadow-md hover:bg-white transition-colors"
+                        aria-label="Next slide">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+                    @foreach($heroSlides as $index => $campaign)
+                        <button type="button"
+                                @click="goTo({{ $index }})"
+                                :class="current === {{ $index }} ? 'bg-white w-6' : 'bg-white/50 w-2'"
+                                class="h-2 rounded-full transition-all duration-300"
+                                aria-label="Slide {{ $index + 1 }}"></button>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    </div>
+
+    <x-ad-impression-tracker />
+@endif
 
 
 {{-- ══════════════════════════════════════════
