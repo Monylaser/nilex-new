@@ -179,8 +179,8 @@
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     @foreach([
-                        ['+15', __('ui.points.earn_register')],
-                        ['+15',  __('ui.points.earn_verify')],
+                        ['+20', __('ui.points.earn_register')],
+                        ['+20',  __('ui.points.earn_verify')],
                         ['+3',   __('ui.points.earn_listing')],
                     ] as [$pts, $action])
                         <div class="flex items-center gap-3 bg-zinc-50 rounded-xl px-4 py-3">

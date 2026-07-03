@@ -15,9 +15,9 @@ function seedPricingPlans(): void
 {
     $plans = [
         ['name_ar' => 'مبتدئ',     'name_en' => 'Starter',    'points' => 100,  'price' => 49,  'description' => 'باقة البداية'],
-        ['name_ar' => 'نمو',       'name_en' => 'Growth',     'points' => 250,  'price' => 99,  'description' => 'باقة النمو'],
-        ['name_ar' => 'بائع محترف','name_en' => 'Pro Seller', 'points' => 700,  'price' => 249, 'description' => 'باقة المحترف'],
-        ['name_ar' => 'أعمال',     'name_en' => 'Business',   'points' => 1500, 'price' => 499, 'description' => 'باقة الشركات'],
+        ['name_ar' => 'نمو',       'name_en' => 'Growth',     'points' => 300,  'price' => 99,  'description' => 'باقة النمو'],
+        ['name_ar' => 'بائع محترف','name_en' => 'Pro Seller', 'points' => 850,  'price' => 249, 'description' => 'باقة المحترف'],
+        ['name_ar' => 'أعمال',     'name_en' => 'Business',   'points' => 2500, 'price' => 499, 'description' => 'باقة الشركات'],
     ];
 
     foreach ($plans as $plan) {
@@ -47,9 +47,9 @@ describe('Pricing Page UI', function () {
             ->assertSee('Pro Seller')
             ->assertSee('Business')
             ->assertSee('100')
-            ->assertSee('250')
-            ->assertSee('700')
-            ->assertSee('1,500')
+            ->assertSee('300')
+            ->assertSee('850')
+            ->assertSee('2,500')
             ->assertSee('49')
             ->assertSee('99')
             ->assertSee('249')

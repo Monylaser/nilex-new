@@ -64,6 +64,7 @@ class DatabaseSeeder extends Seeder
         // 4. أدوار وصلاحيات الأدمن (super_admin)
         $this->call([
             RoleSeeder::class,
+            PointPlanSeeder::class,
             PlanEntitlementSeeder::class,
         ]);
 

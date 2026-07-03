@@ -4,7 +4,7 @@
  * Nilex Platform — Pest Feature Tests
  *
  * Covers:
- *   1. Registration  → 50 welcome points, is_phone_verified=false, redirect /verify-otp
+ *   1. Registration  → 20 welcome points, is_phone_verified=false, redirect /verify-otp
  *   2. Points        → listing creation credits 3 pts; featureWithPoints deducts correctly
  *   3. Admin ACL     → normal user blocked (403); super_admin allowed through
  */
@@ -40,7 +40,7 @@ describe('Registration', function () {
         $response->assertRedirect(route('otp.notice'));
     });
 
-    it('awards exactly 50 welcome points on registration (no doubled bonus)', function () {
+    it('awards exactly 20 welcome points on registration (no doubled bonus)', function () {
         $this->post('/register', [
             'name'                  => 'Ahmed Hassan',
             'contact'               => 'ahmed@example.com',
@@ -50,9 +50,8 @@ describe('Registration', function () {
 
         $user = User::where('email', 'ahmed@example.com')->firstOrFail();
 
-        // Single source of truth: RegisteredUserController credits 50.
-        // (The old dead UserObserver +50 was removed, so no 50+50=100.)
-        expect($user->points)->toBe(15);
+        // Single source of truth: RegisteredUserController credits config('pricing.registration_welcome_points').
+        expect($user->points)->toBe(20);
     });
 
     it('sets is_phone_verified to false immediately after registration', function () {
@@ -151,19 +150,19 @@ describe('Points', function () {
         ]);
 
         $days         = 3;
-        $expectedCost = Listing::featureCost($days); // 60 pts for 3 days
+        $expectedCost = Listing::featureCost($days); // 90 pts for 3 days
 
         $listing->featureWithPoints($days);
 
         expect($user->fresh()->points)
-            ->toBe(300 - $expectedCost)              // 300 − 60 = 240
+            ->toBe(300 - $expectedCost)              // 300 − 90 = 210
             ->and($listing->fresh()->is_featured)->toBeTrue()
             ->and($listing->fresh()->featured_until)->not->toBeNull();
     });
 
     it('throws an exception when user has insufficient points for featuring', function () {
         $user = User::factory()->create([
-            'points'            => 5,   // not enough for 1 day (costs 25)
+            'points'            => 5,   // not enough for 1 day (costs 40)
             'is_phone_verified' => true,
         ]);
 

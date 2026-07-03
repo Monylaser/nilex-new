@@ -26,19 +26,19 @@ function createTierPlan(string $tier): PointPlan
         PlanEntitlement::TIER_GROWTH => [
             'name_ar' => 'نمو',
             'name_en' => 'Growth',
-            'points'  => 250,
+            'points'  => 300,
             'price'   => 99,
         ],
         PlanEntitlement::TIER_PRO_SELLER => [
             'name_ar' => 'بائع محترف',
             'name_en' => 'Pro Seller',
-            'points'  => 700,
+            'points'  => 850,
             'price'   => 249,
         ],
         PlanEntitlement::TIER_BUSINESS => [
             'name_ar' => 'أعمال',
             'name_en' => 'Business',
-            'points'  => 1500,
+            'points'  => 2500,
             'price'   => 499,
         ],
     ];

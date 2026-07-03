@@ -208,7 +208,7 @@ describe('Boost System', function () {
         ]);
 
         $days         = 3;
-        $expectedCost = Listing::featureCost($days); // 60 pts for 3 days
+        $expectedCost = Listing::featureCost($days); // 90 pts for 3 days
 
         $listing->featureWithPoints($days);
 

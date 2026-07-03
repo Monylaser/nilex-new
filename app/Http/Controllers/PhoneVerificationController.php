@@ -94,7 +94,7 @@ class PhoneVerificationController extends Controller
             ])->save();
 
             if ($grantBonus) {
-                $this->pointService->credit($user, 15, 'مكافأة توثيق رقم الهاتف');
+                $this->pointService->credit($user, 20, 'مكافأة توثيق رقم الهاتف');
             }
         });
 
