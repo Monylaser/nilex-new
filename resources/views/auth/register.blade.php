@@ -105,7 +105,7 @@
         </div>
 
         {{-- زر التسجيل --}}
-        <button type="submit" class="btn-primary mt-2">
+        <button type="submit" class="btn-nilex-primary mt-2">
             {{ __('ui.auth.register_submit') }}
         </button>
 

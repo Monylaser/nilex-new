@@ -29,14 +29,12 @@
         .input-field::placeholder { color: #9ca3af; }
         .input-field:focus {
             background: white;
-            border-color: #1D9E75;
-            box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.12);
+            border-color: #11407A;
+            box-shadow: 0 0 0 3px rgba(17, 64, 122, 0.12);
         }
 
-        .btn-primary {
+        .btn-nilex-primary {
             width: 100%;
-            background: #1D9E75;
-            color: white;
             font-family: 'Cairo', sans-serif;
             font-weight: 700;
             font-size: 15px;
@@ -44,12 +42,8 @@
             border-radius: 12px;
             border: none;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            box-shadow: 0 4px 14px rgba(29, 158, 117, 0.25);
             display: block;
         }
-        .btn-primary:hover  { background: #085041; }
-        .btn-primary:active { transform: scale(0.98); }
 
         .btn-social {
             display: flex;
@@ -85,9 +79,9 @@
             transition: background 0.2s, color 0.2s;
         }
         .tab-btn.active {
-            background: #1D9E75;
+            background: #14A5A8;
             color: white;
-            box-shadow: 0 2px 8px rgba(29, 158, 117, 0.22);
+            box-shadow: 0 2px 8px rgba(20, 165, 168, 0.22);
         }
 
         .strength-bar {
@@ -229,7 +223,7 @@
                          style="height:32px;"
                          alt="Nilex"
                          onerror="this.style.display='none'; this.nextSibling.style.display='inline'">
-                    <span style="font-size:22px; font-weight:900; color:#1D9E75; display:none;">نايلكس</span>
+                    <span style="font-size:22px; font-weight:900; color:#14A5A8; display:none;">نايلكس</span>
                 </a>
             </div>
 

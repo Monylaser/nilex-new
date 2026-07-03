@@ -76,7 +76,7 @@
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
                 <label style="font-size:14px; font-weight:600; color:#374151;">{{ __('ui.auth.label_password') }}</label>
                 @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" style="font-size:12px; color:#1D9E75; text-decoration:none; font-weight:600;">
+                    <a href="{{ route('password.request') }}" class="text-xs text-nilex-teal no-underline font-semibold">
                         {{ __('ui.auth.forgot_password') }}
                     </a>
                 @endif
@@ -116,14 +116,14 @@
         {{-- تذكرني --}}
         <div style="display:flex; align-items:center; gap:8px;">
             <input type="checkbox" name="remember" id="remember_me"
-                style="width:16px; height:16px; cursor:pointer; accent-color:#1D9E75;">
+                class="w-4 h-4 cursor-pointer accent-nilex-teal">
             <label for="remember_me" style="font-size:14px; color:#6b7280; cursor:pointer; user-select:none;">
                 {{ __('ui.auth.remember_me') }}
             </label>
         </div>
 
         {{-- زر الدخول --}}
-        <button type="submit" class="btn-primary">
+        <button type="submit" class="btn-nilex-primary">
             {{ __('ui.auth.login_submit') }}
         </button>
 
@@ -178,7 +178,7 @@
     {{-- رابط التسجيل --}}
     <p style="text-align:center; font-size:14px; color:#6b7280; margin-top:24px;">
         {{ __('ui.auth.no_account') }}
-        <a href="{{ route('register') }}" style="color:#1D9E75; font-weight:700; text-decoration:none;">
+        <a href="{{ route('register') }}" class="text-nilex-teal font-bold no-underline">
             {{ __('ui.auth.register_now') }}
         </a>
     </p>

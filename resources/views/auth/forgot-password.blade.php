@@ -41,14 +41,14 @@
                 @enderror
             </div>
 
-            <button type="submit" class="btn-primary">
+            <button type="submit" class="btn-nilex-primary">
                 {{ __('ui.auth.forgot_submit') }}
             </button>
         </form>
 
         <p class="text-center text-sm text-zinc-500 mt-6">
             {{ __('ui.auth.remembered') }}
-            <a href="{{ route('login') }}" style="color:#1D9E75; font-weight:700; text-decoration:none;">
+            <a href="{{ route('login') }}" class="text-nilex-teal font-bold no-underline">
                 {{ __('ui.auth.back_to_login') }}
             </a>
         </p>

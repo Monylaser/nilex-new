@@ -55,7 +55,7 @@
 
             {{-- Submit --}}
             <button type="submit"
-                    class="btn-primary"
+                    class="btn-nilex-primary"
                     aria-label="{{ __('ui.auth.otp_submit') }}">
                 {{ __('ui.auth.otp_submit') }}
             </button>

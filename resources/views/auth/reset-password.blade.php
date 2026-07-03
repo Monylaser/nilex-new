@@ -72,7 +72,7 @@
                 @enderror
             </div>
 
-            <button type="submit" class="btn-primary">
+            <button type="submit" class="btn-nilex-primary">
                 {{ __('ui.auth.reset_submit') }}
             </button>
         </form>
