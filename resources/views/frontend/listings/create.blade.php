@@ -17,15 +17,15 @@
     }
     .wizard-input:focus {
         outline: none;
-        border-color: #1D9E75;
-        box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
+        border-color: #14A5A8;
+        box-shadow: 0 0 0 3px rgba(20,165,168,0.12);
     }
     .wizard-input.has-error {
         border-color: #f87171;
     }
 
     .drop-zone.dragging {
-        border-color: #1D9E75;
+        border-color: #14A5A8;
         background: #ecfdf5;
     }
 </style>
@@ -84,8 +84,8 @@
                     <div class="flex flex-col items-center text-center shrink-0">
                         <div class="w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300"
                              :class="{
-                                'bg-[#1D9E75] border-[#1D9E75] text-white': currentStep > {{ $num }},
-                                'bg-white border-[#1D9E75] text-[#1D9E75] ring-4 ring-green-100': currentStep === {{ $num }},
+                                'bg-nilex-teal border-nilex-teal text-white': currentStep > {{ $num }},
+                                'bg-white border-nilex-teal text-nilex-teal ring-4 ring-green-100': currentStep === {{ $num }},
                                 'bg-white border-gray-200 text-gray-300': currentStep < {{ $num }},
                              }">
                             <template x-if="currentStep > {{ $num }}">
@@ -96,7 +96,7 @@
                             <span x-show="currentStep <= {{ $num }}">{{ $num }}</span>
                         </div>
                         <span class="hidden md:block text-[11px] font-semibold mt-2 transition-colors"
-                              :class="currentStep >= {{ $num }} ? 'text-[#1D9E75]' : 'text-gray-400'">
+                              :class="currentStep >= {{ $num }} ? 'text-nilex-teal' : 'text-gray-400'">
                             {{ $label }}
                         </span>
                     </div>
@@ -104,7 +104,7 @@
                     {{-- Connecting line --}}
                     @if(!$loop->last)
                         <div class="flex-1 h-0.5 mx-1.5 md:mx-2 rounded-full transition-all duration-300"
-                             :class="currentStep > {{ $num }} ? 'bg-[#1D9E75]' : 'bg-gray-200'"></div>
+                             :class="currentStep > {{ $num }} ? 'bg-nilex-teal' : 'bg-gray-200'"></div>
                     @endif
                 @endforeach
             </div>
@@ -158,14 +158,14 @@
                         <div @click="selectRoot(cat)"
                              class="rounded-2xl border-2 p-4 cursor-pointer flex flex-col items-center text-center gap-2 transition-all duration-200 hover:shadow-md hover:scale-105 min-h-[44px]"
                              :class="(selectedRootId === cat.id)
-                                ? 'border-[#1D9E75] bg-green-50 ring-2 ring-green-400'
+                                ? 'border-nilex-teal bg-green-50 ring-2 ring-green-400'
                                 : 'border-gray-100 bg-white hover:border-gray-200'">
                             <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 overflow-hidden">
                                 <template x-if="categoryIconUrl(cat)">
                                     <img :src="categoryIconUrl(cat)" :alt="cat.name" class="w-8 h-8 object-contain">
                                 </template>
                                 <template x-if="!categoryIconUrl(cat)">
-                                    <span class="text-lg font-black text-[#1D9E75]" x-text="cat.name ? cat.name.charAt(0) : '؟'"></span>
+                                    <span class="text-lg font-black text-nilex-teal" x-text="cat.name ? cat.name.charAt(0) : '؟'"></span>
                                 </template>
                             </div>
                             <span class="text-[13px] font-bold text-zinc-800 leading-tight" x-text="cat.name"></span>
@@ -176,7 +176,7 @@
                 {{-- Subcategories --}}
                 <div x-show="subCategories.length > 0" x-cloak class="mt-7">
                     <h3 class="text-sm font-bold text-zinc-700 mb-3 flex items-center gap-2">
-                        <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
+                        <span class="w-1 h-4 rounded-full inline-block bg-nilex-teal"></span>
                         {{ __('wizard.step1.choose_sub') }}
                     </h3>
                     <div class="flex flex-wrap gap-2">
@@ -184,8 +184,8 @@
                             <button type="button" @click="selectSub(sub)"
                                     class="px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all duration-200 min-h-[44px]"
                                     :class="(formData.category_id == sub.id)
-                                        ? 'border-[#1D9E75] bg-green-50 text-[#1D9E75] ring-2 ring-green-300'
-                                        : 'border-gray-200 text-zinc-600 hover:border-[#1D9E75]'">
+                                        ? 'border-nilex-teal bg-green-50 text-nilex-teal ring-2 ring-green-300'
+                                        : 'border-gray-200 text-zinc-600 hover:border-nilex-teal'">
                                 <span x-text="sub.name"></span>
                             </button>
                         </template>
@@ -208,7 +208,7 @@
                 {{-- ────────────────────────────────────────
                      🤖 المساعد الذكي (Gemini) — إضافة فقط
                 ──────────────────────────────────────── --}}
-                <div class="mb-6 rounded-2xl border border-[#1D9E75]/30 bg-gradient-to-br from-green-50 to-white p-4">
+                <div class="mb-6 rounded-2xl border border-nilex-teal/30 bg-gradient-to-br from-green-50 to-white p-4">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-lg">🤖</span>
                         <h3 class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.ai_title') }}</h3>
@@ -220,7 +220,7 @@
                                placeholder="{{ __('wizard.step2.ai_placeholder') }}">
                         <button type="button" @click="generateWithAI()"
                                 :disabled="aiLoading || aiPrompt.trim().length < 3"
-                                class="inline-flex items-center justify-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-5 py-2.5 rounded-xl text-sm min-h-[44px] shrink-0">
+                                class="inline-flex items-center justify-center gap-2 bg-nilex-teal hover:bg-nilex-teal-deep disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-5 py-2.5 rounded-xl text-sm min-h-[44px] shrink-0">
                             <svg x-show="aiLoading" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -231,7 +231,7 @@
                     <div x-show="aiMessage" x-cloak
                          class="mt-3 text-xs font-semibold rounded-xl px-3 py-2"
                          :class="aiMessage && aiMessage.type === 'success'
-                            ? 'bg-green-100 text-[#178a64]'
+                            ? 'bg-green-100 text-nilex-teal'
                             : 'bg-amber-50 text-amber-700 border border-amber-200'"
                          x-text="aiMessage ? aiMessage.text : ''"></div>
                 </div>
@@ -267,13 +267,13 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div @click="formData.condition = 'new'"
                                  class="rounded-2xl border-2 p-4 cursor-pointer text-center transition-all duration-200 min-h-[44px]"
-                                 :class="formData.condition === 'new' ? 'border-[#1D9E75] bg-green-50 ring-2 ring-green-300' : 'border-gray-200 hover:border-gray-300'">
+                                 :class="formData.condition === 'new' ? 'border-nilex-teal bg-green-50 ring-2 ring-green-300' : 'border-gray-200 hover:border-gray-300'">
                                 <div class="text-2xl mb-1">✨</div>
                                 <span class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.condition_new') }}</span>
                             </div>
                             <div @click="formData.condition = 'used'"
                                  class="rounded-2xl border-2 p-4 cursor-pointer text-center transition-all duration-200 min-h-[44px]"
-                                 :class="formData.condition === 'used' ? 'border-[#1D9E75] bg-green-50 ring-2 ring-green-300' : 'border-gray-200 hover:border-gray-300'">
+                                 :class="formData.condition === 'used' ? 'border-nilex-teal bg-green-50 ring-2 ring-green-300' : 'border-gray-200 hover:border-gray-300'">
                                 <div class="text-2xl mb-1">🔄</div>
                                 <span class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.condition_used') }}</span>
                             </div>
@@ -299,7 +299,7 @@
                             <template x-for="opt in priceTypes" :key="opt.value">
                                 <button type="button" @click="formData.price_type = opt.value"
                                         class="px-2 py-2.5 rounded-xl border-2 text-[13px] font-semibold transition-all duration-200 min-h-[44px]"
-                                        :class="formData.price_type === opt.value ? 'border-[#1D9E75] bg-green-50 text-[#1D9E75]' : 'border-gray-200 text-zinc-600 hover:border-gray-300'">
+                                        :class="formData.price_type === opt.value ? 'border-nilex-teal bg-green-50 text-nilex-teal' : 'border-gray-200 text-zinc-600 hover:border-gray-300'">
                                     <span x-text="opt.label"></span>
                                 </button>
                             </template>
@@ -313,7 +313,7 @@
                     ──────────────────────────────────────── --}}
                     <div x-show="isCarCategory" x-cloak class="pt-2 border-t border-gray-100">
                         <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
-                            <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
+                            <span class="w-1 h-4 rounded-full inline-block bg-nilex-teal"></span>
                             {{ __('wizard.car.section_title') }}
                         </h3>
                         <div class="space-y-4">
@@ -431,7 +431,7 @@
                     ──────────────────────────────────────── --}}
                     <div x-show="isRealEstateCategory" x-cloak class="pt-2 border-t border-gray-100">
                         <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
-                            <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
+                            <span class="w-1 h-4 rounded-full inline-block bg-nilex-teal"></span>
                             {{ __('wizard.realestate.section_title') }}
                         </h3>
                         <div class="space-y-4">
@@ -537,7 +537,7 @@
                     {{-- Dynamic custom fields --}}
                     <div x-show="customFieldsSchema.length > 0" x-cloak class="pt-2 border-t border-gray-100">
                         <h3 class="text-sm font-bold text-zinc-700 mb-3 mt-3 flex items-center gap-2">
-                            <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
+                            <span class="w-1 h-4 rounded-full inline-block bg-nilex-teal"></span>
                             {{ __('wizard.step2.extra_specs') }}
                         </h3>
                         <div class="space-y-4">
@@ -569,7 +569,7 @@
                                     <template x-if="field.type === 'boolean'">
                                         <label class="inline-flex items-center gap-2 cursor-pointer">
                                             <input type="checkbox" x-model="formData.custom_fields[field.name]"
-                                                   class="w-5 h-5 rounded accent-[#1D9E75]">
+                                                   class="w-5 h-5 rounded accent-nilex-teal">
                                             <span class="text-sm text-zinc-600">{{ __('wizard.common.yes') }}</span>
                                         </label>
                                     </template>
@@ -604,7 +604,7 @@
                 {{-- الصور الحالية (كتلة ثابتة الترتيب — حذف فقط؛ الجديدة تُلحَق بعدها) --}}
                 <div x-show="existingImages.length > 0" x-cloak class="mb-6">
                     <h3 class="text-sm font-bold text-zinc-700 mb-1 flex items-center gap-2">
-                        <span class="w-1 h-4 rounded-full inline-block bg-[#1D9E75]"></span>
+                        <span class="w-1 h-4 rounded-full inline-block bg-nilex-teal"></span>
                         {{ __('wizard.edit.existing_images_title') }}
                     </h3>
                     <p class="text-xs text-zinc-400 mb-3">{{ __('wizard.edit.existing_images_hint') }}</p>
@@ -636,7 +636,7 @@
                      @dragleave.prevent="isDragging = false"
                      @drop.prevent="isDragging = false; addImages($event.dataTransfer.files)">
                     <div class="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mb-3">
-                        <svg class="w-7 h-7 text-[#1D9E75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-7 h-7 text-nilex-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                     </div>
@@ -673,7 +673,7 @@
                                 </svg>
                             </button>
                             <span x-show="index === 0"
-                                  class="absolute bottom-1.5 start-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#1D9E75] text-white">
+                                  class="absolute bottom-1.5 start-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-nilex-teal text-white">
                                 {{ __('wizard.step3.main_badge') }}
                             </span>
                         </div>
@@ -701,7 +701,7 @@
                                placeholder="01xxxxxxxxx">
                         <p x-show="errors.phone" x-cloak class="text-xs text-red-600 mt-1" x-text="errors.phone"></p>
                         @if(! $isPhoneVerified)
-                        <p class="mt-1.5 flex items-center gap-1 text-xs text-[#1D9E75] font-semibold">
+                        <p class="mt-1.5 flex items-center gap-1 text-xs text-nilex-teal font-semibold">
                             <span>💡</span> {{ __('wizard.step4.verify_phone_hint') }}
                         </p>
                         @endif
@@ -742,7 +742,7 @@
                         <template x-for="item in checklist" :key="item.label">
                             <li class="flex items-center gap-2">
                                 <span class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                                      :class="item.done ? 'bg-[#1D9E75] text-white' : 'bg-gray-200 text-gray-400'">
+                                      :class="item.done ? 'bg-nilex-teal text-white' : 'bg-gray-200 text-gray-400'">
                                     <svg x-show="item.done" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                     </svg>
@@ -761,21 +761,21 @@
                             <p class="text-[11px] font-bold text-zinc-400 mb-1">{{ __('wizard.step4.summary_category') }}</p>
                             <p class="text-sm font-semibold text-zinc-800" x-text="activeCategory ? activeCategory.name : '—'"></p>
                         </div>
-                        <button type="button" @click="goToStep(1)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
+                        <button type="button" @click="goToStep(1)" class="text-xs font-bold text-nilex-teal hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
                     </div>
 
                     {{-- Details --}}
                     <div class="border border-gray-100 rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-3 mb-2">
                             <p class="text-[11px] font-bold text-zinc-400">{{ __('wizard.step4.summary_details') }}</p>
-                            <button type="button" @click="goToStep(2)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
+                            <button type="button" @click="goToStep(2)" class="text-xs font-bold text-nilex-teal hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
                         </div>
                         <p class="text-sm font-bold text-zinc-800" x-text="formData.title || '—'"></p>
                         <p class="text-xs text-zinc-500 mt-1 line-clamp-2" x-text="formData.description || ''"></p>
                         <div class="flex flex-wrap gap-2 mt-3">
                             <span class="text-[11px] font-semibold bg-gray-50 text-zinc-600 px-2.5 py-1 rounded-lg" x-text="conditionLabel()"></span>
                             <span class="text-[11px] font-semibold bg-gray-50 text-zinc-600 px-2.5 py-1 rounded-lg" x-text="priceTypeLabel()"></span>
-                            <span class="text-[11px] font-bold bg-green-50 text-[#1D9E75] px-2.5 py-1 rounded-lg">
+                            <span class="text-[11px] font-bold bg-green-50 text-nilex-teal px-2.5 py-1 rounded-lg">
                                 <span x-text="formData.price ? Number(formData.price).toLocaleString('en-US') : '0'"></span> {{ __('wizard.common.currency') }}
                             </span>
                         </div>
@@ -785,7 +785,7 @@
                     <div class="border border-gray-100 rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-3 mb-2">
                             <p class="text-[11px] font-bold text-zinc-400">{{ __('wizard.step4.summary_images') }} (<span x-text="images.length + existingImages.length"></span>)</p>
-                            <button type="button" @click="goToStep(3)" class="text-xs font-bold text-[#1D9E75] hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
+                            <button type="button" @click="goToStep(3)" class="text-xs font-bold text-nilex-teal hover:underline shrink-0">{{ __('wizard.common.edit') }}</button>
                         </div>
                         <div x-show="imagePreviews.length > 0 || existingImages.length > 0" class="flex gap-2 flex-wrap">
                             <template x-for="img in existingImages.slice(0,5)" :key="'ex-' + img.id">
@@ -808,7 +808,7 @@
                         </h3>
                         <span class="text-xs font-semibold text-zinc-500">
                             {{ __('wizard.feature.current_points') }}
-                            <span class="text-[#1D9E75] font-bold" x-text="userPoints"></span>
+                            <span class="text-nilex-teal font-bold" x-text="userPoints"></span>
                             {{ __('wizard.common.points_unit') }}
                         </span>
                     </div>
@@ -852,7 +852,7 @@
 
                 {{-- Next --}}
                 <button type="button" @click="nextStep()" x-show="currentStep < totalSteps"
-                        class="inline-flex items-center gap-1.5 bg-[#1D9E75] hover:bg-[#178a64] text-white font-bold px-6 py-2.5 rounded-xl text-sm ms-auto min-h-[44px]">
+                        class="btn-nilex-primary inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-sm ms-auto min-h-[44px]">
                     {{ __('wizard.common.next') }}
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
@@ -862,7 +862,7 @@
                 {{-- Submit --}}
                 <div x-show="currentStep === totalSteps" x-cloak class="ms-auto flex flex-col items-end gap-1.5">
                     <button type="submit" :disabled="isSubmitting"
-                            class="inline-flex items-center gap-2 bg-[#1D9E75] hover:bg-[#178a64] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold px-7 py-2.5 rounded-xl text-sm min-h-[44px]">
+                            class="btn-nilex-primary inline-flex items-center gap-2 px-7 py-2.5 rounded-xl text-sm min-h-[44px]">
                         <svg x-show="isSubmitting" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
