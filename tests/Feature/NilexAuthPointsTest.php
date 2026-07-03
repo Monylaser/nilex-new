@@ -52,7 +52,7 @@ describe('Registration', function () {
 
         // Single source of truth: RegisteredUserController credits 50.
         // (The old dead UserObserver +50 was removed, so no 50+50=100.)
-        expect($user->points)->toBe(50);
+        expect($user->points)->toBe(15);
     });
 
     it('sets is_phone_verified to false immediately after registration', function () {

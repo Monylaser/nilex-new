@@ -89,7 +89,7 @@ class RegisteredUserController extends Controller
         // ── 8. Welcome points ────────────────────────────────────────
         $this->pointService->credit(
             $user,
-            50,
+            15,
             'هدية ترحيبية بمناسبة الانضمام لمنصة نايلكس 🎁'
         );
 

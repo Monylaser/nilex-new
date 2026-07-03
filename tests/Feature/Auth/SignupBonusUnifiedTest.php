@@ -87,8 +87,8 @@ it('advertises 50 (not 100) in the earn-guide and footer teaser', function () {
     // The register reward row now reads +50; no +100 promise remains on the page.
     expect($html)->toContain('+50')->not->toContain('+100');
 
-    // The footer teaser string itself must read 50, not 100.
-    expect(__('ui.footer.gift_teaser'))->toContain('50')->not->toContain('100');
+    // The footer teaser string itself must read 15, not 100.
+    expect(__('ui.footer.gift_teaser'))->toContain('15')->not->toContain('100');
     app()->setLocale('en');
-    expect(__('ui.footer.gift_teaser'))->toContain('50')->not->toContain('100');
+    expect(__('ui.footer.gift_teaser'))->toContain('15')->not->toContain('100');
 });

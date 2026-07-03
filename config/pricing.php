@@ -11,7 +11,7 @@
  */
 return [
 
-    'registration_welcome_points' => 100,
+    'registration_welcome_points' => 15,
 
     'plan_column_keys' => [
         'starter',

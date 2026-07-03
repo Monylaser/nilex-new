@@ -68,7 +68,7 @@ describe('Pricing Page UI', function () {
         seedPricingPlans();
 
         $this->get(route('pricing'))
-            ->assertSee(__('ui.pricing.welcome_gift', ['points' => number_format(100)]));
+            ->assertSee(__('ui.pricing.welcome_gift', ['points' => number_format(config('pricing.registration_welcome_points'))]));
     });
 
     it('renders analytics section with seller-verified capabilities only', function () {
