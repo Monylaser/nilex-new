@@ -56,50 +56,51 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         x-cloak
-        class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+        class="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm"
         role="dialog"
         aria-modal="true"
         aria-label="إعلان"
         data-ad-id="{{ $popupCampaign->id }}"
     >
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true"></div>
+        {{-- Full-screen image --}}
+        @if($popupTargetUrl)
+            <a href="{{ route('ads.click', $popupCampaign) }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="absolute inset-0 block">
+                <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
+                     alt="{{ $popupCampaign->title }}"
+                     class="w-full h-full object-cover">
+            </a>
+        @else
+            <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
+                 alt="{{ $popupCampaign->title }}"
+                 class="absolute inset-0 w-full h-full object-cover">
+        @endif
 
-        <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden" @click.stop>
-            @if($popupTargetUrl)
-                <a href="{{ route('ads.click', $popupCampaign) }}"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="block">
-                    <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
-                         alt="{{ $popupCampaign->title }}"
-                         class="w-full aspect-[4/3] object-cover">
-                </a>
-            @else
-                <div class="block">
-                    <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
-                         alt="{{ $popupCampaign->title }}"
-                         class="w-full aspect-[4/3] object-cover">
-                </div>
-            @endif
+        {{-- Skip controls — absolute, bottom-centre, on top of the image --}}
+        <div class="absolute bottom-8 inset-x-0 z-10 flex flex-col items-center gap-3 pointer-events-none">
 
-            <div class="flex items-center justify-between gap-3 px-4 py-3 border-t border-zinc-100 bg-zinc-50">
-                <span class="text-xs text-zinc-500" x-show="!skipEnabled">
-                    يمكنك التخطي بعد
-                    <span class="font-bold text-zinc-700" x-text="countdown"></span>
-                    ثوانٍ
-                </span>
-                <span class="text-xs text-zinc-400" x-show="skipEnabled" x-cloak></span>
+            {{-- Countdown label (separate element, no @click) --}}
+            <p class="text-white/80 text-sm drop-shadow pointer-events-none"
+               x-show="!skipEnabled">
+                تخطي بعد
+                <span class="font-bold" x-text="countdown"></span>
+                ثوانٍ
+            </p>
 
-                <button type="button"
-                        @click="close()"
-                        :disabled="!skipEnabled"
-                        :class="skipEnabled
-                            ? 'btn-nilex-primary cursor-pointer'
-                            : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'"
-                        class="shrink-0 px-5 py-2 rounded-xl text-sm font-bold">
-                    تخطي
-                </button>
-            </div>
+            {{-- Skip button — has @click, does NOT have x-show --}}
+            <button type="button"
+                    @click="close()"
+                    :disabled="!skipEnabled"
+                    :class="skipEnabled
+                        ? 'bg-white text-gray-900 shadow-lg cursor-pointer hover:bg-white/90 active:scale-95'
+                        : 'bg-white/20 text-white/40 cursor-not-allowed'"
+                    class="pointer-events-auto px-8 py-2.5 rounded-full text-sm font-bold transition-all duration-200">
+                {{-- These spans carry x-show, the button itself does not --}}
+                <span x-show="!skipEnabled" x-cloak>تخطي</span>
+                <span x-show="skipEnabled">تخطي ←</span>
+            </button>
         </div>
     </div>
 @endif

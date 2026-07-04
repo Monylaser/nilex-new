@@ -3,13 +3,12 @@
 /**
  * Ad Popup component — server-side rendering tests.
  *
- * Verifies the popup renders (or not) correctly based on campaign state,
- * and that the HTML structure matches the expected design spec.
+ * Verifies the popup renders (or not) correctly and that the HTML structure
+ * matches the full-screen design spec.
  */
 
 use App\Models\AdCampaign;
 use App\Models\User;
-use App\Services\AdCampaignService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -38,7 +37,7 @@ function makePopupCampaign(array $overrides = []): AdCampaign
 
 function attachPopupImage(AdCampaign $campaign): void
 {
-    $campaign->addMedia(UploadedFile::fake()->image('popup.jpg', 800, 600))
+    $campaign->addMedia(UploadedFile::fake()->image('popup.jpg', 1080, 1920))
         ->toMediaCollection('ad_image');
 }
 
@@ -74,49 +73,7 @@ describe('Ad popup component', function () {
             ->assertSee('data-ad-id="' . $campaign->id . '"', false);
     });
 
-    it('uses max-w-lg for the popup card (512 px desktop width)', function () {
-        $campaign = makePopupCampaign();
-        attachPopupImage($campaign);
-        Cache::flush();
-
-        $this->get(route('home'))
-            ->assertOk()
-            ->assertSee('max-w-lg', false);
-    });
-
-    it('uses bg-black/60 backdrop-blur-sm for the overlay', function () {
-        $campaign = makePopupCampaign();
-        attachPopupImage($campaign);
-        Cache::flush();
-
-        $this->get(route('home'))
-            ->assertOk()
-            ->assertSee('bg-black/60 backdrop-blur-sm', false);
-    });
-
-    it('applies aspect-[4/3] and object-cover to the campaign image', function () {
-        $campaign = makePopupCampaign();
-        attachPopupImage($campaign);
-        Cache::flush();
-
-        $this->get(route('home'))
-            ->assertOk()
-            ->assertSee('aspect-[4/3]', false)
-            ->assertSee('object-cover', false);
-    });
-
-    it('renders the skip button with countdown text', function () {
-        $campaign = makePopupCampaign();
-        attachPopupImage($campaign);
-        Cache::flush();
-
-        $this->get(route('home'))
-            ->assertOk()
-            ->assertSee('يمكنك التخطي بعد', false)
-            ->assertSee('تخطي', false);
-    });
-
-    it('includes fade-out x-transition directives for smooth close animation', function () {
+    it('uses a full-screen fixed overlay (bg-black/70 backdrop-blur-sm)', function () {
         $campaign = makePopupCampaign();
         attachPopupImage($campaign);
         Cache::flush();
@@ -124,18 +81,87 @@ describe('Ad popup component', function () {
         $html = $this->get(route('home'))->content();
 
         expect($html)
-            ->toContain('x-transition:leave')
-            ->toContain('x-transition:enter');
+            ->toContain('bg-black/70')
+            ->toContain('backdrop-blur-sm')
+            ->toContain('fixed inset-0');
     });
 
-    it('renders a clickable link when target_url is set', function () {
+    it('applies w-full h-full object-cover to the campaign image', function () {
+        $campaign = makePopupCampaign();
+        attachPopupImage($campaign);
+        Cache::flush();
+
+        $html = $this->get(route('home'))->content();
+
+        expect($html)
+            ->toContain('w-full h-full object-cover');
+    });
+
+    it('positions skip controls at bottom centre with absolute positioning', function () {
+        $campaign = makePopupCampaign();
+        attachPopupImage($campaign);
+        Cache::flush();
+
+        $html = $this->get(route('home'))->content();
+
+        expect($html)->toContain('absolute bottom-8');
+    });
+
+    it('renders the countdown label separately from the skip button', function () {
+        $campaign = makePopupCampaign();
+        attachPopupImage($campaign);
+        Cache::flush();
+
+        $html = $this->get(route('home'))->content();
+
+        // Countdown text lives in a <p>, not the button
+        expect($html)
+            ->toContain('تخطي بعد')
+            ->toContain('ثوانٍ')
+            ->toContain('x-text="countdown"');
+    });
+
+    it('skip button has @click="close()" and no x-show on itself', function () {
+        $campaign = makePopupCampaign();
+        attachPopupImage($campaign);
+        Cache::flush();
+
+        $html = $this->get(route('home'))->content();
+
+        // The button must have @click but the button tag itself must not carry x-show
+        expect($html)
+            ->toContain('@click="close()"')
+            ->toContain(':disabled="!skipEnabled"');
+
+        // x-show appears on the <span> children, not on the <button> line
+        preg_match_all('/<button[^>]*>/s', $html, $buttons);
+        foreach ($buttons[0] as $tag) {
+            expect($tag)->not->toContain('x-show');
+        }
+    });
+
+    it('includes fade x-transition directives for smooth open/close', function () {
+        $campaign = makePopupCampaign();
+        attachPopupImage($campaign);
+        Cache::flush();
+
+        $html = $this->get(route('home'))->content();
+
+        expect($html)
+            ->toContain('x-transition:enter')
+            ->toContain('x-transition:leave');
+    });
+
+    it('renders a clickable full-screen link when target_url is set', function () {
         $campaign = makePopupCampaign(['target_url' => 'https://example.com/promo']);
         attachPopupImage($campaign);
         Cache::flush();
 
-        $this->get(route('home'))
-            ->assertOk()
-            ->assertSee(route('ads.click', $campaign), false);
+        $html = $this->get(route('home'))->content();
+
+        expect($html)
+            ->toContain(route('ads.click', $campaign))
+            ->toContain('absolute inset-0 block');
     });
 
     it('renders the image without a link when target_url is null', function () {
