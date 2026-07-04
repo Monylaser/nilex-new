@@ -56,51 +56,70 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         x-cloak
-        class="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm"
+        class="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
         role="dialog"
         aria-modal="true"
         aria-label="إعلان"
         data-ad-id="{{ $popupCampaign->id }}"
     >
-        {{-- Full-screen image --}}
-        @if($popupTargetUrl)
-            <a href="{{ route('ads.click', $popupCampaign) }}"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="absolute inset-0 block">
-                <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
-                     alt="{{ $popupCampaign->title }}"
-                     class="w-full h-full object-cover">
-            </a>
-        @else
-            <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
-                 alt="{{ $popupCampaign->title }}"
-                 class="absolute inset-0 w-full h-full object-cover">
-        @endif
+        {{-- Modal card --}}
+        <div class="w-full max-w-2xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col">
 
-        {{-- Skip controls — absolute, bottom-centre, on top of the image --}}
-        <div class="absolute bottom-8 inset-x-0 z-10 flex flex-col items-center gap-3 pointer-events-none">
+            {{-- Upper section: image --}}
+            <div class="flex-1 relative overflow-hidden">
 
-            {{-- Countdown label (separate element, no @click) --}}
-            <p class="text-white/80 text-sm drop-shadow pointer-events-none"
-               x-show="!skipEnabled">
-                تخطي بعد
-                <span class="font-bold" x-text="countdown"></span>
-                ثوانٍ
-            </p>
+                {{-- X close button — top-right (RTL: visual top-left) --}}
+                <button type="button"
+                        @click="close()"
+                        :disabled="!skipEnabled"
+                        :class="skipEnabled ? 'hover:bg-black/60 cursor-pointer' : 'cursor-not-allowed opacity-60'"
+                        class="absolute top-3 right-3 z-10 bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors duration-200"
+                        aria-label="إغلاق">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
 
-            {{-- Skip button — has @click, does NOT have x-show --}}
-            <button type="button"
-                    @click="close()"
-                    :disabled="!skipEnabled"
-                    :class="skipEnabled
-                        ? 'bg-white text-gray-900 shadow-lg cursor-pointer hover:bg-white/90 active:scale-95'
-                        : 'bg-white/20 text-white/40 cursor-not-allowed'"
-                    class="pointer-events-auto px-8 py-2.5 rounded-full text-sm font-bold transition-all duration-200">
-                {{-- These spans carry x-show, the button itself does not --}}
-                <span x-show="!skipEnabled" x-cloak>تخطي</span>
-                <span x-show="skipEnabled">تخطي ←</span>
-            </button>
+                {{-- Ad image (wrapped in link when target URL exists) --}}
+                @if($popupTargetUrl)
+                    <a href="{{ route('ads.click', $popupCampaign) }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="block w-full h-full">
+                        <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
+                             alt="{{ $popupCampaign->title }}"
+                             class="w-full h-full object-cover min-h-[300px] max-h-[500px]">
+                    </a>
+                @else
+                    <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
+                         alt="{{ $popupCampaign->title }}"
+                         class="w-full h-full object-cover min-h-[300px] max-h-[500px]">
+                @endif
+            </div>
+
+            {{-- Lower section: skip bar --}}
+            <div class="bg-white px-6 py-4 flex items-center justify-between">
+
+                {{-- Right: countdown label (hidden once timer hits 0) --}}
+                <p class="text-sm text-zinc-500" x-show="!skipEnabled">
+                    تخطي بعد
+                    <span class="font-bold" x-text="countdown"></span>
+                    ثوانٍ
+                </p>
+                {{-- Spacer when countdown hidden so skip button stays left-aligned --}}
+                <span x-show="skipEnabled"></span>
+
+                {{-- Left: skip button --}}
+                <button type="button"
+                        @click="close()"
+                        :disabled="!skipEnabled"
+                        :class="skipEnabled
+                            ? 'text-nilex-teal font-bold cursor-pointer'
+                            : 'text-zinc-300 cursor-not-allowed'"
+                        class="text-sm transition-colors duration-200">
+                    تخطي ←
+                </button>
+            </div>
         </div>
     </div>
 @endif

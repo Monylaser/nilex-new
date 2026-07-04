@@ -97,14 +97,16 @@ describe('Ad popup component', function () {
             ->toContain('w-full h-full object-cover');
     });
 
-    it('positions skip controls at bottom centre with absolute positioning', function () {
+    it('positions skip controls in a white bar at the bottom of the modal', function () {
         $campaign = makePopupCampaign();
         attachPopupImage($campaign);
         Cache::flush();
 
         $html = $this->get(route('home'))->content();
 
-        expect($html)->toContain('absolute bottom-8');
+        expect($html)
+            ->toContain('bg-white')
+            ->toContain('justify-between');
     });
 
     it('renders the countdown label separately from the skip button', function () {
@@ -152,7 +154,7 @@ describe('Ad popup component', function () {
             ->toContain('x-transition:leave');
     });
 
-    it('renders a clickable full-screen link when target_url is set', function () {
+    it('renders a clickable link when target_url is set', function () {
         $campaign = makePopupCampaign(['target_url' => 'https://example.com/promo']);
         attachPopupImage($campaign);
         Cache::flush();
@@ -161,7 +163,7 @@ describe('Ad popup component', function () {
 
         expect($html)
             ->toContain(route('ads.click', $campaign))
-            ->toContain('absolute inset-0 block');
+            ->toContain('block w-full h-full');
     });
 
     it('renders the image without a link when target_url is null', function () {
