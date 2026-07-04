@@ -330,15 +330,12 @@
                     @endif
 
                     {{-- Current status --}}
+                    @if($user->email && !$user->hasVerifiedEmail())
                     <div class="mb-4 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
-                        @if($user->email && !$user->hasVerifiedEmail())
-                            <p class="text-xs text-zinc-400 mb-0.5">{{ __('ui.profile.email_verify.current_verified') }}</p>
-                            <p class="text-sm font-medium text-zinc-700" dir="ltr">{{ $user->email }}</p>
-                            <p class="text-xs text-amber-600 mt-0.5">{{ __('ui.profile.email_verify.none_yet') }}</p>
-                        @else
-                            <p class="text-sm text-zinc-500">{{ __('ui.profile.email_verify.none_yet') }}</p>
-                        @endif
+                        <p class="text-xs text-zinc-400 mb-0.5">{{ __('ui.profile.email_verify.current_verified') }}</p>
+                        <p class="text-sm font-medium text-zinc-700" dir="ltr">{{ $user->email }}</p>
                     </div>
+                    @endif
 
                     {{-- One-time +20 bonus hint --}}
                     @if(is_null($user->email_bonus_claimed_at))
