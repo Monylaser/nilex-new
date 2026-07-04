@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Filament\Models\Contracts\FilamentUser;
@@ -34,6 +35,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'email',
         'password',
         'phone',
+        'whatsapp',
+        'bio',
+        'governorate',
+        'city',
+        'location_id',
         'points',
         'points_balance',
         'is_banned',
@@ -50,7 +56,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'is_phone_verified', 
         'phone_verified_at',
         'pending_phone',
+        'pending_email',
         'phone_bonus_claimed_at',
+        'email_bonus_claimed_at',
         'provider_name',
         'provider_id',
         'plan_tier',
@@ -68,18 +76,20 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password'          => 'hashed',
-        'is_banned'         => 'boolean',
-        'strike_count'      => 'integer',
-        'otp_expires_at'    => 'datetime',
-        'is_phone_verified' => 'boolean',
-        'phone_verified_at' => 'datetime',
+        'email_verified_at'      => 'datetime',
+        'password'               => 'hashed',
+        'is_banned'              => 'boolean',
+        'strike_count'           => 'integer',
+        'otp_expires_at'         => 'datetime',
+        'is_phone_verified'      => 'boolean',
+        'phone_verified_at'      => 'datetime',
         'phone_bonus_claimed_at' => 'datetime',
-        'otp_attempts'      => 'integer',
-        'ratings_avg'       => 'float',
-        'ratings_count'     => 'integer',
-        'anonymized_at'     => 'datetime',
+        'email_bonus_claimed_at' => 'datetime',
+        'otp_attempts'           => 'integer',
+        'location_id'            => 'integer',
+        'ratings_avg'            => 'float',
+        'ratings_count'          => 'integer',
+        'anonymized_at'          => 'datetime',
     ];
 
     // ── Panel Access ──────────────────────────────────────────────────────────
@@ -92,6 +102,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     }
 
     // ── Relationships ─────────────────────────────────────────────────────────
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
+    }
 
     public function listings(): HasMany
     {

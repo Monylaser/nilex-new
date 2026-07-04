@@ -69,10 +69,17 @@ class HomeController extends Controller
         $isPhoneVerified  = (bool) $user->is_phone_verified;
         $userPoints       = (int)  $user->points;
 
+        // Pre-fill location from user profile (Task 2 — wizard auto-fill).
+        $user->loadMissing('location');
+        $prefillLocationId    = $user->location_id    ? (string) $user->location_id              : '';
+        $prefillGovernorateId = $user->location?->parent_id ? (string) $user->location->parent_id : '';
+
         return view('frontend.listings.create', array_merge($reference, [
-            'isPhoneVerified' => $isPhoneVerified,
-            'userPoints'      => $userPoints,
-            'mode'            => 'create',
+            'isPhoneVerified'      => $isPhoneVerified,
+            'userPoints'           => $userPoints,
+            'mode'                 => 'create',
+            'prefillLocationId'    => $prefillLocationId,
+            'prefillGovernorateId' => $prefillGovernorateId,
         ]));
     }
 
@@ -349,14 +356,21 @@ class HomeController extends Controller
         $isPhoneVerified  = (bool) $user->is_phone_verified;
         $userPoints       = (int)  $user->points;
 
+        // In edit mode, location is already set from the listing itself (editData).
+        // Pre-fill is only relevant for create mode, so pass empty strings here.
+        $prefillLocationId    = '';
+        $prefillGovernorateId = '';
+
         return view('frontend.listings.create', array_merge($reference, [
-            'isPhoneVerified' => $isPhoneVerified,
-            'userPoints'      => $userPoints,
-            'mode'            => 'edit',
-            'listing'         => $listing,
-            'editData'        => $editData,
-            'editImages'      => $editImages,
-            'editRootId'      => $editRootId,
+            'isPhoneVerified'      => $isPhoneVerified,
+            'userPoints'           => $userPoints,
+            'mode'                 => 'edit',
+            'listing'              => $listing,
+            'editData'             => $editData,
+            'editImages'           => $editImages,
+            'editRootId'           => $editRootId,
+            'prefillLocationId'    => $prefillLocationId,
+            'prefillGovernorateId' => $prefillGovernorateId,
         ]));
     }
 

@@ -84,6 +84,15 @@ return [
         'otp_invalid'  => 'The code is incorrect or has expired.',
     ],
 
+    // Post-registration email verification (EmailVerificationProfileController)
+    'email' => [
+        'required'     => 'Please enter your email address.',
+        'invalid'      => 'Invalid email address format.',
+        'already_taken'=> 'This email address is already registered to another account.',
+        'no_pending'   => 'There is no email address awaiting confirmation. Send the verification code first.',
+        'otp_invalid'  => 'The code is incorrect or has expired.',
+    ],
+
     // Listing editing after publish (HomeController::edit/update)
     'listing' => [
         'updated_success'           => 'Your listing was updated and will be reviewed again before it shows. ✏️',

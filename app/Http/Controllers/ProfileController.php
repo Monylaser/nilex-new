@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,32 +17,57 @@ class ProfileController extends Controller
 {
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        $user = $request->user();
+        $user->load('location');
+
+        $governorates = Location::governorates()
+            ->active()
+            ->with(['children' => fn ($q) => $q->active()->orderBy('sort_order')])
+            ->get(['id', 'name_ar', 'name_en', 'slug']);
+
+        // Derive the governorate ID from the user's city location parent.
+        $userGovernorateId = $user->location?->parent_id ? (string) $user->location->parent_id : '';
+        $userLocationId    = $user->location_id          ? (string) $user->location_id          : '';
+
+        return view('profile.edit', compact('user', 'governorates', 'userGovernorateId', 'userLocationId'));
     }
 
     public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
 
-        // ملاحظة: رقم الهاتف (phone) لم يعد يُحفَظ من هذا النموذج مباشرةً —
-        // صار يُدار حصراً عبر مسار توثيق الهاتف المنفصل (PhoneVerificationController)
-        // الذي يرسل OTP للرقم الجديد ويؤكده قبل اعتماده. لذا أُزيل من قواعد التحقق هنا.
+        // رقم الهاتف: يُدار حصراً عبر PhoneVerificationController (OTP).
+        // الإيميل: يُدار عبر EmailVerificationProfileController إذا أُضيف لأول مرة،
+        //           وعبر هذا النموذج فقط إذا كان المستخدم لديه إيميل مسبقاً.
+        $emailRules = $user->email
+            ? ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id]
+            : ['prohibited']; // المستخدمون بالموبايل يضيفون إيميلهم عبر قسم توثيق الإيميل
+
         $validated = $request->validate([
-            'name'       => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'whatsapp'   => ['nullable', 'string', 'max:20'],
-            'avatar'     => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'governorate'=> ['nullable', 'string', 'max:100'],
-            'city'       => ['nullable', 'string', 'max:100'],
-            'bio'        => ['nullable', 'string', 'max:500'],
+            'name'        => ['required', 'string', 'max:255'],
+            'email'       => $emailRules,
+            'whatsapp'    => ['nullable', 'string', 'max:20'],
+            'avatar'      => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'bio'         => ['nullable', 'string', 'max:500'],
         ]);
 
-        $user->fill($validated);
+        // Preserve the original email for dirty-checking before any writes.
+        $originalEmail = $user->getOriginal('email') ?? $user->email;
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
+        $user->fill([
+            'name'        => $validated['name'],
+            'whatsapp'    => $validated['whatsapp'] ?? null,
+            'location_id' => $validated['location_id'] ?? null,
+            'bio'         => $validated['bio'] ?? null,
+        ]);
+
+        // Email — only for users who already have one (phone-only users are 'prohibited').
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+            if ($validated['email'] !== $originalEmail) {
+                $user->email_verified_at = null;
+            }
         }
 
         // رفع الصورة

@@ -2,6 +2,13 @@
 
 <x-app-layout>
 
+    {{-- JSON constant for the location picker (profile + email verify sections). --}}
+    @push('footer-scripts')
+    <script>
+        const PROFILE_LOCATIONS = @json($governorates);
+    </script>
+    @endpush
+
     <div class="bg-zinc-50 min-h-screen py-8" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"
          x-data="{ deleteOpen: false }">
         <div class="max-w-3xl mx-auto px-4 space-y-5">
@@ -141,19 +148,38 @@
                         @error('whatsapp') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- Governorate + City --}}
-                    <div class="grid grid-cols-2 gap-3">
+                    {{-- Governorate + City (dependent dropdowns using locations table) --}}
+                    <div class="grid grid-cols-2 gap-3"
+                         x-data="{
+                             governorates: typeof PROFILE_LOCATIONS !== 'undefined' ? PROFILE_LOCATIONS : [],
+                             governorateId: '{{ old('governorate_id', $userGovernorateId) }}',
+                             locationId: '{{ old('location_id', $userLocationId) }}',
+                             get cities() {
+                                 const gov = this.governorates.find(g => g.id == this.governorateId);
+                                 return gov?.children ?? [];
+                             },
+                             onGovChange() { this.locationId = ''; }
+                         }">
                         <div>
                             <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.info.governorate') }}</label>
-                            <input type="text" name="governorate" value="{{ old('governorate', $user->governorate) }}"
-                                   placeholder="{{ __('ui.profile.info.gov_placeholder') }}"
-                                   class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                            <select name="governorate_id" x-model="governorateId" @change="onGovChange()"
+                                    class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all bg-white">
+                                <option value="">{{ __('ui.profile.info.gov_placeholder') }}</option>
+                                <template x-for="gov in governorates" :key="gov.id">
+                                    <option :value="gov.id" x-text="gov.{{ app()->getLocale() === 'ar' ? 'name_ar' : 'name_en' }}" :selected="gov.id == governorateId"></option>
+                                </template>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.info.city') }}</label>
-                            <input type="text" name="city" value="{{ old('city', $user->city) }}"
-                                   placeholder="{{ __('ui.profile.info.city_placeholder') }}"
-                                   class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                            <select name="location_id" x-model="locationId"
+                                    :disabled="!governorateId"
+                                    class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all bg-white disabled:bg-zinc-50 disabled:text-zinc-400 disabled:cursor-not-allowed">
+                                <option value="" x-text="governorateId ? '{{ __('ui.profile.info.city_placeholder') }}' : '{{ __('ui.profile.info.city_placeholder_no_gov') }}'"></option>
+                                <template x-for="city in cities" :key="city.id">
+                                    <option :value="city.id" x-text="city.{{ app()->getLocale() === 'ar' ? 'name_ar' : 'name_en' }}" :selected="city.id == locationId"></option>
+                                </template>
+                            </select>
                         </div>
                     </div>
 
@@ -179,100 +205,201 @@
                  PHONE VERIFICATION (separate post-registration OTP flow)
             ══════════════════════════════════════════════════════════════ --}}
             <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
-                <h3 class="text-base font-black text-zinc-900 mb-1">{{ __('ui.profile.phone_verify.heading') }}</h3>
-                <p class="text-sm text-zinc-500 mb-4">{{ __('ui.profile.phone_verify.description') }}</p>
-
-                {{-- Flash messages --}}
-                @if(session('status') === 'phone-verified')
-                    <div class="alert-success mb-4 text-sm">{{ __('ui.profile.phone_verify.verified_flash') }}</div>
-                @elseif(session('status') === 'phone-otp-sent')
-                    <div class="alert-success mb-4 text-sm">{{ __('ui.profile.phone_verify.sent_flash') }}</div>
-                @endif
-
-                {{-- Current verified status --}}
-                <div class="mb-4 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
-                    @if($user->phone && ($user->is_phone_verified ?? false))
-                        <div class="flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-xs text-zinc-400 mb-0.5">{{ __('ui.profile.phone_verify.current_verified') }}</p>
-                                <p class="text-sm font-bold text-zinc-800" dir="ltr">🇪🇬 +20 {{ $user->phone }}</p>
-                            </div>
-                            <span class="inline-flex items-center gap-1.5 text-xs font-bold text-nilex bg-nilex/8 px-2.5 py-1 rounded-full shrink-0">
-                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                {{ __('ui.profile.phone_verify.verified_badge') }}
-                            </span>
-                        </div>
-                    @else
-                        <p class="text-sm text-zinc-500">{{ __('ui.profile.phone_verify.none_yet') }}</p>
+                @if($user->phone && ($user->is_phone_verified ?? false) && !$user->pending_phone)
+                    {{-- ✅ رقم الهاتف موثّق: نعرض الحالة فقط بدون أي نموذج إرسال --}}
+                    <h3 class="text-base font-black text-zinc-900 mb-3">{{ __('ui.profile.phone_verify.already_verified_heading') }}</h3>
+                    @if(session('status') === 'phone-verified')
+                        <div class="alert-success mb-4 text-sm">{{ __('ui.profile.phone_verify.verified_flash') }}</div>
                     @endif
-                </div>
-
-                {{-- One-time +50 bonus hint --}}
-                @if(is_null($user->phone_bonus_claimed_at))
-                    <p class="flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl mb-4">
-                        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z"/><path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z"/></svg>
-                        {{ __('ui.profile.phone_verify.bonus_hint') }}
-                    </p>
-                @else
-                    <p class="text-xs text-zinc-400 mb-4">{{ __('ui.profile.phone_verify.bonus_claimed') }}</p>
-                @endif
-
-                @if($user->pending_phone)
-                    {{-- OTP verification step --}}
-                    <form method="POST" action="{{ route('profile.phone.verify') }}" class="space-y-3">
-                        @csrf
-                        <p class="text-sm text-zinc-600">{{ __('ui.profile.phone_verify.otp_sent_to', ['phone' => '+20 '.$user->pending_phone]) }}</p>
+                    <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
                         <div>
-                            <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.phone_verify.otp_label') }}</label>
-                            <input type="text" inputmode="numeric" name="otp" maxlength="4" dir="ltr"
-                                   placeholder="{{ __('ui.profile.phone_verify.otp_placeholder') }}"
-                                   class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm tracking-[0.5em] text-center focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
-                            @error('otp') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            <p class="text-xs text-zinc-400 mb-0.5">{{ __('ui.profile.phone_verify.current_verified') }}</p>
+                            <p class="text-sm font-bold text-zinc-800" dir="ltr">🇪🇬 +20 {{ $user->phone }}</p>
                         </div>
-                        <button type="submit"
-                                class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
-                            {{ __('ui.profile.phone_verify.verify_btn') }}
-                        </button>
-                    </form>
-
-                    {{-- Resend / change number --}}
-                    <form method="POST" action="{{ route('profile.phone.send') }}" class="mt-4 pt-4 border-t border-zinc-100 space-y-3">
-                        @csrf
-                        <label class="block text-sm font-semibold text-zinc-700">{{ __('ui.profile.phone_verify.change_number') }}</label>
-                        <div class="relative">
-                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-sm select-none">🇪🇬 +20</span>
-                            <input type="tel" name="phone" value="{{ old('phone', $user->pending_phone) }}"
-                                   placeholder="{{ __('ui.profile.phone_verify.phone_placeholder') }}" dir="ltr"
-                                   class="w-full border border-zinc-200 rounded-xl py-2.5 pl-4 pr-20 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all text-start">
-                        </div>
-                        @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        <button type="submit"
-                                class="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold py-2.5 rounded-xl transition-all text-sm">
-                            {{ __('ui.profile.phone_verify.resend') }}
-                        </button>
-                    </form>
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-nilex bg-nilex/8 px-2.5 py-1 rounded-full shrink-0">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            {{ __('ui.profile.phone_verify.verified_badge') }}
+                        </span>
+                    </div>
                 @else
-                    {{-- Entry step --}}
-                    <form method="POST" action="{{ route('profile.phone.send') }}" class="space-y-3">
-                        @csrf
-                        <div>
-                            <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.phone_verify.phone_label') }}</label>
+                    {{-- 🔲 لا يوجد هاتف موثّق أو pending OTP: نعرض نموذج التوثيق --}}
+                    <h3 class="text-base font-black text-zinc-900 mb-1">{{ __('ui.profile.phone_verify.heading') }}</h3>
+                    <p class="text-sm text-zinc-500 mb-4">{{ __('ui.profile.phone_verify.description') }}</p>
+
+                    @if(session('status') === 'phone-otp-sent')
+                        <div class="alert-success mb-4 text-sm">{{ __('ui.profile.phone_verify.sent_flash') }}</div>
+                    @endif
+
+                    {{-- Current status block (no phone or not verified) --}}
+                    <div class="mb-4 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+                        <p class="text-sm text-zinc-500">{{ __('ui.profile.phone_verify.none_yet') }}</p>
+                    </div>
+
+                    {{-- One-time +20 bonus hint --}}
+                    @if(is_null($user->phone_bonus_claimed_at))
+                        <p class="flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl mb-4">
+                            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z"/><path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z"/></svg>
+                            {{ __('ui.profile.phone_verify.bonus_hint') }}
+                        </p>
+                    @else
+                        <p class="text-xs text-zinc-400 mb-4">{{ __('ui.profile.phone_verify.bonus_claimed') }}</p>
+                    @endif
+
+                    @if($user->pending_phone)
+                        {{-- OTP verification step --}}
+                        <form method="POST" action="{{ route('profile.phone.verify') }}" class="space-y-3">
+                            @csrf
+                            <p class="text-sm text-zinc-600">{{ __('ui.profile.phone_verify.otp_sent_to', ['phone' => '+20 '.$user->pending_phone]) }}</p>
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.phone_verify.otp_label') }}</label>
+                                <input type="text" inputmode="numeric" name="otp" maxlength="4" dir="ltr"
+                                       placeholder="{{ __('ui.profile.phone_verify.otp_placeholder') }}"
+                                       class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm tracking-[0.5em] text-center focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                                @error('otp') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <button type="submit" class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
+                                {{ __('ui.profile.phone_verify.verify_btn') }}
+                            </button>
+                        </form>
+
+                        {{-- Resend / change number --}}
+                        <form method="POST" action="{{ route('profile.phone.send') }}" class="mt-4 pt-4 border-t border-zinc-100 space-y-3">
+                            @csrf
+                            <label class="block text-sm font-semibold text-zinc-700">{{ __('ui.profile.phone_verify.change_number') }}</label>
                             <div class="relative">
                                 <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-sm select-none">🇪🇬 +20</span>
-                                <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}"
+                                <input type="tel" name="phone" value="{{ old('phone', $user->pending_phone) }}"
                                        placeholder="{{ __('ui.profile.phone_verify.phone_placeholder') }}" dir="ltr"
                                        class="w-full border border-zinc-200 rounded-xl py-2.5 pl-4 pr-20 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all text-start">
                             </div>
                             @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                            <p class="text-xs text-zinc-400 mt-1.5">{{ __('ui.profile.phone_verify.note_sms') }}</p>
-                        </div>
-                        <button type="submit"
-                                class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
-                            {{ __('ui.profile.phone_verify.send_code') }}
-                        </button>
-                    </form>
+                            <button type="submit" class="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold py-2.5 rounded-xl transition-all text-sm">
+                                {{ __('ui.profile.phone_verify.resend') }}
+                            </button>
+                        </form>
+                    @else
+                        {{-- Entry step --}}
+                        <form method="POST" action="{{ route('profile.phone.send') }}" class="space-y-3">
+                            @csrf
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.phone_verify.phone_label') }}</label>
+                                <div class="relative">
+                                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-sm select-none">🇪🇬 +20</span>
+                                    <input type="tel" name="phone" value="{{ old('phone') }}"
+                                           placeholder="{{ __('ui.profile.phone_verify.phone_placeholder') }}" dir="ltr"
+                                           class="w-full border border-zinc-200 rounded-xl py-2.5 pl-4 pr-20 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all text-start">
+                                </div>
+                                @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                <p class="text-xs text-zinc-400 mt-1.5">{{ __('ui.profile.phone_verify.note_sms') }}</p>
+                            </div>
+                            <button type="submit" class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
+                                {{ __('ui.profile.phone_verify.send_code') }}
+                            </button>
+                        </form>
+                    @endif
                 @endif
             </div>
+
+            {{-- ══════════════════════════════════════════════════════════════
+                 EMAIL VERIFICATION (for phone-registered users — +20 points)
+            ══════════════════════════════════════════════════════════════ --}}
+            @if(!$user->email || !$user->hasVerifiedEmail())
+            <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,0.05);">
+                @if($user->email && $user->hasVerifiedEmail())
+                    {{-- ✅ Already verified — show only (shouldn't reach here due to @if above but kept as safety) --}}
+                    <h3 class="text-base font-black text-zinc-900 mb-3">{{ __('ui.profile.email_verify.heading') }}</h3>
+                    <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+                        <div>
+                            <p class="text-xs text-zinc-400 mb-0.5">{{ __('ui.profile.email_verify.current_verified') }}</p>
+                            <p class="text-sm font-bold text-zinc-800" dir="ltr">{{ $user->email }}</p>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-nilex bg-nilex/8 px-2.5 py-1 rounded-full shrink-0">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            {{ __('ui.profile.email_verify.verified_badge') }}
+                        </span>
+                    </div>
+                @else
+                    {{-- 🔲 No verified email: show the add/verify form --}}
+                    <h3 class="text-base font-black text-zinc-900 mb-1">{{ __('ui.profile.email_verify.heading') }}</h3>
+                    <p class="text-sm text-zinc-500 mb-4">{{ __('ui.profile.email_verify.description') }}</p>
+
+                    @if(session('status') === 'email-verified')
+                        <div class="alert-success mb-4 text-sm">{{ __('ui.profile.email_verify.verified_flash') }}</div>
+                    @elseif(session('status') === 'email-otp-sent')
+                        <div class="alert-success mb-4 text-sm">{{ __('ui.profile.email_verify.sent_flash') }}</div>
+                    @endif
+
+                    {{-- Current status --}}
+                    <div class="mb-4 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+                        @if($user->email && !$user->hasVerifiedEmail())
+                            <p class="text-xs text-zinc-400 mb-0.5">{{ __('ui.profile.email_verify.current_verified') }}</p>
+                            <p class="text-sm font-medium text-zinc-700" dir="ltr">{{ $user->email }}</p>
+                            <p class="text-xs text-amber-600 mt-0.5">{{ __('ui.profile.email_verify.none_yet') }}</p>
+                        @else
+                            <p class="text-sm text-zinc-500">{{ __('ui.profile.email_verify.none_yet') }}</p>
+                        @endif
+                    </div>
+
+                    {{-- One-time +20 bonus hint --}}
+                    @if(is_null($user->email_bonus_claimed_at))
+                        <p class="flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl mb-4">
+                            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z"/><path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z"/></svg>
+                            {{ __('ui.profile.email_verify.bonus_hint') }}
+                        </p>
+                    @else
+                        <p class="text-xs text-zinc-400 mb-4">{{ __('ui.profile.email_verify.bonus_claimed') }}</p>
+                    @endif
+
+                    @if($user->pending_email)
+                        {{-- OTP verification step --}}
+                        <form method="POST" action="{{ route('profile.email.verify') }}" class="space-y-3">
+                            @csrf
+                            <p class="text-sm text-zinc-600">{{ __('ui.profile.email_verify.otp_sent_to', ['email' => $user->pending_email]) }}</p>
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.email_verify.otp_label') }}</label>
+                                <input type="text" inputmode="numeric" name="otp" maxlength="4" dir="ltr"
+                                       placeholder="{{ __('ui.profile.email_verify.otp_placeholder') }}"
+                                       class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm tracking-[0.5em] text-center focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                                @error('otp', 'emailVerification') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                @error('otp') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <button type="submit" class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
+                                {{ __('ui.profile.email_verify.verify_btn') }}
+                            </button>
+                        </form>
+
+                        {{-- Resend / change email --}}
+                        <form method="POST" action="{{ route('profile.email.send') }}" class="mt-4 pt-4 border-t border-zinc-100 space-y-3">
+                            @csrf
+                            <label class="block text-sm font-semibold text-zinc-700">{{ __('ui.profile.email_verify.change_email') }}</label>
+                            <input type="email" name="email" value="{{ old('email', $user->pending_email) }}"
+                                   placeholder="{{ __('ui.profile.email_verify.email_placeholder') }}" dir="ltr"
+                                   class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                            @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            <button type="submit" class="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold py-2.5 rounded-xl transition-all text-sm">
+                                {{ __('ui.profile.email_verify.resend') }}
+                            </button>
+                        </form>
+                    @else
+                        {{-- Entry step --}}
+                        <form method="POST" action="{{ route('profile.email.send') }}" class="space-y-3">
+                            @csrf
+                            <div>
+                                <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.email_verify.email_label') }}</label>
+                                <input type="email" name="email" value="{{ old('email') }}"
+                                       placeholder="{{ __('ui.profile.email_verify.email_placeholder') }}" dir="ltr"
+                                       class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                                @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                <p class="text-xs text-zinc-400 mt-1.5">{{ __('ui.profile.email_verify.note') }}</p>
+                            </div>
+                            <button type="submit" class="btn-nilex-primary w-full py-3 rounded-xl text-sm">
+                                {{ __('ui.profile.email_verify.send_code') }}
+                            </button>
+                        </form>
+                    @endif
+                @endif
+            </div>
+            @endif
 
             {{-- ══════════════════════════════════════════════════════════════
                  RATINGS SECTION (UI ready — awaiting backend)

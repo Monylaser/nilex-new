@@ -913,7 +913,10 @@
     const NILEX_STORE_URL     = "{{ route('listings.store') }}";
     const NILEX_AI_URL        = "{{ route('listings.ai-generate') }}";
     const NILEX_DASHBOARD_URL = "{{ route('dashboard') }}";
-    const NILEX_PREFILL_PHONE = @json(optional(auth()->user())->phone ?? '');
+    const NILEX_PREFILL_PHONE        = @json(optional(auth()->user())->phone ?? '');
+    // Pre-fill location from user profile (set in HomeController::create/edit).
+    const NILEX_PREFILL_LOCATION_ID    = @json($prefillLocationId ?? '');
+    const NILEX_PREFILL_GOVERNORATE_ID = @json($prefillGovernorateId ?? '');
     // مفتاح المسودة منفصل لكل إعلان في وضع التعديل (وموحّد في وضع الإنشاء).
     const NILEX_WIZARD_KEY    = @json($isEdit ? ('nilex_listing_wizard_edit_' . $listing->id) : 'nilex_listing_wizard');
     const NILEX_PHONE_VERIFIED = @json($isPhoneVerified);
@@ -1081,6 +1084,16 @@
                 this.syncFloorFromFormData();
                 if (!this.formData.phone) {
                     this.formData.phone = NILEX_PREFILL_PHONE || '';
+                }
+                // Pre-fill governorate + city from the user's saved profile location
+                // (only in create mode; edit mode has the listing's own location).
+                if (NILEX_WIZARD_MODE === 'create') {
+                    if (!this.formData.governorate_id && NILEX_PREFILL_GOVERNORATE_ID) {
+                        this.formData.governorate_id = NILEX_PREFILL_GOVERNORATE_ID;
+                    }
+                    if (!this.formData.location_id && NILEX_PREFILL_LOCATION_ID) {
+                        this.formData.location_id = NILEX_PREFILL_LOCATION_ID;
+                    }
                 }
                 this.$watch('formData', () => this.saveToLocalStorage(), { deep: true });
                 this.$watch('selectedRootId', () => this.saveToLocalStorage());

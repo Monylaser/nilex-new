@@ -2,6 +2,7 @@
 
 namespace App\Auth\Services;
 
+use App\Auth\Jobs\SendEmailVerificationOtpJob;
 use App\Auth\Jobs\SendOtpEmailJob;
 use App\Auth\Jobs\SendOtpSmsJob;
 use App\Auth\Jobs\SendPhoneVerificationSmsJob;
@@ -97,6 +98,79 @@ class OtpService
                 'otp_code' => null,
                 'otp_expires_at' => null,
                 'otp_attempts' => 0,
+            ]);
+
+            Cache::forget($this->lockKey($locked));
+
+            return true;
+        });
+    }
+
+    /**
+     * Issue an OTP for the post-registration email-verification flow.
+     *
+     * Stages the new address in `pending_email` (the live `email` is left
+     * untouched until confirmed) and dispatches a verification email to THAT
+     * pending address — not to $user->email (which may be null for phone users).
+     */
+    public function issueForEmail(User $user, string $email): OtpCode
+    {
+        $length = config('auth-security.otp.length', 4);
+        $otp = OtpCode::generate($length);
+        $minutes = config('auth-security.otp.expires_minutes', 5);
+
+        $user->forceFill([
+            'otp_code'      => $otp->hash,
+            'otp_expires_at'=> now()->addMinutes($minutes),
+            'otp_attempts'  => 0,
+            'otp_channel'   => 'email',
+            'pending_email' => $email,
+        ])->save();
+
+        SendEmailVerificationOtpJob::dispatch($user->id, $email, $otp->plain)
+            ->onQueue(config('auth-security.queues.email'))
+            ->afterCommit();
+
+        return $otp;
+    }
+
+    /**
+     * Verify an OTP for the post-registration email flow.
+     *
+     * Validates the active code and clears OTP fields on success.
+     * Does NOT mutate email / email_verified_at / points — those side
+     * effects are the caller's responsibility (EmailVerificationProfileController).
+     */
+    public function verifyEmail(User $user, string $candidate): bool
+    {
+        $this->ensureNotLocked($user);
+
+        return DB::transaction(function () use ($user, $candidate) {
+            /** @var User $locked */
+            $locked = User::query()->lockForUpdate()->findOrFail($user->id);
+
+            if (! $locked->otp_code || ! $locked->otp_expires_at) {
+                $this->recordFailedAttempt($locked);
+
+                return false;
+            }
+
+            if (now()->greaterThan($locked->otp_expires_at)) {
+                $this->recordFailedAttempt($locked);
+
+                return false;
+            }
+
+            if (! OtpCode::verify($candidate, $locked->otp_code)) {
+                $this->recordFailedAttempt($locked);
+
+                return false;
+            }
+
+            $locked->update([
+                'otp_code'      => null,
+                'otp_expires_at'=> null,
+                'otp_attempts'  => 0,
             ]);
 
             Cache::forget($this->lockKey($locked));

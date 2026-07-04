@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymobController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\EmailVerificationProfileController;
 use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;          // ✅ بدل OtpVerificationController
@@ -102,6 +103,10 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
     // 3.1 توثيق رقم الهاتف (مسار منفصل بعد التسجيل) — إرسال OTP للرقم الجديد ثم تأكيده
     Route::post('/profile/phone', [PhoneVerificationController::class, 'send'])->name('profile.phone.send');
     Route::post('/profile/phone/verify', [PhoneVerificationController::class, 'verify'])->name('profile.phone.verify');
+
+    // 3.2 توثيق البريد الإلكتروني (للمستخدمين المسجّلين بالموبايل) — +20 نقطة مرة واحدة
+    Route::post('/profile/email', [EmailVerificationProfileController::class, 'send'])->name('profile.email.send');
+    Route::post('/profile/email/verify', [EmailVerificationProfileController::class, 'verify'])->name('profile.email.verify');
 
     // 4. سجل النقاط
     Route::get('/points/history', function () {
