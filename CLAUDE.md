@@ -1,10 +1,42 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Last full audit: 2026-07-05 (every fact below was verified against the actual source files on that date).
 
-## Project Overview
+---
 
-Nilex is an Egyptian classified ads marketplace built on Laravel 13 with a Filament 5 admin panel. It features OTP-based phone auth, a point-based economy, tiered plan entitlements, AI-powered listing generation (Gemini), Paymob payment integration, and self-service ad campaigns.
+## 1. Project Overview
+
+**Nilex (نايلكس)** is an Egyptian classified-ads marketplace. Target audience: Egyptian buyers and sellers (Arabic-first, fully bilingual AR/EN public UI). It features OTP-based auth (email or phone channel), a point-based economy, tiered plan entitlements, AI-powered listing generation (Gemini), Paymob payment integration, self-service ad campaigns, and a dual sale-confirmation + seller-reviews system.
+
+The platform has **14 categories**. **"خردة وخامات" (Scrap & Raw Materials)** is a deliberate competitive differentiator — no major Egyptian classifieds platform serves this niche. Source the category list from the `categories` table / seeder, never hardcode it.
+
+### Tech Stack (verified from composer.lock / package.json)
+
+| Layer | Technology |
+|---|---|
+| Language | PHP `^8.3` |
+| Framework | Laravel 13 (locked v13.13.0) |
+| Admin | Filament 5.4.5 (at `/admin`) + FilamentShield 4.2 (RBAC) + FilamentTranslatable 3.0 |
+| Reactive UI | Livewire 4.3 (transitive via Filament), Alpine.js 3.15 |
+| CSS / Build | Tailwind CSS 3 + Vite 8 |
+| DB | MySQL (local DB `nilex_platform`); tests use in-memory SQLite |
+| Cache | `CACHE_STORE=file` locally (Redis planned for production) |
+| Queue | `QUEUE_CONNECTION=sync` locally; priority channels defined for prod: `sms-high`, `email-high`, `auth-critical` (`config/auth-security.php`) |
+| Search | Laravel Scout 11 — `SCOUT_DRIVER=collection` locally (Meilisearch client installed for prod) |
+| Media | Spatie MediaLibrary 11 (auto-optimized, watermarked conversions) |
+| i18n | Spatie laravel-translatable 6 (fallback wired manually — see §9) |
+| AI | Google Gemini (`gemini-1.5-flash`, `GEMINI_API_KEY`) |
+| Payments | Paymob (`https://accept.paymob.com/api`, test mode) |
+| Auth (social) | Socialite 5.27 — only Google fully configured |
+| Testing | Pest 4.7 primary, PHPUnit 12.5 fallback |
+
+### Local Environment
+
+- **Laragon on Windows**, served at `http://127.0.0.1:8000`, `APP_ENV=local`.
+- **Shell is PowerShell — NEVER chain commands with `&&`.** Use `;` or separate invocations.
+- `MAIL_MAILER=log`, SMS simulated to `storage/logs/laravel.log` (`SmsService` logs in local env).
+- **Timezone: `Africa/Cairo`** (`APP_TIMEZONE` env, default in `config/app.php`). Locale default `ar`, fallback `en`.
 
 ## Commands
 
@@ -29,703 +61,368 @@ composer test
 ./vendor/bin/enlightn
 ```
 
-## Architecture
+---
 
-### Tech Stack
+## 2. Project Structure
 
-- **Framework:** Laravel 13, Livewire, Alpine.js, Tailwind CSS 3
-- **Admin:** Filament 5.4 (accessible at `/admin`) with FilamentShield (RBAC) and FilamentTranslatable (AR/EN)
-- **Build:** Vite 8
-- **DB:** SQLite (dev) — configure for production
-- **Queue:** Redis with priority channels (`sms-high`, `email-high`, `auth-critical`) — set `QUEUE_CONNECTION=sync` for local testing
-- **Search:** Laravel Scout + Meilisearch (use `SCOUT_DRIVER=collection` in tests)
-- **AI:** Google Gemini API (`GEMINI_API_KEY`)
-- **Payments:** Paymob (`/payments/callback` webhook, CSRF disabled, HMAC-validated)
-- **Testing:** Pest 4.0 primary, PHPUnit 12.5 fallback; in-memory SQLite
+### Controllers (`app/Http/Controllers`)
 
-### Domain Modules
+| Controller | Responsibility |
+|---|---|
+| `Frontend/HomeController` | Homepage (`index`, queries `hero_top` campaigns directly), listing wizard create/store (+3 pts) and edit/update (category locked, status→pending, no pts), `aiGenerate()` (Gemini), `pricing()` (point plans page), `search()` |
+| `Frontend/CategoryController` | Category page; increments `views_count`, paginates published listings (eager-loads `category,location,user`) |
+| `Frontend/LegalPageController` | Renders `LegalPage` by slug at `/{slug}` |
+| `Frontend/PaymentController` | Points checkout → Paymob iframe (requires `refund_policy_accepted`); user-facing success/failed callback views (credit happens in webhook) |
+| `ListingController` | Detail page + view tracking + similar listings; `revealPhone()` (auth, 401 guests), `trackWhatsappClick()`, `makeOffer()` |
+| `ProfileController` | Profile edit/update (phone/email managed via OTP flows, not here); `destroy()` **anonymizes** (see §9) |
+| `PhoneVerificationController` | Profile phone add+verify: `send()` stages `pending_phone`, `verify()` commits + one-time **+20** (`phone_bonus_claimed_at`) |
+| `EmailVerificationProfileController` | Mirror flow for email: `pending_email`, one-time **+20** (`email_bonus_claimed_at`) |
+| `FavoriteController` | AJAX favorite toggle (guest → 401) + `/dashboard/favorites` page |
+| `MessageController` | Creates `Message`, fires `NewMessage` |
+| `PaymobController` / `PaymobWebhookController` | HMAC webhooks → `PaymobWebhookService` (points) / `PaymobAdWebhookService` (ads) |
+| `AdSpacesController` | Public `/ads/pricing` page |
+| `AdTrackingController` | Ad impression (JSON) + click (redirect) tracking |
+| `Dashboard/SellerAdCampaignController` | Seller self-service ad CRUD + Paymob checkout + `retryPayment()` |
+| `Auth/*` | Breeze set + `OtpController` (registration OTP show/verify/resend — **no points**), `RegisteredUserController` (device limit, +20 welcome, campaign referral), `SocialiteController` (OAuth; +20 first-time) |
 
-**1. Auth & User Management** (`app/Auth/`)
-- OTP phone verification (codes hashed, configurable via `config/auth-security.php`)
-- Device fingerprinting with 3-account-per-device limit
-- Social login: Google, Facebook, TikTok, Instagram (Socialite)
-- Roles: `super_admin`, `admin`, `moderator`, `user`
-- Middleware: `EnsureOtpIsVerified`, `EnsureUserIsNotBanned`, `SetLocale`
+### Models (`app/Models`) — key facts
 
-**2. Listing System**
-- Status flow: `pending → published / rejected / flagged`
-- Rejection reasons: inappropriate, scam, incomplete, wrong_category, prohibited, duplicate
-- 3-strike system → auto-ban (`ListingObserver`)
-- Media via Spatie MediaLibrary (auto-optimized on upload)
+- **`Listing`** — `SoftDeletes`, Scout `Searchable`, `InteractsWithMedia`, `LogsActivity`. Statuses: `pending / published / rejected / flagged`. `STRIKE_REASONS`: `inappropriate_content`, `scam_fraud`, `prohibited_items`. Media collection **`images`** (never `listings`); conversions `thumb` (300 webp), `card` (600×450 webp), `full_hd` (1920×1080 webp) — all watermarked (`public/images/watermark.png`, bottom-right, 40% opacity), all `nonQueued`; the original stays clean and is never linked publicly. `FEATURE_COSTS` — see §3.
+- **`User`** — `points` (source of truth) + `points_balance` (mirror). Verification columns: `is_phone_verified`, `phone_verified_at`, `email_verified_at`, `pending_phone`, `pending_email`, `otp_channel`, `phone_bonus_claimed_at`, `email_bonus_claimed_at`, `anonymized_at`. Ratings: `ratings_avg` / `ratings_count` (denormalized by `ReviewObserver`). Also `plan_tier`, `plan_type`, `locale`, `strike_count`, `is_banned`, device-fingerprint fields.
+- **`AdCampaign`** — `SoftDeletes`, media collection **`ad_image`**, conversions `desktop` 1200×400 / `tablet` 768×256 / `mobile` 390×130. Scopes: `active`, `displayable`, `paid`, `pending`, `approved`, `rejected`, `byPlacement`.
+- **`Category` / `Location` / `CarBrand` / `CarModel`** — plain `name_ar` + `name_en` columns with a locale-aware `getNameAttribute()` accessor (NOT Spatie translatable). City-level `Location.name_en` = Arabic by seeder design (data gap).
+- **`SaleConfirmation`** — state machine `pending → confirmed / canceled`; `confirmed` locked permanently; `canInitiateForListing()` = one confirmed sale per listing. `listing()` is `withTrashed()`.
+- **`Review`** — 1–5 rating, unique per `sale_confirmation_id`; `listing()` `withTrashed()`.
+- **`Offer` / `SellerLead`** — both have `withTrashed()` listing relations (closed listings are soft-deleted). `Offer.responded_at` powers seller response rate.
+- **`LegalPage`** — Spatie `HasTranslations` (`title`, `content`).
+- **`PointPlan`** — DB-driven plan catalog (see §3). `PlanEntitlement` / `UserEntitlement` / `UserEntitlementUsage` back the entitlement system.
+- Others: `Favorite`, `PointTransaction`, `Transaction`, `PaymentAttempt`, `AdCampaignLog`, `AdCampaignAuditLog`, `Campaign` + `CampaignLink` (referral), `Message`, `AuditLog`, `SiteSetting`, `SeoTemplate`, `ListingView/PhoneClick/WhatsappClick`.
 
-**3. Point Economy** (`app/Services/PointService.php`)
-- Transactional credit/debit/transfer — balance kept in sync by `PointTransactionObserver`
-- 4 plan tiers: Starter, Growth, Pro Seller, Business (Individual or Company type)
-- Plans configured in `config/pricing.php`
+### Services (`app/Services`, `app/Auth/Services`)
 
-**4. Entitlement System** (`app/Services/EntitlementService.php`)
-- 13 feature flags gated by plan tier (analytics, charts, click data, featured/boost limits, search priority, business badge, etc.)
-- Check access via `EntitlementService::canUseFeature()`
-- Entitlements cached in Redis to avoid N+1; cache invalidated by `AdCampaignObserver`
+| Service | Role |
+|---|---|
+| `PointService` | Atomic `credit()` / `deduct()` / `transfer()` with `lockForUpdate`; syncs `points` + `points_balance`; creates `PointTransaction`. Registered singleton. |
+| `EntitlementService` | 13 feature flags (§3); cache `entitlements:user:{id}` TTL 300s; `assignFromPlan()` on `PointsPurchased` event; legacy users grandfathered to `home_promotion` only. |
+| `AdCampaignService` | Placement queries + cache (§4), approve/reject campaigns, impression/click tracking via queued jobs. |
+| `AdCampaignPaymentService` | Ad checkout price from `config/ad_pricing.php`; merchant order id `nilex-ad:{campaignId}:{attemptId}`. |
+| `PaymobService` | Auth → Order → Payment Key against `https://accept.paymob.com/api` (`/auth/tokens`, `/ecommerce/orders`, `/acceptance/payment_keys`); reads `config('services.paymob.*')`; shared by points + ads checkouts. |
+| `PaymobWebhookService` / `PaymobAdWebhookService` | HMAC-validated fulfillment: credit points + fire `PointsPurchased` / mark campaign paid. |
+| `OtpService` (`app/Auth/Services`) | `issue()` (channel-aware: email→`SendOtpEmailJob`, phone→`SendOtpSmsJob`), `verify()` (registration gate — stamps `email_verified_at` OR `is_phone_verified`+`phone_verified_at` by channel, **no points**), `issueForPhone()`/`verifyPhone()` + `issueForEmail()`/`verifyEmail()` (profile flows, side-effect-free verify), `ensureNotLocked()` progressive throttle. |
+| `SmsService` | Local env: logs OTP to `laravel.log` and returns true. Production API is a placeholder — **no real SMS gateway yet**. |
+| `SellerListingAnalyticsService` | Seller dashboards, competitor pricing, `responseRate()` (min 5 offers), monthly-report stats. |
+| `DeviceLimitService` | Max 3 accounts per device (`device_id` / `fingerprint_hash` / `ip_address`). |
+| `MonthlyReportService` | PDF/HTML report → `storage/app/reports/{userId}/`. |
+| `SellerLeadService` / `ListingLeadTrackingService` | Lead creation from phone/WhatsApp/offer events; view dedup 24h, click dedup 1h. |
+| `GeminiService` | `gemini-1.5-flash` for wizard AI generation. |
 
-**5. Ad Campaigns** (`app/Models/AdCampaign.php`)
-- Toggle with `SELF_SERVICE_ADS=true`
-- Lifecycle: `draft → active → expired`
-- Impression/click tracking dispatched to queue asynchronously
-- `TrackCampaign` middleware for attribution
-- Pricing in `config/ad_pricing.php`
+### Jobs & Scheduler
 
-**6. Analytics** (`app/Services/SellerListingAnalyticsService.php`)
-- Per-listing views, phone clicks, WhatsApp clicks
-- Business-tier users get full dashboard + auto monthly PDF reports (generated 1st of month @ 02:00 via scheduler)
+Jobs: `TrackAdImpressionJob`, `TrackAdClickJob`, `InvalidateAdCampaignCacheJob`, `ProcessScheduledCampaigns` (CRM broadcasts), plus OTP delivery jobs in `app/Auth/Jobs` (`SendOtpSmsJob`, `SendOtpEmailJob`, `SendPhoneVerificationSmsJob`, `SendEmailVerificationOtpJob`) — all on `config('auth-security.queues.*')` channels with `afterCommit()`.
 
-### Key Service Providers
+Schedule (`routes/console.php`) — exactly three entries:
 
-- `AppServiceProvider` — registers singletons (PointService, EntitlementService), model observers, event listeners, view composers
-- `AuthSecurityServiceProvider` — OTP & device fingerprinting config
+```php
+Schedule::job(ProcessScheduledCampaigns::class)->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('nilex:monthly-reports')->monthlyOn(1, '02:00')->withoutOverlapping();
+Schedule::command('campaigns:expire')->hourly();
+```
 
-### Observers (Model Hooks)
+**There is NO daily-login points scheduler** — that reward is not implemented (see §8).
 
-| Observer | Trigger |
-|----------|---------|
-| `PointTransactionObserver` | Updates `users.points_balance` |
-| `ListingObserver` | Moderation workflow, media optimization |
-| `AdCampaignObserver` | Cache invalidation |
-| `ListingPhoneClickObserver` / `ListingWhatsappClickObserver` | Click tracking |
-| `OfferLeadObserver` | Tracks buyer offers |
+Artisan commands: `nilex:monthly-reports`, `campaigns:expire`, `users:backfill-verification {--execute}` (dry-run default), `listings:migrate-media-collection {--dry-run}`, `listings:regenerate-images {--listing=}`, `nilex:generate-seo-images {--force}`.
 
-### Configuration Files
+### Middleware (registered in `bootstrap/app.php`)
 
-| File | Purpose |
-|------|---------|
-| `config/auth-security.php` | OTP length, expiry, device limits, queue channels |
-| `config/pricing.php` | Point plan definitions |
-| `config/ad_pricing.php` | Campaign pricing tiers |
-| `config/services.php` | Third-party API keys (Gemini, Paymob, Socialite) |
+| Middleware | Alias / group | Purpose |
+|---|---|---|
+| `EnsureOtpIsVerified` | `otp.verified` | Redirects to `otp.notice` unless `is_phone_verified OR email_verified_at` |
+| `EnsureUserIsNotBanned` | `not.banned`, appended to `web` | Logs out anonymized or banned users |
+| `EnsureSelfServiceAdsEnabled` | `self_service_ads` | 404 when `config('features.self_service_ads')` is false |
+| `SetLocale` | appended to `web` | `user->locale` → session → config; also `Carbon::setLocale()`. **NOT on Filament `/admin`** (Phase D deferred) |
+| `TrackCampaign` | appended to `web` | Stores `?ref=` as session `campaign_code` for referral attribution |
+| `PreventStorageCache` / `SecurityHeaders` | global append | No-cache headers / security headers |
 
-### Testing Notes
+CSRF exempt: `payments/callback`, `payment/webhook`, `webhooks/paymob/ads` (all HMAC-validated).
 
-Tests use in-memory SQLite, `QUEUE_CONNECTION=sync`, and `SCOUT_DRIVER=collection`. Telescope, Pulse, and Nightwatch are disabled in test env. See `phpunit.xml` for full env overrides.
+### Routes
 
-### Localization
+- Public: `home`, `listings.search`, `pricing`, `category.show`, `listings.show`, reveal-phone / whatsapp-click / favorite POSTs (401 for guests), `ads.pricing`, ad impression/click, socialite `auth/{provider}` (`google|facebook|tiktok|instagram` allowed — only Google configured), `legal.show` catch-all (last), `language.switch`, Breeze guest routes.
+- `['auth']`: OTP screens (`otp.notice/verify/resend`).
+- `['auth','otp.verified']`: wizard create/edit, dashboard (Livewire `UserDashboard`), leads, business dashboard, profile + phone/email verification, points history, payment checkout, messages, offers, favorites, purchases (`dashboard.purchases`).
+- `['auth','otp.verified','self_service_ads']`: `dashboard/ads/*` (routes in `routes/ads.php` + `routes/advertising.php`).
 
-AR/EN strings live in `lang/{locale}/ui.php`. Use `__('ui.key')` in views. Filament forms support both languages via FilamentTranslatable.
+### Observers (registered in `AppServiceProvider`)
 
-**Bilingual infrastructure (Phase A):** All 3 layouts (`frontend`, `app`, `guest`) now set `<html dir>`/`lang` from `app()->getLocale()` (`rtl` for `ar`, `ltr` otherwise). The AR/EN toggle (POST `language.switch`) is present in all 3. Locale persists across devices: a nullable `users.locale` column (added via migration, in `$fillable`) is written on switch when authenticated, and `SetLocale` middleware now prefers `user->locale` → session → config. Note: `SetLocale` runs only on the `web` group, **not** on Filament `/admin` (its own middleware stack) — admin locale switching is deferred to Phase D. Inner hardcoded RTL bits (footer `dir`, search `direction:rtl`) are intentionally left for Phase B/C.
+| Observer | Behavior |
+|---|---|
+| `PointTransactionObserver` | Sets `current_balance` on creating + flash message (balance itself is written by `PointService`) |
+| `ListingObserver` | Auto-flags fraud keywords on create/update |
+| `ListingPhoneClickObserver` / `ListingWhatsappClickObserver` / `OfferLeadObserver` | Create `SellerLead` rows |
+| `ReviewObserver` | Recomputes `users.ratings_avg` / `ratings_count` (`updateQuietly`) |
+| `AdCampaignObserver` | Auto-expires past `ends_at` on saving; queues cache invalidation on saved/deleted/restored |
 
-**Phase B.1 — category names (content translation):** Categories already store both `name_ar` **and** `name_en` (plain string columns, **not** Spatie `HasTranslations`; all 13 live categories have `name_en` populated) plus a locale-aware accessor `Category::getNameAttribute()` (returns `name_en` when locale ≠ `ar`). Public views now render the locale-aware `$category->name` instead of `->name_ar` in: `frontend/category.blade.php` (title/meta/breadcrumb/header/subcategories/search placeholder/empty state — the header subtitle now shows the *opposite*-language name to avoid duplication), `frontend/home.blade.php` (sticky category bar + category grid + footer tag links + the inline latest-listing category chip), and `frontend/listings/show.blade.php` (breadcrumb + meta only). The listing wizard (`frontend/listings/create.blade.php`) reads `cat.name` / `sub.name` from JSON; `HomeController::create()` appends the `name` accessor to the categories collection (and children) so the locale-aware value is serialized. **Intentionally left as `name_ar`:** the homepage `$iconMap` substring match (internal keyword lookup, language-independent), and car brand/model + location names (separate from categories, deferred). **Known coupling (deferred):** `frontend/partials/listing-card.blade.php` still uses `$listing->category->name_ar`; it is rendered on the in-scope category/home grids and should be switched in a follow-up.
+### Notifications (all `ShouldQueue`, `database`+`mail` unless noted)
 
-**Phase B.2 — listing-card + home/category content + remaining RTL bits:** Closed the B.1 known coupling: `frontend/partials/listing-card.blade.php` (the shared card reused on home/category/search) now renders the locale-aware `$listing->category->name`, and its 3 hardcoded UI strings are translated — `featured` badge → `ui.sections.featured_plain`, currency → `ui.sections.currency`, price-on-contact → `ui.sections.price_on_contact`. **Location names now resolve to `Location::getNameAttribute()` (locale-aware `name`)** in `home.blade.php` (featured + latest grids) — `Location` already had the same `name_ar`/`name_en` accessor pattern as `Category`; the B.1 deferral on location names is now lifted *for the home grids only* (other location usages in `show.blade.php`/`search-results`/livewire remain `name_ar`, deferred). `home.blade.php` also translated: the seller "موثق" badge/tooltip → `ui.sections.verified`, the duplicate empty-state "تصفح حسب الفئة" → existing `ui.sections.browse_by_category`, the "ابحث في" heading → `ui.sections.search_in`, and the trend connector "في" → `ui.misc.in` (the trend *query terms* themselves stay Arabic — they are real search payloads, not UI). `category.blade.php` fully translated: title → `ui.category.title`, meta description → `ui.category.meta`, breadcrumb home → `ui.footer.link_home`, count suffix → `ui.sections.listing_count_suffix`, in-category search placeholder → `ui.category.search_placeholder`, search button → `ui.hero.search_btn`, empty title/subtitle/browse-other → `ui.category.empty_title`/`empty_subtitle`/`browse_other`, add-free → `ui.empty.add_free`. **RTL bits made conditional** (`app()->getLocale() === 'ar' ? 'rtl' : 'ltr'`): `layouts/frontend.blade.php` desktop + mobile search `direction`, the short "أضف" mobile CTA → `ui.nav.add_short`, and `frontend/category.blade.php` `<main dir>` (kept the attribute, made it conditional rather than dropping it). **New `ui` keys added (ar + en):** `nav.add_short`, `misc.in`, `sections.featured_plain`, `sections.verified`, `sections.search_in`, and a new `category` group (`title`, `meta`, `search_placeholder`, `empty_title`, `empty_subtitle`, `browse_other`). **Explicitly out of B.2 scope (next phase):** `frontend/search-results.blade.php`, `frontend/listing-details.blade.php` (legacy/likely-unused duplicate of `show.blade.php`), and the livewire grids. Tests: 263 passing, 0 failures (unchanged).
+`ListingStatusNotification` (moderation), `SaleConfirmationRequested` (bilingual, locale-aware), `PointsPurchasedNotification`, `AdCampaignApproved/Rejected/PaymentReceivedNotification`, `MonthlyPerformanceReportNotification` (mail only), `CampaignNotification`.
 
-**Phase B.3a — listing wizard Blade markup (presentation layer):** First of four sub-phases translating `frontend/listings/create.blade.php` (~232 strings split ~115 Blade markup / ~117 inside the inline Alpine `<script>`). B.3a covers **only the ~115 rendered markup strings**; the Alpine component (option arrays, client-side validation, AI/error messages) is untouched and deferred to B.3b/B.3c, and the server-side `HomeController::store()` validation messages to B.3d. New dedicated lang files `lang/{ar,en}/wizard.php` were created (not a `ui` sub-group, to avoid bloating `ui.php`) with the groups `page_title`, `header_*`, `steps`, `common`, `step1`–`step4`, `car`, `realestate`, `feature`. All markup now uses `__('wizard.xxx')`: page title, headers, `$stepLabels` `@php` array, every field label/placeholder/`<option>` prompt, the AI panel text, image step, review/summary cards, featuring panel, nav buttons, and the inline `x-text` ternaries (AI button, model/city placeholders, submit button, featuring `<option>` suffix) — quote-escaping verified safe (translations contain no single/double quotes). The page `dir` is now conditional (`app()->getLocale() === 'ar' ? 'rtl' : 'ltr'`) matching the B.2 RTL pattern. A `const NILEX_WIZARD_I18N = @json(__('wizard'));` was added next to `NILEX_CATEGORIES`/`NILEX_LOCATIONS` and is **wired but unused** until B.3b/B.3c consume it (note: `@json` emits `\u`-escaped Arabic — valid, decodes at runtime). Blade comments left Arabic (not rendered); localStorage drafts unaffected (only labels changed, not keys/values). Tests: 263 passing, 0 failures (unchanged). **Out of B.3a scope:** all JS/Alpine strings (B.3b options + condition value→label split, B.3c validation/AI/errors), `HomeController` server messages (B.3d), and `show.blade.php`'s duplicate label maps (B.4).
+---
 
-**Phase B.3b — listing wizard Alpine option arrays (58 labels):** Translated the 12 static option arrays in the `create.blade.php` Alpine component (`fuelOptions`, `transmissionOptions`, `carConditionOptions`, `propertyTypeOptions`, `listingTypeOptions`, `roomsOptions`, `bathroomsOptions`, `floorOptions`, `finishingOptions`, `compoundOptions`, `featureOptions`, `priceTypes`). Each option's `label` now reads from `NILEX_WIZARD_I18N` (the constant wired in B.3a) instead of a hardcoded Arabic string. New keys added to `lang/{ar,en}/wizard.php`: an `options` group (`fuel`, `transmission`, `condition`, `property_type`, `listing_type`, `rooms`, `bathrooms`, `floor`, `finishing`, `compound`, `price_type`) plus `feature.opt_{0,1,3,7,14}`. **Value-preservation:** 11 arrays use locale-neutral `value` keys (English/numeric/day) so only their `label` changed; **`carConditionOptions` is the exception** — its `value` stays a hardcoded Arabic literal (e.g. `حالة ممتازة`, stored in `custom_fields_values.condition` and depended on by `show.blade.php`, which has no value-map for `condition` and renders the raw stored value), only its `label` reads from `options.condition.{fabrica,excellent,good,fair,needs_maintenance}`. Numeric/`+` keys accessed via bracket notation (e.g. `options.rooms['6+']`). No change to submitted/stored values, so `show.blade.php`'s `$cfValueMaps` (B.4) stays aligned. Tests: 263 passing, 0 failures (unchanged). **Out of B.3b scope:** B.3c (client validation/AI/error strings), B.3d (`HomeController` server messages), B.4 (`show.blade.php` label maps).
+## 3. Points & Rewards System (source of truth)
 
-**Phase B.3c — listing wizard remaining JS strings (final JS sub-phase, ~38 strings):** Translated all remaining hardcoded Arabic strings in the `create.blade.php` Alpine `<script>` to read from `NILEX_WIZARD_I18N`. New groups added to `lang/{ar,en}/wizard.php`: `validation` (17 fixed per-field messages + `field_required` with a `:field` placeholder for the dynamic `customFieldsSchema` required-field loop), `ai` (5: `prompt_too_short`, `success`, `failed`, `invalid_prompt`, `connection_failed`), `errors` (7: `max_images`, `unsupported_format` + `image_too_large` use a `:name` placeholder for filename interpolation, `session_expired`, `unexpected`, `network`, `fix_errors`), and `checklist` (6). **Interpolation pattern:** JS uses `.replace(':field', …)` / `.replace(':name', file.name)` to inject dynamic values into translated templates. **Shared key:** the 419 "session expired" message (previously duplicated across AI and submit handlers with differing punctuation) is now a single `errors.session_expired` (period normalized) used in both. **`conditionLabel()`** (the simple new/used toggle, distinct from B.3b's 5-value `carConditionOptions`) reuses existing `step2.condition_new`/`condition_used` with the emoji appended in JS — no new keys. Tests: 263 passing, 0 failures (unchanged). **Remaining:** only B.3d (`HomeController` server-side validation messages) before wizard translation is complete.
+Any view displaying points MUST match these values — never hardcode different numbers.
 
-**Phase B.3d — HomeController server-side messages (final B.3 sub-phase, wizard translation complete):** Replaced the literal Arabic strings the controller passed directly into `validate()` (bypassing Laravel's `lang/validation.php`, which doesn't exist here) with `__('wizard.server.*')`. New `server` group in `lang/{ar,en}/wizard.php` (12 keys: `price_max`, `car_brand_required`, `car_model_required`, `car_model_not_in_brand`, `fuel_required`, `transmission_required`, `year_required`, `condition_required`, `car_brand_other_required`, `property_type_required`, `listing_type_required`, plus `field_required` with a `:field` placeholder, `created_success`, `ai_failed`). Covered in `HomeController::store()`: the `price.max` message, all car/real-estate conditional validation messages, and the success flash (`created_success`, shown only on the non-AJAX fallback path — the AJAX response returns `{success,featured,redirect}` with no message). The **dynamic `custom_fields_schema` required-field message** is now locale-aware: it resolves `label_en`→`label_ar`→`name` by locale and uses the `field_required` `:field` template (dropping the old hardcoded Arabic " مطلوب" suffix; note schema rows currently only carry `label_ar`, so EN falls back to the Arabic label but with an English suffix). `HomeController::aiGenerate()`'s failure `message` now uses `server.ai_failed` (it's surfaced to the user via the wizard's `data.message || NILEX_WIZARD_I18N.ai.failed` fallback). **Safe by design:** the wizard's `mapServerErrors()` routes 422 errors by **field key**, not message content, so translating the message *values* is presentation-only. **Deferred (out of scope):** the point-transaction reason string at `HomeController.php:221` (`'مكافأة نشر إعلان جديد: '…`) stays Arabic — it's persisted once at credit time (not dynamically locale-aware) and is only shown on the still-untranslated `points/history.blade.php`. Tests: 263 passing, 0 failures (unchanged). **B.3 (the entire listing wizard) is now fully bilingual.**
-
-**Phase B.4 — listing detail page (`frontend/listings/show.blade.php`):** Translated all ~42 page-chrome strings (price/contact cards, breadcrumb, gallery, seller, meta box, mobile bar, offer modal, the JS offer-error fallback, and `<title>`/og meta). New dedicated files `lang/{ar,en}/listing.php` with a `detail` group (page strings + two cf-label overrides `label_color`/`label_compound`); generic bits reuse `ui.sections.currency` + `ui.footer.link_home`. **Spec maps now reuse the SAME wizard keys (no duplicate literals):** `$cfValueMaps` was deleted entirely and replaced with `__('wizard.options.'.$key.'.'.$val)` lookups (fallback to the raw value for free-text/numeric fields); `$cfLabels` reuses the 13 exact-match `wizard.car.*`/`wizard.realestate.*` label keys; `$cfSuffix` reuses `wizard.car.mileage_unit`/`wizard.realestate.area_unit`. **`condition` fix:** the custom car-`condition` value is stored as an Arabic literal (B.3b), so it's reverse-mapped via `array_flip(__('wizard.options.condition', [], 'ar'))` → neutral key → `__('wizard.options.condition.*')` for locale-aware *display* (stored value unchanged); previously it leaked Arabic in EN. **Locale-aware names:** added a `getNameAttribute()` accessor to `CarBrand` + `CarModel` (same no-fallback pattern as `Category`/`Location`), and switched all remaining `->name_ar` on this page to `->name` (`carBrand`, `carModel`, `location`, `province`). Brand/model + governorate names have real `name_en` (seeded) so they translate; **city names have `name_en = name_ar` (Arabic) by seeder design — a data gap, not a code gap**, so EN shows Arabic city names until real `name_en` is seeded (no code change needed then). The schema `labelMap` is now locale-aware too (`label_en`→`label_ar`→`name`, matching B.3d). RTL was already handled (breadcrumb `dir` conditional from an earlier phase; the rest inherits the layout `<html dir>`). Tests: 263 passing, 0 failures (unchanged). **B.4 hotfix:** the offer-error fallback was first written as `@json(__('listing.detail.offer_error'))` inside the double-quoted `x-data` attribute — `@json` emits double quotes, which prematurely closed the attribute and dumped the rest of `submitOffer()` as visible page text; fixed by switching to the single-quoted `'{{ __('listing.detail.offer_error') }}'` pattern used elsewhere in the file.
-
-**Phase B.5 — public ad spaces page (`frontend/ads/pricing.blade.php`), completing Phase B:** Translated all ~33 page-chrome strings (meta title/description, hero, ad-space card headings, pricing-table headings/`Space` column, both "how it works" 3-step flows, and the CTA banner). New dedicated files `lang/{ar,en}/adspaces.php` with groups `meta`, `hero`, `spaces`, `pricing`, `how.{self,email}.*`, `cta`. **Placement/duration labels stay config-driven:** `config/ad_pricing.php` gained `label_en` (all placements + durations) and `description_en` (the 5 shown placements) **alongside** the existing `label_ar`/`description_ar` (untouched — protects the shared Dashboard/`SellerAdCampaignController` consumers that still read `label_ar`); the Blade now picks ar/en via two `@php` closures (`$localeLabel`/`$localeDesc`) keyed on `app()->getLocale()`. Page is purely static/config-driven (prices `number_format`'d from config) — **no model/accessor work**. RTL made conditional: `<main dir>` and the pricing table `text-right`/`text-left` now follow `$isRtl`; the Arabic-Indic step numerals `١٢٣` switch to Western `1 2 3` in EN. `mailto:ads@nilex.com` left locale-neutral (only link text translated). The two how-it-works `@if($selfServiceEnabled)` branches were collapsed into one loop driven by a `$flow = self|email` key. Tests: 263 passing, 0 failures (unchanged). **Phase B (public frontend translation) is now complete.**
-
-**Phase C — authenticated-area translation (in progress):** Covers everything an authenticated user sees that Phase B did not. Sequenced C.1 → C.7. Scoping discovery confirmed ~400–430 strings total; three files are **dead and intentionally skipped** (not deleted yet — a delete decision is deferred to C.4): `resources/views/dashboard.blade.php` (the `/dashboard` route resolves to the Livewire `UserDashboard`, not this view), `auth/unified.blade.php` (references a non-existent `social.redirect` route — would error if rendered), and the 3 Breeze `profile/partials/*` (the live `profile/edit.blade.php` is a custom page that never `@include`s them).
-
-**Phase C.1 — foundation (navigation + app layout + framework lang files):** First and foundational sub-phase. **(1) Published the two missing framework lang files** that previously fell back to English regardless of locale: `lang/{ar,en}/auth.php` (Laravel defaults `failed`/`password`/`throttle`) and `lang/{ar,en}/validation.php` (full Laravel default ruleset + a project-specific `attributes` map covering `name`, `email`, `phone`, `whatsapp`, `password`, `contact`, `identifier`, `otp`, `governorate`, `city`, `bio`, `avatar`, `title`, `price`, `category_id`, `target_url`, `ad_image`, `duration_days`, `placement`). These now drive every auth/profile/ads form's framework validation + login-failure messages bilingually — **this unblocks C.2/C.3.** **(2) `layouts/navigation.blade.php`** — translated all ~11 rendered strings (incl. the previously English `{{ __('Profile') }}`/`{{ __('Log Out') }}` which had no lang file) to new `ui.nav.*` keys: `home`, `ad_spaces`, `admin_panel`, `login_full`, `register`, `profile`, `logout`. **(3) `layouts/app.blade.php`** — translated the notification-bell dropdown (new `ui.notifications.{title,default,empty}` group), the quick-search placeholder (new `ui.nav.search_placeholder_full`), and the entire legal footer (reused existing `ui.footer.*` where text matched: `quick_links`, `link_home`, `link_dashboard`, `link_login`, `legal_pages`, `copyright`, `contact`; added new `ui.footer.{brand,tagline,link_search,link_register_short,privacy,terms}`). **RTL fixes:** the footer's hardcoded `dir="rtl"` (line ~136, which Phase A did **not** fix — only the `<html>` tag) and the search input's `direction: rtl` + `text-right` (line ~99) are now conditional on `app()->getLocale() === 'ar'`. The language-toggle button label (`'ar' ? 'EN' : 'ع'`) is intentionally left as-is (it shows the *opposite* language). New `ui` keys added (ar + en): `nav.{home,ad_spaces,admin_panel,login_full,register,profile,logout,search_placeholder_full}`, a new `notifications` group, and `footer.{brand,tagline,link_search,link_register_short,privacy,terms}`. Tests: 263 passing, 0 failures (unchanged).
-
-**Phase C.2 — auth screens (login/register/otp/forgot/reset + guest layout):** Translated all live auth views (the dead `auth/unified.blade.php` was skipped). All ~55 view strings now use a **new `ui.auth.*` group** (ar + en) — `auth.php` was left as framework-only (`failed`/`password`/`throttle`). The 5 Arabic views (`login`, `register`, `verify-otp`, `forgot-password`, `reset-password`) plus `layouts/guest.blade.php`'s brand panel (tagline + 3 trust points + 3 stats) and Arabic `<title>` fallback are covered. The 2 Breeze views (`confirm-password`, `verify-email`) use bare-English `__()` keys, so **new `lang/{ar,en}.json` files** were created with their exact key→translation maps (zero Blade changes to those 2 files). `register.blade.php`'s JS password-strength labels are wired via the **`@json` bridge** (`const NILEX_AUTH_STRENGTH = @json(__('ui.auth.strength'))`, B.3a pattern). **OAuth buttons** (Google/Facebook/TikTok/Instagram) left as fixed brand labels — only the divider text translated. **RTL bits made conditional** (`app()->getLocale() === 'ar' ? rtl/right : ltr/left`): inner `dir="rtl"` on `verify-otp`/`forgot`/`reset`, the `text-align/text-right` headers on `login`/`register`/`forgot`/`reset`/guest panel. Phone/email/OTP inputs stay `dir="ltr"` by design. **OtpController's 6 hardcoded Arabic server messages were NOT touched — deferred to C.7** (the view only renders them via `session()`/`@error`). Tests: 263 passing, 0 failures (unchanged).
-
-**Phase C.3 — profile page (`profile/edit.blade.php`):** Translated all 44 hardcoded strings in the only live profile view (the 3 dead Breeze `profile/partials/*` were left untouched) via a **new `ui.profile.*` group** (ar + en) sub-grouped `trust`/`info`/`ratings`/`password`/`danger`/`delete`. Covered: trust card badges + member-since/points/ratings placeholders, the profile-info form (avatar/name/phone/whatsapp/governorate/city/bio labels + placeholders + save), ratings section, password-change form, danger zone, and the delete-account modal. The two flash-message displays keep their stable session **keys** (`'profile-updated'`/`'password-updated'`) and only the displayed text is translated; `ProfileController` has no user-facing strings (changes none). Governorate/city are plain free-text inputs (not `Location`-model selects), so no accessor work. No JS strings (Alpine is only a `deleteOpen` boolean), so no `@json` bridge. Both `dir="rtl"` (page wrapper + modal) made conditional (`app()->getLocale() === 'ar' ? 'rtl' : 'ltr'`). **Global Carbon locale fix:** `SetLocale` middleware now also calls `Carbon::setLocale($locale)` right after `App::setLocale()`, so relative dates (`diffForHumans()`, e.g. the profile "member since", listing cards, dashboard) render in the active locale everywhere, not just on the profile page. Tests: 263 passing, 0 failures (unchanged).
-
-**Phase C.4 — dashboard chrome / points / payment / legal-page chrome:** Translated the remaining authenticated-area views via three **new `ui.*` sub-groups** (ar + en): `ui.points.*` (`points/history.blade.php` — balance card, quick actions, transactions table, empty state, earn-points guide), `ui.payment.*` (`payment/success.blade.php` + `payment/failed.blade.php`), and `ui.pages.*` (`pages/show.blade.php` **chrome only** — breadcrumb, "official document" header, "last updated", "other docs"; the DB-driven Spatie translatable `$page->title`/`$page->content` are untouched). **Deleted the confirmed-dead `resources/views/dashboard.blade.php`** (the `/dashboard` route resolves to the Livewire `UserDashboard`, no `view('dashboard')` call anywhere; the file also had stale `->points`/`status==='active'` bugs). **Points-rule bug fix:** `points/history.blade.php` previously advertised **+10** for posting a listing (both the quick-action subtitle and the earn-guide) — corrected to **+3** to match the Point Economy Rules source of truth. **`pages/show.blade.php`** `dir="rtl"` made conditional and the hardcoded `og:locale=ar_EG` / `og:site_name=نايلكس` are now locale-aware (`ui.pages.og_locale` → `ar_EG`/`en_US`, `og_site_name` → نايلكس/`Nilex`); breadcrumb home reuses existing `ui.footer.link_home`. The history transaction date switched from `->format('d M Y')` to `->translatedFormat('d M Y')` so the month name follows the C.3 Carbon-locale fix. **Deferred (flag only, same as B.3d):** `$transaction->description` strings are hardcoded Arabic persisted at credit time (`HomeController`/`OtpController`/`RegisteredUserController`/`SocialiteController`) — not retroactively localizable; the `.prose-arabic` legal CSS stays RTL-styled. **Project-wide numeral rule:** all numbers must always render as Western/Latin digits (1,2,3) regardless of locale. PHP/Laravel already does this for dynamic numbers (`number_format()`/`{{ }}`); the only Arabic-Indic numerals were hand-typed literals — converted all 9 in `lang/ar/ui.php` (`panel_stat_*`, `hero.badge`, `hero.stat_*`, `footer.bio`, `footer.gift_teaser`, Arabic words/`ك` "thousand" letter kept, digits only changed), collapsed B.5's `pricing.blade.php` step-number ternary to a single Western `['1','2','3']`, and switched `home.blade.php`'s 3 hero-stat fallback defaults to Western. Tests: 263 passing, 0 failures (unchanged). **Phase C.4 complete.**
-
-**Phase C.5 — self-service ad campaign management (`dashboard/ads/{index,create,show}.blade.php`):** Translated all ~65 seller-facing CRUD strings via a **new `ui.ads_dashboard.*` group** (ar + en) sub-grouped `common` (back links + a `:count`-placeholder `day_fallback`), `payment_status` (4) + `approval_status` (3) — both shared across index/show, `index`, `create`, and `show`. **Placement/duration labels reuse the exact B.5 `$localeLabel` closure pattern** (reads `label_ar`/`label_en` from `config/ad_pricing.php` by locale) — index/show now fetch the whole config *row* (`config("ad_pricing.placements.$key")`) instead of the old single `label_ar` string lookup, then pass it through `$localeLabel`. **`create.blade.php` Alpine calculator:** `durationLabel` getter now reads a locale key (`localeLabelKey: @js($isRtl ? 'label_ar' : 'label_en')`) with a `@js`-bridged `day_fallback` (`.replace(':count', …)`); **`Intl.NumberFormat('ar-EG')` → `'en-US'`** to comply with the C.4 Western-numeral rule. **`->name_ar` → `->name`** on both Category dropdowns (create + show; controller already loads `name_en`, B.1 accessor resolves). All 3 `dir="rtl"` made conditional (`$isRtl ? 'rtl' : 'ltr'`); index L113 `space-x-reverse` now `$isRtl`-gated. **Deferred to C.7 (flag only, untouched):** the ~13 hardcoded Arabic validation messages in `StoreSellerAdCampaignRequest` + the 1 in `SellerAdCampaignController::retryPayment()` — views render them verbatim via `$errors`, so view translation is presentation-only. Tests: 263 passing, 0 failures (unchanged).
-
-**Phase C.6 — Livewire components (`user-dashboard`, `listing-grid`, `smart-ad-creator`, `business-dashboard`):** Translated the 4 remaining Livewire views via three **new `ui.*` groups** (ar + en): `ui.dashboard.*` (user-dashboard — welcome/greeting `:name`, stat cards, listings table, offers, empty state, `wire:confirm` dialogs, tooltips, 2 Chart.js labels), `ui.listing_grid.*` (filters, GPS, 2 JS `alert()` messages), and `ui.ad_creator.*` (smart-ad-creator). **Chart.js labels:** the `<script>` blocks live in `@section('footer-scripts')` of `.blade.php` files (Blade-compiled), so labels use plain inline `'{{ __('ui.dashboard.chart_views') }}'` / `chart_whatsapp_clicks` — **no `@json` bridge needed**; the 2 chart keys + a `listing_count_suffix` (`إعلان`) are **shared** by both user-dashboard and business-dashboard. JS `alert()` strings (quote-free) and the Alpine `x-text` fallback inline `'{{ __() }}'` the same way. The 2 delete-confirm dialogs are **kept separate** (`confirm_delete` mobile vs `confirm_delete_listing` desktop, different wording). Reused existing keys: `ui.sections.verified`, `ui.sections.currency` (all `ج.م` incl. business-dashboard L74/L138), `ui.leads.nav_link`. **`->name_ar` → `->name`:** user-dashboard category cell, listing-grid Category + CarBrand dropdowns (CarBrand accessor from B.4). smart-ad-creator textarea `dir="rtl"` made conditional. **smart-ad-creator is an admin (Filament) component** (rendered in `filament/modals/ai-container.blade.php`) — strings are translated now but **won't take visual effect until Phase D enables `SetLocale` on `/admin`** (the lang-file comment flags this); Phase D then only flips the switch, no further translation. **Deferred to C.7 (flag only, untouched):** all server-side messages — `UserDashboard.php` (5 offer/feature/delete flashes), `SmartAdCreator.php` (`$messages` + `errorMessage` literals; the Gemini `getSystemPrompt()` Arabic stays as a functional AI prompt), `BusinessDashboard.php` (CSV `name_ar` + competitor `category`). Blade/JS comments left Arabic (not rendered). Tests: 263 passing, 0 failures (unchanged).
-
-**Phase C.7 — deferred server-side messages (final Phase C sub-step; authenticated area now fully bilingual):** Translated every deferred hardcoded Arabic server-side message into a **new top-level `lang/{ar,en}/server.php`** (sub-grouped `auth`, `ads`, `payment`, `dashboard`, `offer`, `message`, `ai`) via native `__('server.*', [...])` with Laravel's `:placeholder` interpolation (pure-PHP, no JS `.replace()` bridge). Covered: `OtpController` (validation/flash/error) + `OtpService` throttle; `RegisteredUserController` contact/uniqueness + `DeviceLimitService`; `SocialiteController` (error/limit/success); `SellerAdCampaignController` + the 8 previously-**English** `AdCampaignPaymentService` `RuntimeException`s (now bilingual); `PaymentController` refund msg; `UserDashboard` (5 flashes) + `Listing::featureWithPoints`/`featureCostStrict` exceptions; `SmartAdCreator` (`messages()`, errorMessage, progress-step texts — admin component, effective only after Phase D flips `/admin` `SetLocale`). **Also swept in (not in original list):** ban gate (`EnsureUserIsNotBanned`), OTP gate (`EnsureOtpIsVerified`), offer JSON (`ListingController`), `MessageController` self-message. **`StoreSellerAdCampaignRequest`** now uses the **native** path — `messages()` deleted, relying on C.1's `validation.php` default rules + `attributes`, plus one `custom.category_id.required` entry; the programmatic `withValidator` message moved to `server.ads.category_only_category_page`. **`name_ar`→locale-aware fixes:** `BusinessDashboard` CSV + `SellerListingAnalyticsService` competitor (`->name`) and the `getCategoryPerformance` raw join (conditional `name_ar`/`name_en` column by locale). **Permanently deferred (unchanged):** persisted point-transaction reason strings (`PointService::credit` reasons, referral/gift/welcome — stored once at credit time), `SmartAdCreator::getSystemPrompt()` + Gemini prompt text + Arabic regex parsers (functional AI/parsing, not UI), the `SocialiteController` default user name `مستخدم نايلكس` and `SmartAdCreator` AI data-defaults (persisted/content values, not chrome). **Out of scope (recommended follow-up phase):** `app/Notifications/*` (mail/DB notifications) and all `app/Filament/*` (Phase D). Tests: 263 passing, 0 failures (unchanged). **Phase C is complete — the entire authenticated area is bilingual except the intentionally-permanent exceptions above.**
-
-**Phase D — Filament admin panel (assessed in full, then DEFERRED by deliberate business decision):** Phases A, B.1–B.5, and C.1–C.7 are **complete and committed** — the entire public frontend and authenticated user-facing area (auth, profile, dashboard, points, payment, ad management, Livewire components) is bilingual. Phase D (translating the Filament v5.4 admin panel) was **fully scoped** via a comprehensive Discovery report: a fresh re-scan found **56 files** under `app/Filament/` containing hardcoded Arabic, totaling **~720–760 translatable strings** (≈ the size of Phase B + Phase C combined) — concentrated in Resources (~35%), Schemas/Forms/Fields (~21%), Tables (~17%), Pages (~13%), and Widgets (~12%). **Decision: Phase D is deferred in its entirety (D.0 → D.6), including D.0 (wiring `SetLocale` onto `/admin`).** No changes to `AdminPanelProvider` or any file in `app/Filament/`. **Rationale (business, not technical):** the admin panel serves **internal staff only**, who are **all Arabic speakers** today, so there is **no immediate commercial value** in translating it — or even enabling locale switching on it. The admin panel therefore **remains fully Arabic** (both the framework chrome and our custom labels/content) exactly as-is. **No outstanding technical debt:** Filament 5.4 **ships complete Arabic translations for its own framework chrome** (Save/Create/Delete/pagination/modals/search/etc.) bundled in `vendor/filament/*/resources/lang/ar/` and auto-loads them from `app()->getLocale()` — so nothing is broken or half-done on the framework side; the panel renders correctly in Arabic because `config('app.locale')` defaults to `ar`. **Revisit only if the business need actually changes** (e.g. onboarding a non-Arabic-speaking admin); at that point the deferred Discovery report (mechanism: add `SetLocale` to the panel middleware stack since `users.locale` already exists and Filament localizes for free) becomes the starting point. **Note:** `smart-ad-creator` (an admin Filament component) was pre-translated in C.6 in anticipation — those keys exist but stay invisible until/unless `/admin` locale switching is ever wired. **This officially closes the full localization project (Phases A–D).**
-
-## Point Plans & Pricing
-
-| Plan | Points | Price (EGP) | Type |
-|------|--------|-------------|------|
-| Starter (البداية) | 100 | 49 | Individual |
-| Growth (النمو) | 250 | 99 | Individual |
-| Pro Seller (البائع المحترف) | 700 | 249 | Individual |
-| Business (الشركات) | 1800–2000 | 499–599 | Company |
-
-Plans are defined in `config/pricing.php`. Business tier unlocks all 13 entitlement flags.
-
-## Platform Categories
-
-The platform has 14 categories. **"خردة وخامات" (Scrap & Raw Materials)** is a deliberate competitive differentiator — no major Egyptian classifieds platform currently serves this niche.
-
-The full category list should be sourced from the `categories` table / seeder rather than hardcoded here, as it may evolve.
-
-## Point Economy Rules (source of truth)
-
-These values are authoritative. Any view displaying points must match them — never hardcode different numbers.
+### Earning (verified call sites)
 
 | Action | Points | Where |
-|--------|--------|-------|
-| Phone OTP verified (once only) | +50 | `OtpController::verify()` |
-| Listing created | +3 | `HomeController::store()` |
-| Daily login | +1 | (scheduled) |
-| Referral | +25 | (referral flow) |
-| Registration welcome | +50 | `RegisteredUserController` (also Socialite signup — unified) |
-
-**Featuring costs** — defined in `Listing::FEATURE_COSTS` (non-linear, not per-day):
-
-| Duration | Cost | Supported |
-|----------|------|-----------|
-| 1 day | 25 pts | ✅ |
-| 3 days | 60 pts | ✅ |
-| 7 days | 120 pts | ✅ |
-| 14 days | 220 pts | ✅ |
-
-- Use `Listing::featureCost(int $days)` to get cost — returns `null` for unsupported durations (safe for UI rendering)
-- Use `Listing::featureCostStrict(int $days)` to get cost — throws `InvalidArgumentException` for unsupported durations (use in programmatic flows)
-- Use `$listing->featureWithPoints(int $days)` to feature (deducts points + checks entitlement limits; uses `featureCostStrict` internally)
-- Featuring is best-effort after listing creation: failure is silent and does not block the listing
-
-## Current Project Status (as of June 2026)
-
-- **Tests:** 376 passing, 0 failures
-- **SMS OTP:** Routed to `log` driver — no real SMS provider connected yet; OTPs appear in `storage/logs/laravel.log` during development
-- **Payments:** Paymob integration is in **test mode** only — no live transactions
-- **Deployment:** Not yet deployed to a production server; running locally only
-
-### Car Listings (cars category)
-
-- Public listing wizard renders dependent dropdowns for the `cars` category: Brand → Model (filtered by brand) → Fuel → Transmission (Alpine, mirrors the governorate→city pattern). Selecting the "أخرى/Other" brand reveals a free-text field for the brand name.
-- Brand & Model persist to the `listings.car_brand_id` / `car_model_id` FK columns; Fuel/Transmission (and the manual `car_brand_other`) persist in `custom_fields_values`. `HomeController::store()` enforces these only when `category->slug === 'cars'` (model must belong to brand).
-- Brand/model data lives in `car_brands` / `car_models` (25 brands, ~209 models) via `CarBrandSeeder`, now registered in `DatabaseSeeder`.
-- Fixed: `/category/{slug}` 500 (LazyLoadingViolationException) by eager-loading `['category','location','user']` in `CategoryController::show()`.
-- Public wizard now mirrors the admin (`CarFields`/`RealEstateFields`) dropdowns with identical option values:
-  - **Cars** (slug `cars`): added Year (select, current→1970), Condition (select, Arabic values), Mileage (number), Color (text) on top of Brand/Model/Fuel/Transmission. Year + Condition are required (client + `HomeController::store` server-side).
-  - **Real estate** (slug `real-estate`): full set added — Property type, Listing type, Rooms, Bathrooms, Floor, Finishing, Area, Compound — all in `custom_fields_values`. Property type + Listing type are required.
-  - Categories detected by `slug` (`cars`/`real-estate`, both have 0 subcategories); option codes match admin exactly so admin- and user-created listings stay consistent.
-  - `show.blade.php` now humanizes these coded `custom_fields_values` keys into Arabic labels/values (e.g. `property_type: apartment` → `نوع العقار: شقة`), since these categories have no `custom_fields_schema`.
-  - Fixed admin `DynamicFields::STATIC_CATEGORY_IDS` (was `[1,12,20]`; cars is id 2 and 20 doesn't exist → corrected to `[1,2]`).
-- Fixed: submitting a listing with a huge price (e.g. 43.5 billion) crashed with a generic toast — a MySQL `22003` out-of-range error on `listings.price` (`decimal(12,2)`, max `9,999,999,999.99`). Added `max:9999999999.99` to the `price` rule in `HomeController::store()` (Arabic message "السعر المدخل كبير جداً، يرجى التحقق من الرقم") and a matching client-side cap (`NILEX_MAX_PRICE`) + `max` attr in `create.blade.php` for instant feedback. Not a points issue — crash occurred at `$listing->save()` before any point credit.
-
-### Listing Cards & Detail Page
-
-- Listing media is stored under the Spatie collection **`images`** (in `HomeController::store()`). Always read it back with `getMedia('images')` / `getFirstMediaUrl('images')`.
-- Fixed: listing detail page showed "لا توجد صور" because `show.blade.php` read `getMedia('listings')` (wrong collection) — corrected to `getMedia('images')`.
-- The reusable `partials/listing-card.blade.php` is fully clickable: the whole card is wrapped in a single `<a>` to `listings.show` (no nested title anchor).
-- The detail page has a native Alpine.js image lightbox (no new JS dependency). Clicking the main image or any thumbnail opens a fullscreen `full_hd` overlay that reuses the existing `activeIdx`/`images` state. Supports prev/next arrows + counter (when >1 image), touch swipe, click-backdrop/X to close, and keyboard Escape/←/→.
-- **Share button (detail page only):** an additive, self-contained Alpine component lives in the title+meta card of `show.blade.php` (left column → visible on mobile + desktop). It has its **own `x-data`** (all names `share*`-prefixed, e.g. `shareMenuOpen`/`shareNative`/`copyLink`) — **zero shared state / no name collision** with the page-level `x-data`. On click it tries the **Web Share API** (`navigator.share`, ideal on mobile) and falls back to a small menu: **WhatsApp** (`wa.me/?text=`), **Facebook** (`facebook.com/sharer`), and **Copy link**. No new JS library — Alpine only. URL/title are injected via `@js(url()->current())` / `@js($listing->title)`. Copy uses `navigator.clipboard` (requires a **secure context / HTTPS** — won't work on local plain-HTTP dev, works on the real SSL server) with a `document.execCommand('copy')` textarea fallback. Strings live in the new `ui.share.*` group (ar+en: `button`, `heading`, `whatsapp`, `facebook`, `copy`, `copied`).
-- **Similar listings (detail page, additive):** the bottom of `show.blade.php` shows a "إعلانات مشابهة / Similar listings" section. The query lives **inline in `ListingController::show()`** (not a View Composer / `@php`): same `category_id`, excludes the current `id`, `status = Listing::STATUS_PUBLISHED` only, ordered by **same `province_id` first** (`orderByRaw('CASE WHEN province_id = ? THEN 0 ELSE 1 END')`) then `latest()`, `limit(6)`. **Price range is intentionally NOT a similarity factor** (it shrinks results and would hide the section too often). It eager-loads `['category','location','user']` to avoid N+1 (mirrors `CategoryController::show()`), and is passed to the view as `$similarListings`. The section **reuses `partials/listing-card.blade.php` as-is** (passing `isFeatured => $similar->is_featured`) in a 2/3-col grid and **renders only `@if($similarListings->isNotEmpty())`** — no empty state when there are none. Heading key: `listing.detail.similar_heading` (ar+en). Cap is **6** to fill a 3-col row evenly without overwhelming the page. Covered by `tests/Feature/Listings/SimilarListingsTest.php` (same-category/published-only, current-listing excluded, other-category/pending excluded, province ordering, hidden-when-empty, 6-cap).
-
-### SEO — schema.org JSON-LD (detail page only)
+|---|---|---|
+| Registration welcome (email/phone signup) | **+20** | `RegisteredUserController::store()` ← `config('pricing.registration_welcome_points', 20)` |
+| First-time social signup | **+20** | `SocialiteController` (same config key) |
+| Registration OTP confirmation | **0** | `OtpController::verify()` grants nothing |
+| Profile phone verification (once per lifetime) | **+20** | `PhoneVerificationController::verify()`, guarded by `phone_bonus_claimed_at` |
+| Profile email verification (once per lifetime) | **+20** | `EmailVerificationProfileController::verify()`, guarded by `email_bonus_claimed_at` |
+| Listing created | **+3** | `HomeController::store()` |
+| Referral signup | `CampaignLink.points_reward` (DB-driven) | `RegisteredUserController` — ⚠️ bypasses `PointService`: increments `points_balance` only + manual `PointTransaction` (known inconsistency, see §8) |
+| Points purchase | plan's `points` | `PaymobWebhookService` (webhook, not the callback controller) |
+| Admin adjustment | admin-entered ± | `UserResource::adjustPointsAction()` via `PointService`, description `'تعديل إداري: '…` |
+| Daily login | **NOT IMPLEMENTED** | no scheduler, no credit logic exists |
+
+### Featuring costs — `Listing::FEATURE_COSTS`
+
+| Duration | Cost |
+|---|---|
+| 1 day | **40** pts |
+| 3 days | **90** pts |
+| 7 days | **170** pts |
+| 14 days | **300** pts |
+
+- `Listing::featureCost(int $days)` → `null` for unsupported durations (safe for UI).
+- `Listing::featureCostStrict(int $days)` → throws for unsupported (programmatic flows).
+- `$listing->featureWithPoints(int $days)` — checks `featured_listings_limit` + `monthly_boost_limit` entitlements + balance; ⚠️ debits via `$user->decrement('points')` + manual `PointTransaction` (type `feature_listing`), not `PointService::deduct()`. Extends `featured_until` when already featured. Best-effort after creation (silent failure never blocks the listing).
+- The pricing page (`frontend/pricing.blade.php`) mirrors these values and must be kept in sync.
+
+### Purchase Plans — DB-driven (`point_plans` table via `PointPlanSeeder`, NOT config)
 
-- **Additive, presentation-only:** a single `<script type="application/ld+json">` was added **inside the existing `@push('meta')`** of `show.blade.php`. No existing meta tag (`og:*`, `twitter:*`, `description`), no controller, and no other file were changed. The structured data is built in a self-contained `@php` block in the meta stack (it cannot reuse the content block's `$displayFields`, because `@push('meta')` renders *before* `@section('content')`).
-- **Schema strategy (hybrid):** every category uses **`Product`**; **cars** (`category->slug === 'cars'`) use the multi-type **`["Product","Car"]`** — in schema.org `Car` is a subtype of `Product`, so it keeps full Product/Offer rich-result eligibility while adding vehicle properties. Real estate (and any other coded-spec category) stays `Product` with specs emitted as **`additionalProperty`** (`PropertyValue`). `RealEstateListing` was rejected because it descends from `WebPage`/`CreativeWork` and produces **no price rich result** in organic Google results.
-- **Fields (Google Rich Results compliant):** `name` (title), `description` (`strip_tags`, capped 5000), `image` (array of absolute `full_hd` URLs, omitted when none), `category` (locale-aware name), `sku` (`NILEX-{id}`), `itemCondition` (`NewCondition`/`UsedCondition` from the top-level `condition` column; omitted when null), and `offers` → `price` (numeric, no separators: `number_format($price, 2, '.', '')`), `priceCurrency` `"EGP"`, `availability` `InStock`, `url`, and `seller` (Person = listing owner). Cars additionally emit `brand`/`model` (from `carBrand`/`carModel` or the manual `car_brand_other`), `vehicleModelDate` (year), `mileageFromOdometer` (`QuantitativeValue`, `unitCode: KMT`), `fuelType`/`vehicleTransmission` (coded values translated via `wizard.options.*`), and `color`.
-- **Deliberate omissions:** `offers` is **omitted entirely when `price_type === 'on_contact'`** (no real numeric price to advertise). No `aggregateRating`/`review` (ratings exist only at the seller level, not per-listing — and self-serving review markup is penalized by Google). No `gtin`/`mpn` (N/A for used classifieds). `priceValidUntil` not set (optional; Google warning only). Any car-specific field is skipped when its data is absent (guarded with `empty()` checks), so older listings simply produce a leaner-but-valid `Product`.
-- **Security:** rendered via `json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)` **without** `JSON_UNESCAPED_SLASHES` — slashes stay escaped so a `</script>` inside a user's title/description **cannot break out** of the `<script>` block (XSS-safe).
-- **Blade gotcha fixed during implementation:** the explanatory `{{-- … --}}` comment must **not** contain the literal token `@php`. Blade extracts `@php … @endphp` raw blocks (`storeUncompiledBlocks`) *before* it strips comments (`compileComments`), so an `@php` inside a comment pairs with the next real `@endphp` and silently swallows everything between (this manifested as `Undefined variable $fullUrls`). The comment was reworded to avoid `@php`/`@section`/`@push` literals.
-- Tests: 268 passing, 0 failures (the 5 `SimilarListingsTest` + all detail-page renders exercise the new markup).
+| Plan | Points | Price (EGP) | tier_key | Type |
+|---|---|---|---|---|
+| البداية / Starter | 100 | 49 | `starter` | individual |
+| النمو / Growth | **300** | 99 | `growth` | individual |
+| البائع المحترف / Pro Seller | **850** | 249 | `pro_seller` | individual |
+| الشركات / Business | **2500** | 499 | `business` | company |
 
-### Image Watermarking
+`config/pricing.php` contains only `registration_welcome_points`, `plan_column_keys`, and a **UI-only** `feature_matrix` for the pricing-page comparison (some rows marked `coming_soon` / `admin_only`). Runtime entitlements come from `PlanEntitlementSeeder`.
 
-- `Listing::registerMediaConversions()` applies the Nilex watermark (`public/images/watermark.png`, transparent, bottom-right, 40% opacity) to **all three** conversions: `thumb` (300px), `card` (600×450, new), and `full_hd` (1920px). Conversions are `nonQueued` (run synchronously on upload via GD).
-- The **original** uploaded file is kept clean/unwatermarked and is never linked in any view — public views only render watermarked conversions (cards/home/search use `card`, detail pages use `full_hd`, dashboard/gallery thumbs use `thumb`).
-- Backfill existing listings with `php artisan listings:regenerate-images` (optional `--listing=ID`) to regenerate conversions for media uploaded before watermarking was added.
+### Entitlements per tier (`PlanEntitlementSeeder` — runtime truth)
 
-## Ad Campaign System
+| Feature flag | Starter | Growth | Pro Seller | Business |
+|---|---|---|---|---|
+| `featured_listings_limit` | 1 | 3 | 5 | 10 |
+| `monthly_boost_limit` | 2 | 5 | 10 | 20 |
+| `search_priority` | ✗ | ✓ | ✓ | ✓ |
+| `home_promotion` | ✓ | ✓ | ✓ | ✓ |
+| `business_badge` | ✗ | ✗ | ✗ | ✓ |
+| `priority_support` | ✗ | ✗ | ✗ | ✓ |
+| `analytics_access` | ✗ | ✓ | ✓ | ✓ |
+| `analytics_charts` | ✗ | ✗ | ✓ | ✓ |
+| `phone_clicks_access` | ✗ | ✗ | ✓ | ✓ |
+| `whatsapp_clicks_access` | ✗ | ✓ | ✓ | ✓ |
+| `event_views_access` | ✗ | ✓ | ✓ | ✓ |
+| `business_dashboard` | ✗ | ✗ | ✗ | ✓ |
+| `monthly_reports` | ✗ | ✗ | ✓ | ✓ |
 
-Two parallel ad systems coexist:
+Check access via `EntitlementService::canUseFeature()` / `hasFeature()`. Cache: `entitlements:user:{id}`, 300s, cleared by `assignFromPlan()` / `recordUsage()`. Users with zero `user_entitlements` rows are grandfathered to `home_promotion` only.
 
-**1. Admin-Managed Campaigns** — fully implemented
-- Created and managed via Filament admin (`AdCampaignResource`)
-- 5 placements: `hero_top`, `home_feed`, `category_page`, `login_page`, `popup`
-- `popup` and `login_page` added via later migrations (`2026_06_13_100005`, `2026_06_13_100006`)
-- Served by `AdCampaignService` with Redis-cached placement queries
-- Impression & click tracking dispatched to queue asynchronously
+---
 
-**2. Self-Service Seller-Paid Ads** — fully implemented, feature-flagged
-- Enabled via `SELF_SERVICE_ADS=true` in `.env` (maps to `config/features.php`)
-- When disabled, `EnsureSelfServiceAdsEnabled` middleware blocks seller ad routes
-- Seller flow: `SellerAdCampaignController` + `StoreSellerAdCampaignRequest`
-- Payment via `AdCampaignPaymentService` + `PaymobAdWebhookService` (Paymob, currently test mode)
-- Routes split across `routes/ads.php` and `routes/advertising.php`
-- Fixed: "Failed to authenticate with Paymob." on ad checkout. `PaymobService` used wrong endpoints — `/auth/login` → corrected to `/auth/tokens`, and `/ecommerce/payment_links/payment_keys` → `/acceptance/payment_keys`. Now reads creds via `config('services.paymob.*')` (not raw `env()`, so `config:cache`-safe) and logs the full status + body on any failed call (`Log::error`) instead of silently returning null. Same `PaymobService` is shared by the points checkout (`PaymentController`), so both flows are fixed. Also corrected `PaymobService::$baseUrl` from `https://egypt.paymob.com/api` to the working `https://accept.paymob.com/api` — the full Paymob flow (Auth → Order → Payment Key) is now verified working end-to-end. Also removed a stray Arabic `ال` prefix from `PAYMOB_HMAC_SECRET` in `.env`. Note: `PAYMOB_IFRAME_ID` still needs a real numeric ID from the Paymob dashboard (currently placeholder).
+## 4. Ad Campaign System
 
-**3. Public Ad Spaces Page** — implemented
-- `/ads/pricing` → `AdSpacesController` → `frontend.ads.pricing` view
-- Passes `selfServiceEnabled` flag and `config('ad_pricing')` to the view
-- Linked from footer and navigation
+Two parallel systems share the `AdCampaign` model:
+1. **Admin-managed** — created in Filament (`AdCampaignResource`); `seller_id`/`payment_status` null → treated as paid.
+2. **Self-service seller-paid** — feature-flagged `SELF_SERVICE_ADS=true` (`config/features.php`); `SellerAdCampaignController` + Paymob.
 
-## Legal Pages
+### Placements (`config/ad_pricing.php` — 7 keys, prices in EGP for 7/15/30/60 days)
 
-- `LegalPage` model (Spatie translatable `title`/`content` as JSON), served at `/{slug}` via `LegalPageController` (`legal.show`), rendered by `resources/views/pages/show.blade.php`. Footer auto-lists all active pages.
-- Seeded slugs (`LegalPageSeeder`): `privacy-policy`, `terms-and-conditions`, `acceptable-use-policy`, `about-us`, `contact-us`, `refund-policy`. (`cookies-policy` via `CookiePolicySeeder`.)
-- Added **`refund-policy`** ("سياسة الاسترجاع والاسترداد", Arabic only) — required by the Paymob merchant agreement. The points checkout (`pricing.blade.php`) now has a single mandatory agreement checkbox above the plans grid; an Alpine `refundAccepted` flag disables all "شحن الرصيد" buttons until checked, and each form posts a hidden `refund_policy_accepted=1`. `PaymentController::checkout()` enforces it server-side (`accepted` rule, Arabic error) as a fallback.
+| Placement | Prices (7/15/30/60d) | Renders where |
+|---|---|---|
+| `hero_top` (1200×400) | 500/900/1500/2500 | Homepage — `HomeController::index()` queries directly; Alpine **carousel** in `home.blade.php` with per-campaign slide duration (NOT `<x-ad-banner>`) |
+| `home_feed` (768×256) | 400/750/1200/2000 | `home.blade.php` — `<x-ad-banner>` every 8 listings, gated `@if(config('features.self_service_ads'))` |
+| `category_page` (768×256) | 350/650/1000/1700 | `category.blade.php` — `<x-ad-banner :category-id>` |
+| `login_page` (768×256) | 250/450/750/1200 | `auth/login.blade.php` |
+| `popup` (768×512) | 600/1100/1800/3000 | `components/ad-popup.blade.php` via `<x-ad-popup />` in `layouts/frontend.blade.php` |
+| `listing_detail` | 300/550/900/1500 | **Config/Filament only — no view renders it yet** |
+| `search_results` | 300/550/900/1500 | **Config/Filament only — no view renders it yet** |
 
-## Favorites System
+Seller self-service allows only the first 5 placements.
 
-An **additive** feature (no existing logic was modified) letting users save listings to revisit later.
+### Approval workflow
 
-**Data model**
-- Table `favorites` (`2026_06_26_000001_create_favorites_table`): `user_id` + `listing_id` (both FK `cascadeOnDelete`), `timestamps`, **`unique(['user_id','listing_id'])`** to prevent duplicates + an index on `user_id`.
-- `App\Models\Favorite` — `$fillable = ['user_id','listing_id']`, `belongsTo` `user()` / `listing()`.
+- Fields: `status` (`draft/scheduled/active/paused/expired`), `approval_status` (`pending/approved/rejected`), `payment_status` (`pending/paid/failed/refunded`, null for admin campaigns).
+- Seller flow: `store()` creates `draft`+`pending`+`pending` → image upload → Paymob checkout (`AdCampaignPaymentService`) → webhook marks `paid` → admin approves in Filament → `AdCampaignService::approveCampaign()` sets `approval_status=approved`, `status=active`, `starts_at=now()`, `ends_at=now()+duration_days`, audit-logs, notifies seller. Reject stores `rejected_reason` + notifies.
+- Expiry: `AdCampaignObserver::saving()` auto-expires past `ends_at`; `campaigns:expire` runs hourly.
 
-**Model relations / helpers (additive only)**
-- `User`: `favorites()` (HasMany), `favoriteListings()` (BelongsToMany via `favorites` pivot, `withTimestamps`), `favoritedListingIds()` and `isFavorited(Listing|int)`.
-- `Listing`: `favorites()` (HasMany), `isFavorited(?User $user = null)` (delegates to `User::isFavorited`).
-- **N+1 avoidance:** `favoritedListingIds()` is **memoized on the User instance** (`$favoritedListingIdsCache`) — one query per request regardless of how many cards render. The card partial calls `auth()->user()->isFavorited($listing->id)`, so existing controllers (home/category/search) were **not** modified to preload anything.
+### Cache behavior (`AdCampaignService`)
 
-**Controller / routes** (`App\Http\Controllers\FavoriteController`)
-- `POST /listings/{listing}/favorite` → `toggle()`, name `listings.favorite`. Defined **outside** the auth group (next to `listings.reveal-phone`); checks `Auth::check()` internally and returns **401** for guests (mirrors `ListingController::revealPhone`). Returns JSON `{ favorited: true|false }`.
-- `GET /dashboard/favorites` → `index()`, name `dashboard.favorites`, placed **inside** the existing `['auth','otp.verified']` group (same protection as other dashboard pages). Paginates `favoriteListings()` (eager-loads `category,location,user`), ordered by `favorites.created_at` desc.
+- TTL **300s**; keys `ad_campaign_{placement}`, category pages `ad_campaign_category_page_{categoryId|'all'}`.
+- **Local env bypasses the cache entirely** — `getForPlacement()` hits the DB directly when `app()->environment('local')`, so no manual clearing is needed during development.
+- Invalidation: `AdCampaignObserver` → `InvalidateAdCampaignCacheJob` → `flushCacheKeys()` on any save/delete/restore. Manual: `AdCampaignService::clearPlacementCache()`.
+- Impression/click dedup keys `ad_imp_{id}_{ip}_{uaHash}` / `ad_clk_…`, TTL 60 min; tracking dispatched to queue.
+- `TrackCampaign` middleware handles `?ref=` attribution.
 
-**Views**
-- Heart toggle is a **self-contained Alpine island** (own `x-data`, no shared state):
-  - `frontend/partials/listing-card.blade.php` — absolutely positioned over the image (`top-2 start-2`); since the card root is a single `<a>`, the button uses `@click.prevent.stop`. Guests → `/login` (`@guest` redirect + 401 handling, revealPhone pattern). Filled red heart when favorited.
-  - `frontend/listings/show.blade.php` — a `fav*`-prefixed island next to the share button in the title card (Save/Saved pill).
-- `dashboard/favorites.blade.php` — new "My Favorites" page (`<x-app-layout>`, conditional `dir`), **reuses `listing-card.blade.php`** in a grid + empty state + pagination (mirrors `dashboard/ads/index` styling).
-- Discoverability: a red "مفضلتي" link was added to `user-dashboard` next to "حملاتي"/"العملاء".
+### Popup component (`components/ad-popup.blade.php`)
 
-**i18n:** new `ui.favorites.*` group (ar+en) — `title`, `subtitle`, `nav_link`, `back_dashboard`, `save`, `saved`, `add_tooltip`, `remove_tooltip`, `empty_title`, `empty_subtitle`, `browse_cta`.
+Frequency-capped via `localStorage` key `popup_last_seen` (24h). 5-second countdown before X/skip become active; closing writes the timestamp. Image links through `route('ads.click')` when `target_url` set (target_url is optional). No impression tracker (unlike `<x-ad-banner>`).
 
-**Tests:** `tests/Feature/Favorites/FavoriteToggleTest.php` (Pest, 6 tests) — add, toggle-off, duplicate prevention (unique constraint), guest 401, favorites page shows only the user's saved listings, and the `User::isFavorited` helper. Suite: **274 passing, 0 failures** (was 268; +6).
+---
 
-## Seller Response Rate
+## 5. Visual Identity (navy/teal — Lovable-final values)
 
-An **additive** public trust signal showing how reliably a seller responds to received offers. Built on a **dedicated `responded_at` timestamp** — deliberately **not** `updated_at` (which is a fragile proxy: any future row update would move it and silently corrupt historical accuracy).
+Token name `nilex` kept, value remapped to navy. Filament `/admin` is fully excluded from the re-skin. Semantic colors are protected: `green/emerald` = success/verified, `red/rose` = error, `amber` = warning — never repurpose as brand.
 
-**Data model**
-- Migration `2026_06_26_000002_add_responded_at_to_offers_table` adds `offers.responded_at` (timestamp, nullable, after `status`; `Schema::hasColumn` guarded).
-- `App\Models\Offer`: `responded_at` added to `$fillable` + a `casts()` returning `'responded_at' => 'datetime'`.
+### Palette (`tailwind.config.js`)
 
-**Capture point (the only logic change)**
-- `UserDashboard::acceptOffer()` / `rejectOffer()` — the existing single `$offer->update([...])` line in each was extended in-place to `'responded_at' => $offer->responded_at ?? now()`. The `?? now()` guard writes the timestamp **once** (first decision) and **never overwrites** it on any later status change. No other lines in those methods were touched.
+| Token | Hex |
+|---|---|
+| `nilex` DEFAULT / dark / light | `#11407A` / `#0B2F5C` / `#3D8BD4` (full 50→900 scale) |
+| `nilex-teal` DEFAULT / deep / light | `#14A5A8` / `#0D7377` / `#14BDBC` |
+| `nilex-orange` DEFAULT / light | `#E8431D` (prices) / `#FF9A4D` |
+| `nilex-ink` | `#11203D` (titles/headings) |
+| `nilex-bg` | `#F4F6FB` (page background) |
+| shadows | `shadow-nilex` `0 4px 14px rgba(17,64,122,.22)`, `shadow-nilex-lg` |
 
-**Service (`SellerListingAnalyticsService`, additive)**
-- `RESPONSE_RATE_MIN_OFFERS = 5` — the statistical minimum.
-- `responseRate(User $seller): ?float` — denominator = offers received (`receiver_id`) with `status != 'canceled'`; numerator = those with `status NOT IN ('pending','canceled')` (i.e. accepted **or** rejected). **`canceled` is excluded from BOTH** (a cancel is a buyer action, not a seller response opportunity). Returns `null` when the (non-canceled) denominator is `< 5` ("insufficient data" — a seller with one offer shouldn't show "100%"). Otherwise `round(%, 1)`.
-- `averageResponseTime(User $seller): ?float` — mean of `(responded_at − created_at)` **in seconds** over offers that have a `responded_at`; honors the same `< 5` threshold and returns `null` when there's no responded offer. **Computed but not yet shown in the UI** (reserved for a later iteration).
+### Key CSS classes (`resources/css/app.css`)
 
-**View (`resources/views/components/seller-trust-card.blade.php`)**
-- This card (rendered on `frontend/listings/show.blade.php`) was **fully Arabic-hardcoded** and is now **fully translated** — all strings moved to a new `ui.seller_trust.*` group (ar+en): `seller`, `phone_verified`, `phone_unverified`, `member_since` (`:time`), `active_listings` (`:count`), `no_ratings`, `response_rate`, `response_rate_value` (`:rate`), `response_insufficient`.
-- A new response-rate row resolves the rate live via `app(SellerListingAnalyticsService::class)->responseRate($seller)`; shows the percentage when available, or the **"insufficient data"** message (never a misleading number) below the threshold.
+- **`.btn-nilex-primary`** — the primary CTA: gradient `linear-gradient(135deg, #0C7F82, #12B5B8)`, dual teal glow, hover `brightness(1.05)` + lighter gradient, `active:scale(0.98)`, focus `2px solid #14BDBC` offset 3px. Reusable via `<x-primary-button>`.
+- Listing-card utilities (`@layer utilities`): `.card-listing` (14px radius, hover lift, teal-tinted border), `.card-image` (4/3 navy gradient placeholder `#3D8BD4→#11407A`), `.badge-new` (emerald gradient), `.badge-featured` (amber gradient), `.fav-icon-btn` (glass circle, orange heart hover), `.pill-category` (`#E6F1FB` bg, navy text), `.trust-badge` (frosted, teal text), `.price-tag` (`#E8431D`, fw-800).
+- `.card-photo` is defined inline in `home.blade.php` (homepage grid photos), not in `app.css`.
 
-**Tests:** `tests/Feature/Offers/ResponseRateTest.php` (Pest, 10 tests) — rate calc at/above threshold, 100% case, per-seller scoping, `null` below minimum, `canceled` excluded from numerator+denominator **and** from the threshold count, `averageResponseTime` averaging + threshold, and the `responded_at` write semantics (set on first decision, **not** overwritten on a repeat). Suite: **284 passing, 0 failures** (was 274; +10).
+### Fonts
 
-## Listing Soft Deletes
+**Cairo** only (Google Fonts `<link>` in all three layouts; `fontFamily.sans` in Tailwind config). No Tajawal.
 
-**Why:** A foundation step before the upcoming **sale-confirmation + ratings** system. A rating will permanently reference the listing it was about, so a listing must **survive in the DB after the seller "deletes" it** — the previous behavior was a **hard delete** (`$listing->delete()` with no `SoftDeletes`), which would orphan/erase any future rating. This change is purely foundational: **no sale-confirmation/ratings tables or features were added here.**
+### Re-skin status
 
-**Model + schema**
-- `App\Models\Listing` now uses `Illuminate\Database\Eloquent\SoftDeletes` (same pattern as `AdCampaign`). Added `'deleted_at' => 'datetime'` to `casts()`.
-- Migration `2026_06_26_000003_add_deleted_at_to_listings_table` adds `deleted_at` via `$table->softDeletes()` (`Schema::hasColumn` guarded; `down()` uses `dropSoftDeletes`). No index added (consistent with `AdCampaign`; the `listings` table has no composite indexes — only implicit FK indexes + a single `price_type` index).
+Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, both pricing pages' CTAs, trust card, footer, dashboard/profile/ads/Livewire CTAs, the **listing wizard** (teal chrome), and the **auth pages + guest layout** (all committed). Residual legacy green `#1D9E75` accents remain in: `components/points-badge.blade.php`, Chart.js dataset colors (user/business dashboards), `pages/show.blade.php` prose links, footer accent bars, and assorted breadcrumb/icon accents on category/search/detail/pricing pages.
 
-**Behavior change (the only logic change to deletion)**
-- `UserDashboard::deleteListing()` (`app/Livewire/Frontend/UserDashboard.php`) — the `clearMediaCollection('images')` call was **removed**. The seller-facing "delete" is now a **soft delete**, and the listing's **media (images) are intentionally preserved** so a deleted listing can still be rendered in a later record (sale/rating history). Spatie only auto-purges media on **force delete**, not soft delete, so the rows survive until an explicit force delete.
+---
 
-**Public surfaces (no code change needed — verified)**
-- All public reads go through Eloquent, so the SoftDeletes global scope excludes trashed automatically: home, category page, search (Scout `collection`/Meilisearch — `scout.soft_delete=false` ⇒ a soft delete fires the `deleted` event and Scout `unsearchable()` removes it from the index), and the detail page (`listings.show` route-model-binding returns **404** for trashed).
+## 6. Fixed Development Rules
 
-**Filament admin (`ListingResource` / `ListingTable`)**
-- Added `Filament\Tables\Filters\TrashedFilter` to the table filters (Filament v5's TrashedFilter is self-contained: it strips the `SoftDeletingScope` via `baseQuery(...)` and toggles `withTrashed`/`onlyTrashed`/`withoutTrashed` — no `getEloquentQuery()` override or separate page needed).
-- Added `RestoreAction` and `ForceDeleteAction` to the row `ActionGroup`. **`ForceDeleteAction` is restricted to `super_admin`** (`->visible(fn () => Auth::user()?->hasRole('super_admin'))`) because force delete is irreversible; `RestoreAction` is available to any panel user (admin/moderator/super_admin). The default `ListListings` tabs/badges (all/pending/published/flagged/rejected) now naturally exclude trashed via the global scope.
+1. **PowerShell: never `&&`** — chain with `;` or run commands separately.
+2. **AR/EN translation is mandatory for every new user-facing string from the first line** — public + authenticated area. Lang files: `lang/{ar,en}/{ui,wizard,listing,adspaces,server,auth,validation}.php` + root `ar.json`/`en.json`. Exception: `app/Filament/*` (admin) is Arabic-only by deliberate decision (Phase D deferred).
+3. **Never delete code without explicit approval** — deprecate/flag instead, and ask.
+4. **Discovery before implementation** — read the actual code/DB first; never assume from docs or memory. For risky data work, dry-run first (see `users:backfill-verification` pattern: read-only by default, `--execute` to write).
+5. **`php artisan test` after every change** — suite must stay green (currently **428 passing, 0 failures**). Tests use in-memory SQLite, sync queue, `SCOUT_DRIVER=collection` (see `phpunit.xml`).
+6. **Commit after each approved phase/step** — small, labeled commits.
+7. **Western/Latin digits (1,2,3) everywhere, all locales** — never Arabic-Indic numerals in UI strings.
+8. **Persisted `PointTransaction.description` strings stay Arabic** (written once at credit time — the documented permanent exception to rule 2).
+9. **Media collections:** listings → `images`, campaigns → `ad_image`. Never read/write the legacy `listings` collection.
+10. Sensitive flows never trust the client: re-verify ownership server-side (`where('user_id', Auth::id())`), IDOR-check ids against real DB relations, wrap multi-step writes in `DB::transaction`.
 
-**Analytics scope fix (`CategoryPerformanceWidget`)**
-- The 4 aggregation subqueries (`buildAggregatedCategoriesSubquery`) start from the **event** models (`ListingView`/`ListingPhoneClick`/`ListingWhatsappClick`/`Offer`) and `join` `listings`, so the Listing SoftDeletes global scope does **not** apply. Added an explicit `->whereNull('listings.deleted_at')` to each so deleted-listing events are excluded from admin category analytics. (All other listing analytics — `CategoriesChartWidget`, `GovernoratesChartWidget`, `SellerListingAnalyticsService::getCategoryPerformance` — use `Listing::query()` as the base, so the scope already applies; no change needed.)
+---
 
-**Tests:** `tests/Feature/Listings/ListingSoftDeleteTest.php` (Pest, 9 tests) — delete is now soft (row survives + `deleted_at` set, found only via `withTrashed`), owner-only IDOR still rejected, trashed listing hidden from home/search/category and 404 on detail, **media rows preserved** after delete, admin `TrashedFilter` query semantics (default hides / `withTrashed` reveals / `onlyTrashed` isolates), and `CategoryPerformanceWidget` aggregation excludes soft-deleted. Suite: **293 passing, 0 failures** (was 284; +9).
+## 7. Completed Features
 
-**Deferred (noted, not done here):** `RestoreAction` is currently visible to all panel users; if finer-grained control is desired later it can be gated via **FilamentShield** permissions per role (the `ForceDeleteAction` super_admin gate is already in place). No bulk Restore/ForceDelete actions were added (single-record row actions only).
+**Auth & accounts:** OTP registration gate (4-digit, 5-min expiry, progressive throttle) with **email/phone channel separation** (§9); device fingerprinting (3 accounts/device); Google social login; ban system; account **anonymization** on delete (row survives, PII wiped, `anonymized_at`, Socialite re-entry blocked, middleware kills stale sessions); profile page with staged phone (`pending_phone`) and email (`pending_email`) OTP verification flows, each with a one-time +20 bonus; password reset; roles `super_admin/admin/moderator/user` via FilamentShield.
 
-## Listing Closing Flow (Step 1 — closing-type modal)
+**Listings:** multi-step Alpine wizard (create + edit share one view; edit locks category, forces re-moderation, preserves slug, no points); cars category (25 brands / ~209 models, dependent dropdowns, year/condition/mileage/color) and real-estate (property/listing type, rooms, floor with free-text "other", finishing, area, compound; no top-level condition); dynamic `custom_fields_schema` per category; AI generation via Gemini; watermarked image conversions; moderation queue (`/admin/moderation`) with unified approve/reject (`ListingModeration` support class: audit log + owner notification + auto-strike), 3-strike auto-ban; soft deletes; closing flow (sold-on-platform → buyer selection / sold-external / canceled); listing detail page with lightbox, share button, similar listings, schema.org JSON-LD; favorites; search (Scout) + category pages.
 
-**Why:** A **foundation step** for the upcoming **sale-confirmation + ratings** system. Before a seller "deletes" a listing they must now declare **how** it was closed, so a future sale/rating record can be tied to the right outcome (and the right buyer). This is **Step 1 only** — the closing-type selection modal; the buyer-selection sub-flow and any new DB tables are deliberately **not** built yet.
+**Sales & trust:** dual sale confirmation (`SaleConfirmation` state machine) → buyer notification → `/dashboard/purchases` confirm screen → 1–5 star review with comment; denormalized `users.ratings_avg/count` via `ReviewObserver`; `<x-rating-stars>` partial-fill component (trust card + dashboard); seller response rate (min 5 offers); seller leads (phone reveal / WhatsApp / offer) with lead detail pages.
 
-**Replaces the native `wire:confirm`.** Browser-native `window.confirm()` (`wire:confirm`) can only show plain text + OK/Cancel — it cannot host a 3-option choice or a buyer list. It was therefore removed **from the two delete buttons only** (mobile card + desktop table in `user-dashboard.blade.php`); the **feature buttons keep their `wire:confirm`** (`confirm_feature`) untouched. The old `ui.dashboard.confirm_delete` / `confirm_delete_listing` keys are now unused but left in place.
+**Economy:** point economy (§3) with atomic `PointService`; plans + 13-flag entitlements; Paymob points checkout (test mode, verified end-to-end) with refund-policy consent; admin points adjustment action (credit/debit + reason, graceful insufficient-balance).
 
-**UI (single shared modal):** A custom Livewire + Alpine modal is rendered **once** outside the mobile/desktop `@foreach` loops (no per-row duplication). Both delete buttons now call `wire:click="openClosingModal($listing->id)"`. The modal (`x-show` entangled to `closingModalOpen`, backdrop-click + Escape close, conditional `dir`) presents **three radio-card options**:
-1. **`sold_platform`** — "تم البيع عن طريق المنصة" → **stub** in this step (no delete; Step 2 will show the buyer list).
-2. **`sold_external`** — "تم البيع خارج المنصة" → soft-deletes (normal flow).
-3. **`canceled`** — "إلغاء بدون بيع" → soft-deletes (normal flow).
+**Ads:** admin-managed + self-service campaigns (§4); hero carousel with per-campaign duration; popup modal with countdown + 24h cap; public ad-spaces pricing page; impression/click tracking + attribution.
 
-The confirm button is **disabled until a type is selected** (`@disabled(is_null($closingType))`).
+**Analytics:** per-listing views/phone/WhatsApp clicks; entitlement-gated seller analytics + charts; Business dashboard; monthly PDF reports (scheduler); admin widgets (category performance excludes soft-deleted).
 
-**Livewire state (kept inside `UserDashboard`, no new component):** Livewire 4 multi-step lives comfortably in the existing component. Added public props `closingModalOpen` (bool), `closingListingId` (?int — **the single source of truth** for which listing is being closed), `closingListingTitle` (?string, display only), `closingType` (?string). Methods: `openClosingModal(int $id)` (verifies ownership via `where('user_id', Auth::id())->findOrFail`, pins the id, resets type), `closeClosingModal()` (resets all four props), `confirmClosing()` (**re-verifies ownership** off `closingListingId` — never trusts the client; soft-deletes for `sold_external`/`canceled`, no-op stub for `sold_platform`). The existing `deleteListing()` is unchanged.
+**i18n:** entire public frontend + authenticated area bilingual AR/EN (localization Phases A–C complete); locale persisted on `users.locale`; Carbon locale synced; Spatie translatable fallback → `ar`; legal pages (7 seeded slugs) with translated titles.
 
-**Buyer-list source (confirmed, used in Step 2 — not built yet):** The `SellerLead` model already captures per-listing contacts. The Step 1 stub carries `closingListingId` so Step 2's buyer query will be **strictly scoped to the exact listing being closed** (`SellerLead::where('listing_id', $closingListingId)->whereIn('source_type', ['phone_reveal','offer'])->whereNotNull('buyer_id')`) — **not** all of the seller's contacts across all listings.
+**Admin (Filament, Arabic-only):** listing resource + moderation queue with infolist review screen (full description + image gallery); fixed `ListingPolicy` (moderators: view/approve/reject only); user management (ban, strikes, points adjustment); ad campaign approval; audit logs; TrashedFilter + restore (force-delete = super_admin only).
 
-**Wording note (UX):** because deletion is a **soft delete** (the row survives; restore is **admin-only**, not seller-facing), the option descriptions deliberately say **"سيُزال الإعلان من المنصة"** ("the listing will be removed from the platform"), never "حذف", to avoid implying a seller-accessible undo.
+**Platform/UX fixes shipped:** OTP boxes LTR order, delete-modal Alpine scope, profile icon overlap, phone-verified badge semantics, footer plans column, duplicate homepage search, admin image-collection unification (`listings:migrate-media-collection`), `email-verify` +20 flow, wizard location prefill.
 
-**i18n:** all new strings are bilingual from the start under `ui.dashboard.*` (ar+en): `close_modal_title`, `close_modal_subtitle` (`:title` placeholder), `close_opt_{sold_platform,sold_external,canceled}` + matching `_desc`, `close_confirm`, `close_cancel`. No hardcoded text in any language.
+---
 
-**Tests:** `tests/Feature/Listings/ListingClosingModalTest.php` (Pest, 5 cases) — `openClosingModal` sets state + pins the exact id, IDOR rejected (other user's listing), `confirmClosing` soft-deletes for **both** `sold_external` and `canceled` (parametrized), and `sold_platform` does **not** delete (Step 1 stub). Suite: **298 passing, 0 failures** (was 293; +5).
+## 8. Deferred / Incomplete
 
-**Deferred (next phase):** the buyer-selection sub-flow for `sold_platform`, the sale-confirmation/ratings DB schema, and persisting the chosen closing reason — all to come **after** the UI direction is fully locked.
+| Item | Status |
+|---|---|
+| **Phase D — Filament admin translation** | Deferred in full by business decision (staff are Arabic speakers). Filament ships its own AR chrome; `SetLocale` is NOT on `/admin`. `smart-ad-creator` keys pre-translated but invisible until wired. |
+| **`store()` image validation gap** | ⚠️ SECURITY: `update()` validates `images.*` (`image|mimes:jpeg,png,webp|max:5120`, `max:10`) but **`store()` still has NO server-side image rules** — must get the exact same rules + `wizard.server.*` messages. |
+| **Daily login +1 points** | Not implemented (no scheduler/logic). Do not advertise it in any view. |
+| **Points for positive review** | Deliberately removed from earn-guide; needs product decisions (definition of "positive", anti-abuse, who's rewarded) before wiring in `ReviewObserver`. |
+| **Referral credit inconsistency** | `RegisteredUserController` referral bypasses `PointService` (increments `points_balance` only, not `points`) — should be unified through `PointService::credit()`. |
+| `listing_detail` / `search_results` placements | Priced in config + selectable in Filament but no view renders them. |
+| Seller-side `cancelBySeller()` UI | Model method exists; no UI action yet. |
+| Auto-reject pending offers on listing close | Pending offers on closed listings stay `pending`. |
+| Notifications: mark-as-read / "view all" page | Bell dropdown only. |
+| Facebook / Instagram / TikTok login | Routes allow them; `config/services.php` has no facebook/instagram blocks and TikTok has no env keys — only Google works. |
+| `lang/en/types.php` | Missing (`lang/ar/types.php` exists AR-only). |
+| Pricing feature-matrix rows | `basic_ctr`, `business_dashboard`, `lead_funnel`, `advanced_ctr`, `monthly_reports` marked `coming_soon` in `config/pricing.php` (UI matrix). |
+| `PAYMOB_IFRAME_ID` | Referenced by `config/services.php` but absent from `.env` (needs real ID from Paymob dashboard). |
+| Legal page `content` EN | Arabic-only by decision; EN visitors see Arabic body via the `ar` fallback. City `Location.name_en` also Arabic (data gap). |
+| Re-skin residual green | See §5 — points-badge, Chart.js colors, prose links, footer accents. |
 
-**Bug fix:** replaced `x-data="{ open: @entangle('closingModalOpen') }"` + `x-show="open"` with direct `x-show="$wire.closingModalOpen"` on the 3 `x-show` nodes — `@entangle` returned a proxy object (always truthy) causing the modal to open on page load, an empty subtitle, and Idiomorph skipping the `@disabled` update inside the Alpine scope.
+---
 
-**Bug fix 2 (close + toggle):** the `x-show`/`x-transition` nodes were further replaced with a Livewire-native `@if($closingModalOpen)` wrapper (morph adds/removes the node → cancel/backdrop close deterministically; Escape kept via a tiny `x-data="{}"` + `@keydown.escape.window`; fade animation intentionally dropped for reliability), and the option radios switched from `wire:model.live` to `wire:click="toggleClosingType($type)"` (sets `$closingType`, or **clears it to `null` when the already-selected option is re-clicked** — toggle UX) guarded by a `CLOSING_TYPES` allow-list. Suite: **301 passing** (was 298; +3).
+## 9. Sensitive Technical Architecture
 
-**Bug fix 3 (toggle-off visuals):** after a toggle-off the real `<input type="radio">` stayed visually filled (its live `.checked` DOM property diverges from the `checked` *attribute* / `defaultChecked`, and Idiomorph preserves live form-control state), and the confirm button stayed enabled (`wire:loading.attr="disabled"` restored the pre-request enabled state, clobbering the morph's `@disabled`). Fixed by making the options **non-form** elements — `<button type="button" role="radio" aria-checked>` with a **class-driven dot** rendered purely from `$closingType === $closeOption` (same server-class pattern as the card highlight, no live form property) — and by **removing `wire:loading.attr="disabled"`** so `@disabled(is_null($closingType))` solely governs the confirm button (`confirmClosing()` is already server-guarded).
+### OTP channel separation (email vs phone)
 
-## Sale Confirmation & Reviews — Data Layer (Step 2 foundation)
+- `users.otp_channel` records the active OTP's channel. Registration `OtpService::verify()` stamps **`email_verified_at`** (email channel) or **`is_phone_verified` + `phone_verified_at`** (phone channel) — never cross-stamps. Legacy in-flight OTPs infer channel from `phone ? 'phone' : 'email'`.
+- **All four gates** accept either channel (`is_phone_verified || email_verified_at`): `EnsureOtpIsVerified`, `OtpController::show()`, `RedirectIfAuthenticated`, `AuthenticatedSessionController::store()`.
+- Profile flows stage new contacts in `pending_phone` / `pending_email` (live values never overwritten until OTP confirms; TOCTOU uniqueness re-check on commit). Bonuses guarded by permanent `phone_bonus_claimed_at` / `email_bonus_claimed_at` (once per lifetime, never re-granted on number/email change).
+- `email_verified_at` writes need `forceFill()` (not in `$fillable`).
+- `users:backfill-verification` fixed historical mis-flagged rows (email users with `is_phone_verified=true`).
 
-The **DB/model foundation** for the dual sale-confirmation + ratings system. **UI is a later phase** — the buyer-selection Modal Step 2 (wired to the existing `sold_platform` stub in `UserDashboard::confirmClosing()`) and the rating form are **not built here**; neither are their `ui.sale_confirmation.*` / `ui.reviews.*` lang groups nor the `seller-trust-card` rating display (all deliberately deferred to the UI phase, where their keys will be added AR/EN from the first line).
+### Points double-column
 
-**Tables (migrations `2026_06_26_000004/000005/000006`):**
-- **`sale_confirmations`** — `listing_id`, `seller_id` (denormalized from `listing.user_id`), `buyer_id`, `status`, `seller_confirmed_at`, `buyer_confirmed_at`, `canceled_at`, `canceled_by`. **`unique(['listing_id','buyer_id'])`** (one request per buyer per listing) + indexes on `status`/`seller_id`/`buyer_id`.
-- **`reviews`** — `sale_confirmation_id` (**unique** → one review per sale), `reviewer_id` (buyer), `reviewee_id` (seller, **denormalized + indexed** — the rating-aggregate axis), `listing_id` (**denormalized + indexed**, immutable — lets "all reviews for a listing/seller" run single-table, no join), `rating` (unsignedTinyInteger 1–5), `comment` (nullable text, **stored now, displayed later**).
-- **`users`** — `ratings_avg` (decimal(3,2) nullable) + `ratings_count` (unsignedInteger default 0), denormalized cache.
+`users.points` is the **only real balance**; `points_balance` is a mirror synced by `PointService::record()`. Never write either column directly — always go through `PointService` (the admin form used to write `points_balance` raw; that was a silent no-op bug, fixed).
 
-**State machine (`SaleConfirmation` model):** seller always initiates (selecting the buyer = seller's confirmation), so a row is born `pending` with `seller_confirmed_at` set. `pending → confirmed` via `confirmByBuyer()` (sets `buyer_confirmed_at` + `status`); `pending → canceled` via `cancelBySeller(?int)`. **Both transitions are allowed only from `pending`** — `confirmed` is **locked permanently** (no cancel after full confirmation), and a `canceled` sale can't be confirmed. `isFullyConfirmed()` = both timestamps set (timestamps are source of truth; `status` is the indexed mirror). `canInitiateForListing(int)` enforces **one confirmed sale per listing** (a `pending`/`canceled` row does NOT block; only a `confirmed` one does) — the future Step 2 action calls it before creating.
+### Spatie MediaLibrary collections
 
-**`restrictOnDelete` everywhere + SoftDeletes coupling:** `listing_id`/`seller_id`/`buyer_id` on `sale_confirmations` and `sale_confirmation_id`/`reviewer_id`/`reviewee_id`/`listing_id` on `reviews` are all **`restrictOnDelete`** (only `canceled_by` is `nullOnDelete`). The `listing()` relation on both models is **`->withTrashed()`** because the listing is soft-deleted right after closing — without it the relation would return `null`. `restrictOnDelete` on `listing_id` also blocks an admin `ForceDeleteAction` on a listing that has a sale, protecting rating history.
+- `Listing` → **`images`** (read with `getMedia('images')` / `getFirstMediaUrl('images')`); conversions `thumb`/`card`/`full_hd`, all watermarked + `nonQueued`; original kept clean and never rendered publicly. Legacy `listings` collection is dead (`listings:migrate-media-collection` moved it).
+- `AdCampaign` → **`ad_image`**; conversions `desktop`/`tablet`/`mobile`.
+- `Category` icons are media-library-backed.
+- Test-helper gotcha: fake media rows must set BOTH `disk` and `conversions_disk` to `'public'` or `getUrl('card')` throws.
 
-**Account-deletion guard (the key safety mechanism — Discovery finding):** `User` has **no SoftDeletes**, so `ProfileController::destroy()`'s `$user->delete()` is a **hard delete**, and `listings.user_id` is **`onDelete('cascade')`** (a seller's listings are physically cascade-deleted on account deletion, bypassing SoftDeletes entirely). With `restrictOnDelete` on the new tables, any user who is party to a sale/review would hit an unhandled `SQLSTATE 1451` 500. So `destroy()` now calls **`$user->hasSalesOrReviews()`** (true if the user is seller/buyer on any `sale_confirmation` OR reviewer/reviewee on any `review`, **any status incl. pending/canceled** — deliberately matching the DB constraint exactly) and, if true, redirects back with a translated `server.account.delete_blocked` (AR/EN) error in the `userDeletion` bag **before** logout/delete. (Account-deletion policy decided as **block**, not soft-delete-user or anonymize.) **⚠️ SUPERSEDED — see "Account Deletion — Anonymization Policy" below:** the `block` decision was reversed; `hasSalesOrReviews()` + `server.account.delete_blocked` were **removed entirely** and replaced with row anonymization, so ALL users (including those party to sales/reviews) can now delete.
+### Soft-delete couplings
 
-**Ratings denormalization (`ReviewObserver`, registered in `AppServiceProvider`):** mirrors `PointTransactionObserver`'s `points_balance` pattern. On review `created/updated/deleted` it recomputes `AVG(rating)`/`COUNT(*)` for the `reviewee_id` and writes `users.ratings_avg`/`ratings_count` via **`updateQuietly`** (no observer loop); on `updated` it also recomputes the **previous** `reviewee_id` if it changed. `ratings_avg` resets to `null` when the last review is removed. Lets the future `seller-trust-card` read the aggregate with **zero extra queries**.
+`Listing` uses `SoftDeletes`; closed/deleted listings survive for sale/review history. Relations that must stay `withTrashed()`: `SaleConfirmation::listing()`, `Review::listing()`, `Offer::listing()`, `SellerLead::listing()`. Event-based analytics joins need explicit `whereNull('listings.deleted_at')` (global scope doesn't apply from the event side). `restrictOnDelete` on sale/review FKs + user **anonymization** (not deletion) protect history: `ProfileController::destroy()` wipes PII, randomizes password, nulls `provider_id` (blocks Socialite re-entry), soft-deletes listings, stamps `anonymized_at` — row and ID survive.
 
-**IDOR note (enforced in the deferred Step 2 action, not here):** when wiring `sold_platform`, the buyer must be validated against `SellerLead` (`listing_id` + `buyer_id` + `source_type IN (phone_reveal, offer)` + non-null `buyer_id`) server-side, plus `buyer_id !== seller_id` and listing-ownership re-check.
+### AdCampaignService cache
 
-**Tests:** `tests/Feature/Sales/SaleConfirmationDataLayerTest.php` (Pest, 21 cases) — creation, `unique(listing_id,buyer_id)`, same-buyer-different-listing, `withTrashed` listing relation survives soft-delete, full state machine (pending→confirmed, pending→canceled, no-cancel-after-confirmed, no-confirm-after-canceled), one-buyer-per-listing guard (pending doesn't block, confirmed does), `ReviewObserver` avg/count on created/updated/deleted + null-reset, and the account-deletion guard (allows clean users; blocks seller-in-pending, buyer-in-canceled, reviewer/reviewee-with-review). Suite: **322 passing, 0 failures** (was 301; +21).
+§4 — remember: **local env always bypasses**; production invalidation is observer→job driven; there is no config flag to disable it.
 
-**Deferred (next phase — UI):** Modal Step 2 buyer-selection wired to `confirmClosing()`'s `sold_platform` stub (with the `SellerLead` IDOR validation + `canInitiateForListing` guard), the buyer-side confirm/seller-side cancel actions calling `confirmByBuyer()`/`cancelBySeller()`, the rating form, the `seller-trust-card` rating display, and the `ui.sale_confirmation.*` / `ui.reviews.*` lang groups (AR/EN).
+### Timezone & locale
 
-## Listing Closing Flow (Step 2 — buyer-selection sub-flow)
+`Africa/Cairo` app-wide (`APP_TIMEZONE`). Default locale `ar`, Laravel fallback `en`, but Spatie translatable fallback is **`ar`** — wired manually in `AppServiceProvider::boot()` because the installed package ignores `config/translatable.php`.
 
-Wires the previously-stubbed **`sold_platform`** option to a buyer-selection step that creates the `SaleConfirmation` row (data layer above) and closes the listing. **No new migrations** — the `sale_confirmations`/`reviews`/`users.ratings_*` schema was already created in the data-layer step; this is purely the UI + Livewire action layer.
+### Misc gotchas
 
-**Same modal, two steps (no second modal).** Added `public int $closingStep = 1` + `public ?int $selectedBuyerId = null` to `UserDashboard`. The existing `@if($closingModalOpen)` modal body is now split into `@if($closingStep === 1)` (the unchanged 3-option type picker) and `@if($closingStep === 2)` (buyer list) — Livewire morph swaps the body, so backdrop/Escape/cancel close deterministically (same reliability rationale as the Step 1 bugfixes). Chosen over a second modal for the least navigation/confusion. `closeClosingModal()`/`openClosingModal()` now also reset `closingStep`/`selectedBuyerId`.
+- Blade: never put the literal token `@php` inside a `{{-- --}}` comment (raw-block extraction runs before comment stripping and swallows content).
+- JSON-LD on the detail page is rendered with escaped slashes (no `JSON_UNESCAPED_SLASHES`) to prevent `</script>` breakout XSS.
+- Livewire modals: prefer `@if($flag)` server-rendered wrappers over `x-show`+`@entangle` (proxy-truthiness/morph bugs), and class-driven pseudo-radios over real inputs (Idiomorph preserves live `.checked`).
+- Paymob endpoints: `/auth/tokens` (not `/auth/login`), `/acceptance/payment_keys`; always via `config('services.paymob.*')`, never raw `env()`.
+- OTP flex container needs explicit `dir="ltr"` (RTL flex reverses visual order).
 
-**Transition:** `confirmClosing()`'s `sold_external`/`canceled` cases are unchanged (soft-delete + close). The `sold_platform` case **no longer no-ops** — it sets `closingStep = 2` (and clears `selectedBuyerId`); **still no delete here.** A `backToStep1()` action returns to the type picker (clearing the buyer choice).
+---
 
-**Buyer query (`buyerLeads()`):** `SellerLead::where('listing_id', $closingListingId)->whereIn('source_type', ['phone_reveal','offer'])->whereNotNull('buyer_id')->with('buyer')->latest()->get()->unique('buyer_id')->values()`. Strictly scoped to the listing being closed; `whatsapp_click` is **excluded** (not a "buyer" signal); `unique('buyer_id')` collapses a buyer who both revealed phone **and** sent an offer into one row (eligible sources live in `UserDashboard::BUYER_LEAD_SOURCES`). Fetched in `render()` **only** when `closingModalOpen && closingStep === 2` (else empty collection — no wasted query). Each row shows the **buyer name** + a verified tick (`is_phone_verified`, reusing `ui.sections.verified`) + contact type (phone/offer) + `created_at->diffForHumans()`. **Offer amount is intentionally NOT shown** (simplification; can be added later). Buyer rows use the same server-rendered class-driven toggle-card pattern as Step 1 (`wire:click="selectBuyer($id)"`, re-click clears) — no real radio, avoiding the morph `.checked` divergence.
+## 10. Launch Notes (as of July 2026)
 
-**Empty state:** when `buyerLeads()` is empty (nobody revealed phone / sent an offer for this listing) the list is replaced with a clear message (`ui.sale_confirmation.no_buyers_*`) and the confirm button is hidden — only "back" remains. Never a silent empty list.
+### Done
+- **Tests: 428 passing, 0 failures** (Pest; in-memory SQLite).
+- Entire public + authenticated frontend bilingual AR/EN; RTL/LTR correct.
+- Paymob integration verified end-to-end **in test mode** (points + ad checkouts).
+- Moderation pipeline complete with notifications + audit trail.
+- Visual identity (navy/teal) applied across frontend incl. wizard + auth pages.
+- Image watermarking + backfill command; SEO JSON-LD; OG images command.
 
-**Confirm (`confirmSaleToBuyer()`):** guards in order — (1) re-verify **ownership** (`Listing::where('user_id', Auth::id())->findOrFail($closingListingId)` — never trusts the client), (2) reject **seller===buyer**, (3) **IDOR** check that `selectedBuyerId` is a real eligible `SellerLead` for **this** listing, (4) `SaleConfirmation::canInitiateForListing()` (a `confirmed` sale blocks; closes modal with `already_confirmed`). On pass: a single **`DB::transaction`** does `SaleConfirmation::updateOrCreate(['listing_id','buyer_id'], [seller_id, status=pending, seller_confirmed_at=now(), null timestamps])` **then** `$listing->delete()` (soft) — atomic so a failed create never leaves a half-closed listing. A `// TODO` marks the deferred buyer notification. Flash `server.sale_confirmation.created` + `closeClosingModal()`.
-
-**i18n (bilingual from the first line):** new `ui.sale_confirmation.*` (ar+en) — `step2_title`, `step2_subtitle` (`:title`), `buyer_via_phone`, `buyer_via_offer`, `no_buyers_title`, `no_buyers_subtitle`, `back`, `confirm_select`; new `server.sale_confirmation.*` (ar+en) — `created`, `invalid_buyer`, `already_confirmed`, `select_required`.
-
-**Tests:** `tests/Feature/Sales/SaleConfirmationStep2Test.php` (Pest, 11 cases) — sold_platform→step 2 (no delete), buyer list eligibility/scoping/de-dup, empty list, create-pending+soft-delete on confirm, IDOR (buyer with no lead / lead on another listing / listing owned by someone else), `canInitiateForListing` block, seller≠buyer, `selectBuyer` toggle-off, `backToStep1`. Suite: **333 passing, 0 failures** (was 322; +11).
-
-**Deferred (next phase):** the **buyer notification** (`SaleConfirmationRequested`) + the **buyer-side confirmation screen** (calling `confirmByBuyer()`) — deliberately built together as the next step, since a notification with no landing screen is half a feature; plus the seller-side `cancelBySeller()` action, the rating form, and the `seller-trust-card` rating display.
-
-**Bug fix (soft-deleted listing relations — `Offer`/`SellerLead`):** Step 2's soft-delete of a listing surfaced a regression introduced by the `Listing` SoftDeletes feature: a still-`pending` `Offer` on the just-closed listing made `/dashboard` 500 (`Attempt to read property 'title' on null` at `user-dashboard.blade.php:259` `$offer->listing->title`) because `Offer::listing()` lacked `->withTrashed()` (unlike `SaleConfirmation`/`Review`). This **also** silently broke the Step 2 "confirm" button — `confirmSaleToBuyer()` committed fine, but the post-action Livewire re-render hit the same null and 500'd, so the UI showed nothing. **Fix:** added `->withTrashed()` to both `Offer::listing()` (the crash fix — resolves both symptoms, since the only `$offer->listing` *relation* read in the whole codebase is that one dashboard line) and `SellerLead::listing()` (consistency — the leads pages were already null-safe with `?->`, so this only upgrades the degraded "—" to the real closed-listing title). **No migration** — Eloquent relation change only. Why the original Step 2 tests missed it: they create `SellerLead` rows directly (no real `Offer`), so `incomingOffers` was empty; the new regression test creates a **real `Offer`** (which auto-creates the lead via `OfferLeadObserver`), closes via `sold_platform`, and asserts the confirm round-trip + a fresh dashboard mount both render without 500. Tests: **334 passing, 0 failures** (was 333; +1).
-
-## Buyer Confirmation + Reviews (Step 3 — buyer-side screen, notification, rating form)
-
-Completes the dual sale-confirmation loop: after the seller records a sale (`SaleConfirmation` `pending`, Step 2), the **buyer** is notified, lands on a dedicated screen, **confirms** the purchase (`confirmByBuyer()`), then **rates the seller** inline. **No new migration** — the `sale_confirmations`/`reviews`/`users.ratings_*` schema already exists (data-layer step); this is purely the UI + Livewire + notification layer.
-
-**Full flow:** seller `confirmSaleToBuyer()` → `SaleConfirmationRequested` notification → buyer's bell / email → **`/dashboard/purchases`** (`BuyerPurchases`) → `confirmPurchase()` (`SaleConfirmation::confirmByBuyer()`) → inline rating form → `submitReview()` creates `Review` → `ReviewObserver` denormalizes `users.ratings_avg`/`ratings_count`.
-
-**Notification (`app/Notifications/SaleConfirmationRequested.php`):** follows the existing 7-class pattern (`ShouldQueue` + `Queueable`, `via = ['database','mail']`, default `MailMessage` — no custom blade template). **Bilingual from the first line (deliberately unlike the older hardcoded-Arabic notifications):** all strings resolve via `__('server.sale_confirmation_notif.*', [...], $locale)` where `$locale = $notifiable->locale ?? app()->getLocale()` (a tiny `localeFor()` helper) — so the message is rendered in the **buyer's** saved locale at send time. `toArray()` stores `message` (ready string for the bell, backward-compatible with `data['message']`) **plus `url` = `route('dashboard.purchases')`** to make the bell item clickable, and `sale_confirmation_id`/`listing_id`/`listing_title`/`seller_name`. Dispatched from the former `// TODO` in `UserDashboard::confirmSaleToBuyer()` (after the atomic create+soft-delete transaction): re-fetches the just-created `SaleConfirmation` and calls `$sale->buyer->notify(new SaleConfirmationRequested($sale))`.
-
-**Notification bell (`layouts/app.blade.php`) — backward-compatible click support:** the unread-list item was changed from a fixed `<div>` to a conditional `<{{ $notifUrl ? 'a' : 'div' }}>` (`@php($notifUrl = $notification->data['url'] ?? null)`). Notifications **with** a `data['url']` (the new one) become clickable links to the target screen; all **existing** notifications (no `url` key) keep rendering as a plain `<div>` exactly as before. The bell still has **no mark-as-read** and **no "view all"** page (unchanged — out of scope).
-
-**Buyer screen (`BuyerPurchases` Livewire full-page component + `livewire/frontend/buyer-purchases.blade.php`, route `GET /dashboard/purchases` → `dashboard.purchases`, inside the `['auth','otp.verified']` group):** mirrors the `SellerLeads`/`favorites` dashboard-subpage pattern (`#[Layout('layouts.app')]` + `WithPagination`, single root `<div>`, conditional `dir`). Lists `SaleConfirmation::where('buyer_id', Auth::id())->with(['listing','seller','review'])->latest()->paginate(10)`. **Three inline states per row (derived from data, no step var — the "closingStep-style" inline conditional the user requested):**
-1. **`pending`** → "تأكيد الشراء" button → `confirmPurchase($id)` (loads the row **scoped to `buyer_id = Auth::id()` via `firstOrFail`** — IDOR guard → 404 for others — then `confirmByBuyer()`; flash `server.sale_confirmation.buyer_confirmed`/`confirm_failed`).
-2. **`confirmed` without a review** → the **rating form renders inline directly** (no extra click): 5 star `<button>`s (`wire:click="setRating($id, $n)"`, class-driven fill from `$ratingValues[$id]`) + optional comment `<textarea wire:model="ratingComments.$id">` + submit (`@disabled` until a star is picked). Per-row state via **array-keyed props** `public array $ratingValues = []` / `ratingComments = []` (keyed by sale id) so multiple rows coexist.
-3. **`confirmed` with a review** → read-only thank-you state (static stars + the saved comment).
-   (A `canceled` sale shows a neutral "ملغاة" badge with no actions.)
-
-**`submitReview($id)` guards (server-side, never trusts the client):** re-loads the sale scoped to `buyer_id = Auth::id()` (`firstOrFail`), then requires `isFullyConfirmed()` **and** no existing `review` (→ `server.review.not_allowed`), and a rating in `1..5` (→ `server.review.rating_required`). Creates the `Review` (`reviewer_id` = buyer, `reviewee_id` = `seller_id`, denormalized `listing_id`, `comment` nulled when blank), clears the row's transient input, flashes `server.review.submitted`. The `unique(sale_confirmation_id)` DB constraint + the explicit `review !== null` check together enforce one review per sale.
-
-**Discoverability:** a "مشترياتي" link (cart icon) added to `user-dashboard` next to "حملاتي"/"العملاء"/"مفضلتي", with an **amber badge** showing `$pendingPurchasesCount` (computed in `UserDashboard::render()` = `SaleConfirmation::where('buyer_id', $user->id)->where('status','pending')->count()`).
-
-**i18n (bilingual from the first line):** extended `ui.sale_confirmation.*` (ar+en) with the buyer-page keys (`nav_link`, `page_title`, `page_subtitle`, `back_dashboard`, `from_seller` `:name`, `pending_badge`, `confirmed_badge`, `canceled_badge`, `confirm_help`, `confirm_purchase`, `empty_*`, `browse_cta`); new `ui.reviews.*` (`title`, `subtitle`, `comment_placeholder`, `submit`, `thanks_title`); new `server.sale_confirmation_notif.*` (`subject`, `greeting` `:name`, `line1` `:seller`/`:title`, `line2`, `action`, `line3`, `db_message`); extended `server.sale_confirmation.*` (`buyer_confirmed`, `confirm_failed`); new `server.review.*` (`submitted`, `rating_required`, `not_allowed`).
-
-**Queue/mail reality (unchanged):** `QUEUE_CONNECTION=sync` (notifications run inline now; auto-queue when prod switches to database/redis) and `MAIL_MAILER=log` (emails go to `storage/logs/laravel.log`), so the **`database` channel — the bell — is the effective one today**; `mail` is kept for the future.
-
-**Tests:** `tests/Feature/Sales/BuyerConfirmationTest.php` (Pest, 9 cases) — notification dispatched to the buyer (and **not** the seller) with the `dashboard.purchases` url, buyer confirms a pending purchase, IDOR on confirm (other buyer → `ModelNotFoundException`), review creation + `ReviewObserver` aggregate update, review blocked while pending, no second review (rating not overwritten), rating required (zero rejected), out-of-range star ignored, and per-buyer scoping of the list. Suite: **343 passing, 0 failures** (was 334; +9).
-
-**Seller-trust-card real rating display (closes the feature):** `resources/views/components/seller-trust-card.blade.php` — the old "5 grey static stars + لا توجد تقييمات بعد" placeholder (lines ~92–102) now renders **real data** from the denormalized `users.ratings_avg`/`ratings_count` (**zero extra queries** — the columns are already on the seller model). When `ratings_count > 0`: partial-fill stars (a gold star overlay clipped to `width: ((avg - (i-1)) * 100)%` per position → continuous fractional fill, finer than half-stars) + a translated `ui.seller_trust.rating_summary` (`:avg out of 5 (:count reviews)`); the average drops a trailing `.0` (`rtrim(rtrim(number_format($avg,1),'0'),'.')` → `5`, not `5.0`) and all digits are Latin (`number_format`). When `ratings_count = 0` the original placeholder is kept verbatim. New key `ui.seller_trust.rating_summary` (ar+en). Covered by `tests/Feature/Sales/SellerTrustRatingTest.php` (3 cases: placeholder for no reviews, real avg+count rendered, whole-number average has no trailing decimal) via the live `listings.show` page. **This officially closes the full "Sale Confirmation + Reviews" feature** (data layer → Step 2 buyer selection → Step 3 buyer confirmation/notification/rating form → seller-trust rating display). Suite: **346 passing, 0 failures** (was 343; +3).
-
-**Deferred (next phase):** the seller-side `cancelBySeller()` action (UI), a mark-as-read / "all notifications" page, and auto-rejecting still-`pending` offers when a listing is closed.
-
-## UI Fixes — Homepage Search & Footer Plans Column
-
-Two small **corrective** frontend fixes (no logic/route changes, no new lang keys):
-
-**1. Duplicate homepage search bars (Bug 1):** The homepage showed two search inputs — one in the shared navbar (`layouts/frontend.blade.php`) and one in the hero (`frontend/home.blade.php`) — both plain GET forms to `route('listings.search')` with param `q` (independent, no shared state). The **navbar search is now hidden on the homepage only** by wrapping **both** navbar forms (desktop ~L57 and mobile-dropdown ~L134) in `@unless(request()->routeIs('home')) … @endunless`. The hero search becomes the sole homepage search; on all other pages (category, search-results, listing-detail) the navbar search stays visible unchanged.
-
-**2. Empty "خطط النقاط" footer column (Bug 2):** `components/footer.blade.php` Col 4 had a header but a blank body — even though `$footerPlans = PointPlan::active()->orderBy('price')->get()` was **already queried at the top of the file but never used**, and the lang keys (`ui.footer.points_suffix`/`view_all_plans`/`view_point_plans`, AR/EN) already existed. Wired the column to loop over `$footerPlans`: each plan shows the **locale-aware name** (`name_ar` for `ar`, else `name_en` with `name_ar` fallback) + its point count (`number_format($plan->points)` + existing `ui.footer.points_suffix`), each linking to `route('pricing')` (no per-plan anchor — the pricing page has none), followed by a "view all plans" link (`ui.footer.view_all_plans`). Empty-state fallback shows the existing `view_point_plans` link. **No `name` accessor on `PointPlan`** (unlike Category/Location), hence the manual locale ternary. Tests: **322 passing, 0 failures** (unchanged — presentation-only).
-
-## Footer Legal Pages — EN labels fix + global translation fallback
-
-**Bug:** In EN locale the footer "Legal Pages" column rendered 6 file icons with **blank text labels**. Root cause was a **data gap** (not a code bug, and unrelated to the navbar/footer-plans edit): `LegalPageSeeder` wrote each `title` as a **plain Arabic string**, so Spatie `HasTranslations` stored `{"ar":"…"}` with **no `en` key**; `{{ $lp->title }}` (`components/footer.blade.php:148`) returned `''` in EN. (`CookiePolicySeeder` was unaffected — it already wrote explicit `['ar'=>…,'en'=>…]` arrays.)
-
-**Discovery surprise:** the installed `spatie/laravel-translatable` (via `laravel-package-tools`) **does not read a `config/translatable.php` file at all** — its `Translatable` config object is a bare `new Translatable` (no config binding), and the trait only consults `config('app.fallback_locale')` (= `en`, also empty here) / `config('app.locale')`. So a published `config/translatable.php` alone would be a **no-op dead file**.
-
-**Fix (Option 3 — both layers):**
-1. **Global fallback safety net.** Created `config/translatable.php` with `use_fallback_locale => true` + `fallback_locale => 'ar'`, and — because the package ignores that file — **wired it into the Spatie `Translatable` singleton in `AppServiceProvider::boot()`** (`->fallback(fallbackLocale: config('translatable.fallback_locale'))`, guarded by `config('translatable.use_fallback_locale')`). Now any translatable attribute (any model, any page) missing the active locale falls back to `ar` instead of rendering blank. `HasTranslations::useFallbackLocale()` already defaults to `true`; the previous blank was because the resolved fallback was `app.fallback_locale=en` (also missing).
-2. **Real EN titles.** Converted the 6 `LegalPageSeeder` titles from plain strings to explicit `['ar'=>…,'en'=>…]` arrays (Privacy Policy / Terms and Conditions / Acceptable Use Policy / About Us / Contact Us / Refund and Return Policy). Re-ran the seeder (idempotent via `updateOrCreate` on `slug`).
-
-**Scope note:** page **`content`** is deliberately left Arabic-only for now (separate future decision); thanks to the new `fallback_locale => 'ar'`, EN visitors see the Arabic body (readable) instead of an empty page — same data-gap-with-fallback pattern as the B.4 city-names gap. `cookies-policy` is not seeded in the current DB (footer shows exactly the 6 `LegalPageSeeder` pages). Tests: **322 passing, 0 failures** (unchanged).
-
-## Admin Review — Image Collection Fix (security/priority)
-
-**The bug (a live moderation blind spot):** user-submitted listings store their images under the Spatie **`images`** collection (`HomeController::store()` → `toMediaCollection('images')`), but the Filament admin read from a **different, legacy `listings` collection** in three places — `ListingTable` (`SpatieMediaLibraryImageColumn`), `ListingForm` (`SpatieMediaLibraryFileUpload`), and `EditListing`'s AI-context `getMedia('listings')`. Net effect: **moderators saw NO image for any user-uploaded listing in the pending queue** — they were approving/rejecting blind. Standardized everything on **`images`**.
-
-**One-time data migration (no schema migration):** new artisan command `php artisan listings:migrate-media-collection` (`app/Console/Commands/MigrateListingMediaToImages.php`) moves any `media` rows where `model_type = Listing` and `collection_name = 'listings'` → `'images'` (matched via `(new Listing)->getMorphClass()`, no morph map in this project so it's the FQCN), then regenerates conversions (`FileManipulator::createDerivedFiles` — conversions are registered for all collections, so thumb/card/full_hd apply). Idempotent (re-runs are no-ops once moved) and supports `--dry-run`. **Run this FIRST** before/after deploying so no legacy admin-uploaded image is lost when the reads switch. **This is a data move on the existing `media` table — NOT a Laravel schema migration.**
-
-**Read sites switched to `images`:** `ListingTable.php` image column → `collection('images')`; `ListingForm.php` upload → `collection('images')`; `EditListing.php` AI context → `getMedia('images')`.
-
-**Clean review screen via `infolist()`:** `ViewListing` previously fell back to the **disabled edit form** (noisy: AI section, slug, user select). Added `ListingResource::infolist()` → new `ListingInfolist` schema class (`app/Filament/Admin/Resources/Listings/Schemas/ListingInfolist.php`) with three read-only sections — **بيانات الإعلان** (title/price/category badge/seller/status badge/governorate/created_at), **وصف الإعلان** (the FULL description via `TextEntry->html()`, not truncated), and **صور الإعلان** (a real gallery via `Filament\Infolists\Components\SpatieMediaLibraryImageEntry->collection('images')->conversion('card')`). Filament's `ViewRecord` auto-uses the infolist when `hasInfolist()` is true (components present) and otherwise falls back to the form — so defining `ListingResource::infolist()` is all that's needed.
-
-**Unified approve/reject (removed the duplication):** the **full** moderation path (model state change + `AuditLog` + owner `ListingStatusNotification` + auto-strike on strike-reasons) previously lived **only** in the `ListingTable` row actions, while the `ViewListing` header had a **divergent, weaker path** (no AuditLog, no notification). Extracted both into a single source of truth: `App\Filament\Admin\Resources\Listings\Support\ListingModeration::approve(Listing)` / `reject(Listing, string $reason, ?string $note)` (returns the human-readable reason label for the toast). Both `ListingTable` and `ViewListing` now call it, so behavior is identical everywhere; the local `ListingTable::notifyUser()` was deleted (moved into the support class).
-
-**Admin i18n:** new admin-facing strings (infolist section/field labels, status labels) are **Arabic only**, consistent with the rest of `app/Filament/*` (Phase D i18n still deferred).
-
-**Tests:** `tests/Feature/Admin/AdminListingReviewTest.php` (Pest, 8 cases) — media migration `listings`→`images` (FileManipulator stubbed, no real file I/O), migration no-op when nothing legacy, `ListingModeration::approve` (publish + `approve_ad` audit + notification), `reject` with a strike reason (reject + strike++ + `auto_strike` & `reject_ad` audits + notification), `reject` with a non-strike reason (no strike, no `auto_strike`), the admin View page renders the infolist (full description + "صور الإعلان" section, as `super_admin` over HTTP), and the seller-dashboard rating display (with reviews / placeholder). Suite: **354 passing, 0 failures** (was 346; +8).
-
-## Admin Permission Fix — ListingPolicy (real security bug, NOT a build error)
-
-**The bug (discovered when "admin still can't see images/description" was reported after the Image Collection Fix):** a full read-only render of the actual admin View page (`GET /admin/listings/8`) proved the infolist + images + full description **render correctly** server-side, all media is under `images`, files + conversions exist, and the `public/storage` symlink resolves — so the Image Collection Fix itself was fine. The real blocker was **authorization**: `app/Policies/ListingPolicy.php` checked the **new-style Shield permission names** (`View:Listing`, `Update:Listing`, `ViewAny:Listing`, …), but **no role actually holds those** — the seeded permissions are the **legacy snake_case** names (`view_listings`, `approve_listings`, `reject_listings`; the moderator role also has `view_users`). So `can('View:Listing')` was **false for everyone except `super_admin`** (FilamentShield's `Gate::before` bypasses all policies for super_admin). The only admin user today **is** super_admin, which masked it — but for a real **`moderator`** (the role that staffs the pending queue) `view()`/`viewAny()` returned false → `canView`/`canEdit` false → the table row was unclickable **and** `GET /admin/listings/{id}` returned **403**. A moderator literally **could not open any listing to review its images/description** before approving/rejecting → moderation blind spot (the exact "ethically-inappropriate content slips through unreviewed" risk).
-
-**Fix (B):** `ListingPolicy` now checks the **real, seeded** names — `viewAny`/`view` → `view_listings`. Management abilities (`create`/`update`/`delete`/`deleteAny`/`restore`/`restoreAny`/`forceDelete`/`forceDeleteAny`/`replicate`/`reorder`) reference snake_case names that are **not seeded yet** (`create_listings`, `update_listings`, `delete_listings`, `restore_listings`, `force_delete_listings`, `replicate_listings`, `reorder_listings`) so they degrade to **false for any non-super_admin** (super_admin still passes via the bypass) — keeping moderators **view + approve + reject only**, and forward-compatible (seed + assign the matching permission later to grant the ability, no policy edit needed). **NO new migration and NO new DB rows** — the missing management permissions are deliberately left unseeded (they just resolve to false); only the *policy code* changed to read the names that already exist.
-
-**Fix (A) — discoverability (the View page was only reachable by clicking the bare row, no visible affordance):** `ListingTable` row actions restructured — a visible **`ViewAction`** (👁️ "مراجعة") plus **`approve`/`reject` pulled OUT of the `⋮` dropdown into standalone visible buttons** (`->button()`), so reviewing/approving/rejecting is one obvious click directly in the pending tab; `feature`/`unfeature`/`flag`/`restore`/`forceDelete` stay in the `⋮` group. The `approve`/`reject` actions (table **and** the `ViewListing` header) are now also **permission-gated** (`approve_listings` / `reject_listings`) via `->visible()`, putting the previously-dead `approve_listings`/`reject_listings` permissions to use (super_admin passes via bypass; moderator holds them).
-
-**Tests:** `tests/Feature/Admin/ListingPolicyModeratorTest.php` (Pest, 5 cases) — the **decisive** proof acts as a real **`moderator`** (with the actually-seeded `view_listings`/`approve_listings`/`reject_listings`), not super_admin: it asserts the moderator does **not** hold the old `View:Listing` name yet `canViewAny`/`canView` are true; the moderator **opens the listings index (200)** and the **View page (200, was 403)** and **sees** the title + full description + "صور الإعلان" gallery section + the "موافقة ونشر"/"رفض الإعلان" buttons; the **Edit** page stays **403** (management restricted); and a role-less user is fully rejected (proving it isn't just the super_admin bypass). Suite: **376 passing, 0 failures**.
-
-## Seller Dashboard Rating Display
-
-**Reusable `<x-rating-stars>` component** (`resources/views/components/rating-stars.blade.php`) — the partial-fill star logic from `seller-trust-card` was extracted into one anonymous Blade component (`:avg`, `:count` props) so the star math lives in a single place. It renders the continuous gold-overlay fractional stars + the translated `ui.seller_trust.rating_summary` (`:avg out of 5 (:count reviews)`, Latin digits, trailing `.0` dropped) when `count > 0`, and the `ui.seller_trust.no_ratings` placeholder when `count = 0`.
-
-**Used in two places:** (1) `seller-trust-card.blade.php` now delegates to `<x-rating-stars :avg="$seller->ratings_avg" :count="$seller->ratings_count" />` (the bespoke ~40-line block was replaced — no behavior change, `SellerTrustRatingTest` still green), and (2) the **seller's own** rating is shown in the welcome-card meta row of `user-dashboard.blade.php` (next to points / phone-verified / member-since), reading the same denormalized `users.ratings_avg`/`ratings_count` on the auth user (**zero extra queries**). No new lang keys (reuses the existing `ui.seller_trust.*`). Covered by the 2 dashboard cases in `AdminListingReviewTest.php`.
-
-## Listing Edit Feature
-
-Lets a seller edit a published (or pending/rejected/flagged) listing **after** it goes live, by **reusing the exact same Alpine wizard** (`frontend/listings/create.blade.php`) in an "edit" mode — no separate edit form. **No new schema migration** (the only edit-adjacent migration, the legacy media-collection `listings`→`images` unification, was already shipped in the prior "Admin Review — Image Collection Fix" work; the artisan command `listings:migrate-media-collection` already exists). This feature is purely route + controller + view-mode + dashboard-button + i18n + tests.
-
-**Routes** (`routes/web.php`, inside the existing `['auth','otp.verified']` group, placed **before** the public `listings.show` so `/listings/{listing}/edit` isn't swallowed):
-- `GET  /listings/{listing}/edit` → `HomeController@edit` (name `listings.edit`).
-- `PUT  /listings/{listing}` → `HomeController@update` (name `listings.update`).
-
-**Controller (`HomeController`)** — three shared private helpers were extracted so create & edit never diverge: `wizardReferenceData()` (categories + governorates + car brands, used by both `create()` and `edit()`), `validateCategorySpecificFields(Request, Category)` (the car/real-estate/dynamic-`custom_fields_schema` conditional rules, used by both `store()` and `update()`), and `hasPendingSale(Listing)` (the guard query).
-- **`edit(Listing)`** — `abort_unless($listing->user_id === Auth::id(), 404)` (never leaks existence; soft-deleted/closed listings 404 via the global scope too). The **pending-`SaleConfirmation` guard** redirects to `dashboard` with `server.listing.edit_blocked_sale_pending` if a sale is mid-confirmation. Builds an `$editData` DTO **shaped exactly like Alpine's `formData`** (DB→formData mapping): all FK ids are cast to **strings** (Alpine `<select>` values are strings), `custom_fields` is passed as an **object** (`(object)[]` when empty) so `Object.assign` + key access work, and **`governorate_id` is derived from `location->parent_id`** (the DB only stores the city in `location_id`). `$editImages` = the current media as `{id, url(card)}` (the fixed "current block"). `$editRootId` = the category's `parent_id ?? id` (so Alpine can re-derive the active sub-category + dynamic fields). Renders the wizard view with `mode='edit'` + `listing`/`editData`/`editImages`/`editRootId`.
-- **`update(Request, Listing)`** — same ownership + pending-sale guard (returns **422 JSON** for AJAX, redirect otherwise). **Category is locked**: the category is read from `$listing` itself and **any `category_id` in the request is ignored**. Validates core fields + **server-side image security** (`images` array `max:10`; `images.*` `image|mimes:jpeg,png,webp|max:5120`; `removed_image_ids.*` `integer`) then the shared category-specific rules. Inside one `DB::transaction`: updates editable fields, **preserves the slug** (never regenerated), updates car FKs only when the (locked) category is `cars`, writes `custom_fields_values`, **always sets `status = STATUS_PENDING`** (admin re-review on every edit, no exception), **does not touch `is_featured`/`featured_until`** (featuring fully excluded from edit), **grants no points** (+3 is create-only), deletes the selected current media (**scoped to `$listing->getMedia('images')->whereIn('id', $removedIds)`** — no cross-listing IDOR), then appends new uploads (Spatie bumps `order_column`, giving the **simple ordering**: surviving current block first, new ones last). Returns `{success, redirect}` JSON (with a flashed `server.listing.updated_success`) or a redirect.
-
-**Wizard view (`create.blade.php`) made mode-aware** via a top `@php` block defaulting `$mode='create'`/`$isEdit=false`/`$editData`/`$editImages`/`$editRootId`:
-- Title/header text + a re-moderation notice banner (`x-show="$isEdit"`) switch on `$isEdit` (`wizard.edit.*`).
-- **Step 1 (category):** in edit mode the interactive category grid is replaced by a **read-only locked panel** (lock icon + `wizard.edit.category_locked`); create mode keeps the grid.
-- **Step 3 (images):** an `x-show="existingImages.length > 0"` "current photos" block (delete-only, "Current" badge); the no-image soft warning now checks **both** `images.length === 0 && existingImages.length === 0`.
-- **Step 4 (review):** the image count sums `images.length + existingImages.length`, the summary previews `existingImages` first then `imagePreviews`, the **featuring panel is `@unless($isEdit)`-hidden**, and the submit button/hint text switch on `$isEdit`.
-- **Alpine `<script>`:** new bridged constants `NILEX_WIZARD_MODE` / `NILEX_UPDATE_URL` / `NILEX_EDIT_DATA` / `NILEX_EDIT_IMAGES` / `NILEX_EDIT_ROOT_ID`. The **localStorage draft key is now per-mode** — `nilex_listing_wizard_edit_{id}` in edit vs `nilex_listing_wizard` in create — so an edit draft never collides with a new-listing draft. State gains `existingImages` (from `NILEX_EDIT_IMAGES`) + `removedImageIds`; `init()` calls `applyEditData()` (edit) before `loadFromLocalStorage()`; `removeExistingImage(i)` moves an id into `removedImageIds`; the image checklist `done` accepts existing images too. `submitForm()` in edit mode **omits `category_id`/`feature_days`**, appends `_method=PUT` + `removed_image_ids[]`, posts to `NILEX_UPDATE_URL`, and follows the JSON `redirect`. `mapServerErrors()` routes `images`/`images.*`/`removed_image_ids*` errors to step 3.
-
-**Dashboard button:** an "Edit" pencil link to `route('listings.edit', $listing)` (`ui.dashboard.edit_listing` / `tooltip_edit`) was added next to feature/delete in **both** the mobile and desktop listing rows of `user-dashboard.blade.php`.
-
-**i18n (bilingual AR/EN from the first line):** new `wizard.edit.*` (page/header titles, re-moderation notice, `category_locked`, existing-images section + badges + delete, submit text/hint) and `wizard.server.*` image keys (`image_invalid`, `image_mimes`, `image_max`, `images_max` — no `:name` placeholder, since aggregate server validation has no per-file name); new `server.listing.*` (`updated_success`, `edit_blocked_sale_pending`); new `ui.dashboard.edit_listing` + `tooltip_edit`.
-
-**Tests:** `tests/Feature/Listings/ListingEditTest.php` (Pest, 17 cases) — `edit()` renders mode=edit with a correctly pre-filled DTO + `editImages`/`editRootId`; the pending-sale guard blocks both GET and PUT; `category_id` is ignored (locked); no points on edit; slug preserved; status→pending from every prior status; editable fields persist; images append / selective-delete / simple-ordering / cross-listing IDOR guard; server-side mime + size rejection (422); 404 for non-owners on both routes; and `store()` stays intact (pending + **+3 points**). **Test-helper note:** fake media rows must set **both** `disk` and `conversions_disk` to `'public'` — `getUrl('card')` resolves a *conversion*, whose disk falls back to `conversions_disk` (a missing one throws `getDiskName(): … null returned`). Suite: **371 passing, 0 failures** (was 354; +17).
-
-## Moderation Queue — Notification Bug Fix + Content Preview
-
-The daily review path is **`/admin/moderation`** (`ModerationResource`, a separate Filament resource that reuses the same `Listing` model + the same fixed `ListingPolicy` — no separate permissions, no name-conflict). `ListingResource` (`/admin/listings`) is kept untouched as an alternate general-management page. This change makes the moderation queue both **correct** (it now actually notifies) and **reviewable** (it now shows the content).
-
-**The real bug (closed here):** `ModerationResource::handleReject()`/`handleApprove()` changed the listing state, wrote an `AuditLog`, and popped a toast reading **"تم رفض الإعلان وإبلاغ المستخدم"** ("…and the user was notified") — but **never actually notified the owner**. There was no `notify()`, no mail, nothing. `Listing::reject()` is only a model `update()`, and `ListingObserver` only does fraud keyword-flagging — neither sends anything. So the **only** path that ever emailed the rejection reason was `ListingModeration::reject()` (used by `ListingResource`), which the moderation queue did **not** call. Net effect: an admin rejecting from the queue believed the seller received the reason on email + in-site; **the seller received nothing** — a real trust/operations risk (sellers left guessing why an ad vanished, with the admin falsely reassured).
-
-**Fix (unify, don't duplicate):** `handleApprove()` now calls `ListingModeration::approve($listing)` and `handleReject()` calls `ListingModeration::reject($listing, $reason, $notes)` — the exact same single-source-of-truth path `ListingResource` uses (state change + `AuditLog` `approve_ad`/`reject_ad` + `auto_strike` when warranted + owner `ListingStatusNotification` on **database + mail**). The previously-inline `$listing->reject()` + `addStrike()` + `AuditLog::record()` were **removed** from `ModerationResource` so the strike/audit logic runs **exactly once** (no double-strike, no duplicate logs). `handleFlag()` is **unchanged** (flag is a security hold, not a reject — it intentionally sends no rejection email; its own `AuditLog` stays).
-
-**Content preview (the "blind review" fix):** the `review` action's `->modalContent()` referenced `resources/views/filament/moderation/review-modal.blade.php`, which was a **0-byte empty file** — so the "اتخاذ قرار" modal rendered the decision form with **no image and no description**, i.e. admins decided blind. The blade is now filled: a visual block **above** the unchanged decision form showing key facts (price / category / seller / governorate), the **full description**, and a **3-col image gallery** read from the canonical `images` collection (thumbnails use the `card` conversion when generated, each links to the full image in a new tab; explicit empty-state when a listing has no images). One click = review + decide. Admin-only, Arabic-only (consistent with the rest of `app/Filament/*`).
-
-**No migration** — code + an empty-view fill only; the notification/strike/audit infrastructure all already existed.
-
-**Tests:** `tests/Feature/Admin/ModerationQueueTest.php` (Pest, 5 cases) — the **decisive proof**: rejecting through the real `/admin/moderation` `review` action (driven via `Livewire::test(ListModeration)->callAction(TestAction::make('review')->table($listing), …)`) now fires a `ListingStatusNotification` to the owner on **both** `database` + `mail` channels (the bug closure); approve likewise notifies; a strike-reason reject strikes **once** and logs `reject_ad`/`auto_strike` **once each** (no duplication from the unification); and the modal blade renders the real images + full description (plus the no-images empty-state). Suite: **381 passing, 0 failures** (was 376; +5).
-
-## Real-Estate Wizard Field Changes (condition removed + floor "other")
-
-Two **additive/corrective** changes to the shared listing wizard (`create.blade.php`, used by **both** create and edit), scoped to the **real-estate** category only.
-
-**NO migration** — confirmed `listings.condition` is **already `nullable()`** (original `2026_04_12_173122_add_condition_to_listings_table`, `->nullable()->default('new')`), so making it null for real estate needs zero schema change.
-
-**1) "الحالة (جديد/مستعمل)" removed for real estate only.** This is the **shared top-level** `formData.condition` field (→ `listings.condition` column), which renders for **all** categories — **not** the car-only `carConditionOptions` (`custom_fields_values['condition']`, untouched).
-- **View:** the condition block (`create.blade.php`) is now wrapped in `x-show="!isRealEstateCategory" x-cloak` (reuses the existing `isRealEstateCategory` getter, inverse of the `isCarCategory` pattern). `submitForm()` **omits** `condition` from the `FormData` when `isRealEstateCategory` (so the server receives no value for real estate).
-- **Server (`store()` + `update()`):** the `condition` rule is now **conditional on category slug** — `['nullable'|'required', 'string', 'max:50']` (required for every category **except** `real-estate`). `store()` resolves the category **early** (`$earlyCategory = Category::find(request category_id)`, reused after validation to avoid a duplicate query) since the rule must be built before `category_id` is confirmed; `update()` reads the **locked** category from `$listing->category`. Both now assign `$listing->condition = $validated['condition'] ?? null` (null when omitted for real estate). The car-only `custom_fields_values.condition` rule in `validateCategorySpecificFields()` is **unchanged**.
-- **Existing data safe:** old real-estate listings keep their stored `condition`; `show.blade.php` guards every condition display with `@if($listing->condition)` so a null simply hides the badge. Editing an old real-estate listing now clears its `condition` to null (intended).
-
-**2) Floor (الدور) gains a free-text "Other".** Previously a fixed 8-value select (`ground/1–5/6+/rooftop`).
-- **View/Alpine:** added `{ value: 'other', label: … }` to `floorOptions`; the `floor` select now binds to a **helper** `floorSelection` (not directly to `formData.custom_fields.floor`) via `@change="onFloorChange()"`, and an `x-show="floorIsOther"` free-text input binds to `floorOther` via `@input="onFloorOtherInput()"`. **The value stored in `custom_fields_values['floor']` is the free text itself** — never the `'other'` sentinel + a separate key (deliberately simpler than the car-brand "other" precedent, which stores `car_brand_id='other'` + `car_brand_other`). Helpers: `floorIsOther` getter, `onFloorChange()`/`onFloorOtherInput()` (write the resolved value into `custom_fields.floor`), `syncFloorFromFormData()` (called in `init()` after `applyEditData()`+`loadFromLocalStorage()` — reconstructs the dropdown/text state from a stored value: any value **not** in `floorOptions` ⇒ "other" mode + free text), and `resetFloorFields()` (called in `selectRoot`/`selectSub` on category change). Round-trips through both the per-id localStorage draft and the edit DTO.
-- **Server:** **zero changes** — `floor` lives in `custom_fields_values` which is saved as a pure pass-through (no `in:` or any rule on `floor` in `store()`/`update()`). A free-text value is accepted as-is.
-- **Display:** **no view code added** — `show.blade.php` (the `$cfValueMaps`/`__('wizard.options.floor.'.$val)` lookup) and the JSON-LD `additionalProperty` builder both already **fall back to the raw stored value** when a floor value isn't a known translation key, so a free-text floor renders verbatim.
-
-**i18n (AR/EN from the first line):** added `wizard.options.floor.other` (أخرى / Other) and `wizard.realestate.floor_other_label` (اكتب الدور / Specify floor) + `floor_other_placeholder` (مثال: بدروم… / e.g. Basement…) to **both** lang files.
-
-**Both flows covered:** the wizard view + `applyEditData()`/`syncFloorFromFormData()` (client) and `store()`/`update()` (server) all reflect the two changes, since create and edit share the same view + controller helpers.
-
-**Tests:** `tests/Feature/Listings/RealEstateWizardFieldsTest.php` (Pest, 8 cases) — real-estate `store`/`update` **without** `condition` succeed (condition null); non-real-estate `store`/`update` **without** `condition` are **rejected** (422 on `condition`); a free-text `floor` is stored verbatim on `store` **and** `update`; a predefined floor code is still stored unchanged; and `edit()` exposes the stored free-text `floor` in the DTO for client reconstruction. Suite: **389 passing, 0 failures** (was 381; +8).
-
-## Admin — Points Adjustment Fix (manual balance edit now actually works)
-
-**Root cause (a silent no-op):** `UserResource`'s edit form had a "رصيد النقاط" `TextInput` bound **directly to `users.points_balance`** — but `points_balance` is a **passive mirror column** that **no user-facing surface reads**. The entire app (dashboard, navbar `<x-points-badge>`, `points/history.blade.php`, `User::hasPoints()`, `PointService::getBalance()`, even the admin `UserInfolist`) reads **`users.points`** — the single source of truth, documented as such on the `User` model (`points` هو الرصيد الفعلي الوحيد — `points_balance` مجرد مرآة له). So when an admin changed the field (e.g. +3) and hit "حفظ التغييرات", the value **did save to `points_balance` in the DB**, but had **zero real effect**: `points` was untouched, no `PointTransaction` was created (nothing in the user's history → "points from nowhere"), and the edit was **later overwritten** anyway because `PointService::record()` resyncs `points_balance = points` on the very next point operation. The save didn't *fail* — it wrote to the **wrong, ignored column**.
-
-**The fix — go through `PointService`, never write the column directly:**
-- **Removed** the raw `points_balance` `TextInput` from the `UserResource` form entirely (it was the source of the confusion). The form now edits only mutable fields (name / email / roles / banned). The current balance is already shown read-only in `UserInfolist` (`points`), so no display field was added.
-- **New shared `UserResource::adjustPointsAction()`** (a `Filament\Actions\Action` factory) wired into **two places** (same pattern as `ban`/`add_strike`): the table-row `ActionGroup` **and** the `EditUser` header (`getHeaderActions()`).
-- **Input avoids sign ambiguity:** a `Select` **"نوع العملية"** (`credit` = إضافة / `debit` = خصم) + a **positive** integer `TextInput` **"عدد النقاط"** (`min:1`, required) + a required `Textarea` **"السبب"** (helperText: "سيظهر هذا السبب للمستخدم في سجل نقاطه"). No more "is the typed value absolute or a delta?" confusion — it's always a signed delta chosen explicitly.
-- **On submit** it calls `app(PointService::class)->credit()` / `->deduct()` with `description = 'تعديل إداري: ' . $reason` (a fixed AR prefix so the user sees a clear reason in their history, never bare points). This atomically (`lockForUpdate`) updates **`points` + `points_balance` together** and **creates a real `PointTransaction`** (with correct `current_balance`) that appears in `points/history.blade.php` automatically. An `AuditLog::record('adjust_points', $user, ['operation','amount','reason'])` is written, and a success `Notification` shows the new balance.
-- **Insufficient-balance is graceful:** a debit larger than the balance throws `InsufficientPointsException` (already enforced by `PointService::deduct()` under the row lock, plus `point_transactions.current_balance` is `unsignedInteger` so a negative result can't even persist) — the action **catches it** and shows a `->danger()` notification **"الرصيد غير كافٍ لإتمام الخصم"** with **no state change** (no transaction, no audit log), instead of a 500.
-
-**NO migration** — `users.points`, `users.points_balance`, and the `point_transactions` table all already exist; the fix only routes through the existing `PointService`. **Admin i18n:** all new strings are **Arabic only** (consistent with the rest of `app/Filament/*`, Phase D deferred).
-
-**Tests:** `tests/Feature/Admin/AdminPointsAdjustmentTest.php` (Pest, 6 cases, driven via `Livewire::test(ListUsers/EditUser)->callAction(...)`) — credit moves `points` **and** `points_balance` together + logs a `PointTransaction` (correct amount/`current_balance`/`'تعديل إداري: …'` description) visible in history; debit does the same with a negative amount; an over-balance debit is rejected with the clear notification and **everything stays unchanged** (no transaction, no audit); `AuditLog` is recorded with operation/amount/reason + the acting admin; and the action exists in **both** the `EditUser` header and the table row (applied successfully from the header too). Suite: **395 passing, 0 failures** (was 389; +6).
-
-## Points Earn-Guide — Removed Misleading "+25 Positive Rating" Promise
-
-**The problem (a user-facing false promise):** the points history page (`resources/views/points/history.blade.php`, "كيف تكسب نقاط مجانية؟" guide — the only source; no separate page) advertised a **"+25 الحصول على تقييم إيجابي"** ("+25 receive a positive rating") row, but **granting points for a positive review is NOT implemented anywhere.** A full READ-ONLY discovery confirmed: (1) **zero** `PointService::credit()`/`deduct()` calls are tied to `Review`/`rating` (the 8 credit sites are OTP +50, register +100, social +100, listing +3, welcome-gift +50, Paymob purchase, admin adjustment, campaign-referral); (2) `ReviewObserver` only recomputes `users.ratings_avg`/`ratings_count` — it **never** touches points; (3) **no server-side definition of "positive"** exists (no `rating >= 4` / `=== 5` threshold anywhere). (4) **Git history proof:** the "+25 rating" row existed since **2026-06-10** (commit `25b3c68`, then with Arabic-Indic numerals + a now-corrected "+10 listing"), which is **16 days BEFORE** the entire Review/SaleConfirmation system was built (started `6d90171` on 2026-06-26). So it was **pre-existing aspirational marketing copy, never wired to any logic** — the same class of bug as the earlier "+10 listing" (corrected to +3), but worse because it's a **whole missing feature**, not just a wrong number.
-
-**The fix (immediate — remove the promise, defer the feature):** deleted the `['+25', __('ui.points.earn_rating')]` row from `history.blade.php`. The `ui.points.earn_rating` key was used **only** there, so it was removed from **both** `lang/ar/ui.php` and `lang/en/ui.php` (no dead key left). The guide now shows only the **actually-implemented** rewards: +100 register, +50 verify, +3 listing. **No migration** (view + lang files only). Building the real "points for a positive review" feature is **deferred to a standalone product task** (see Planned Next Steps).
-
-**Tests:** `tests/Feature/Points/PointsHistoryEarnGuideTest.php` (Pest, 2 cases) — over the real `points.history` route as an authenticated phone-verified user, asserts the page still renders the 3 real reward rows (`earn_register`/`earn_verify`/`earn_listing`) but **does not** contain "تقييم إيجابي" (ar) / "positive rating" (en), guarding against the misleading row returning before the feature is actually built. Suite: **397 passing, 0 failures** (was 395; +2).
-
-## Signup Bonus — Unified to 50 Points
-
-**The change:** every new-account path now grants **exactly 50 welcome points** (down from 100), from a **single source per path**, with the phone-OTP +50 left untouched on top.
-
-**Discovery — the actual pre-change totals (a key surprise):** the task assumed two grants (`RegisteredUserController` +100 **and** `UserObserver` +50) fired together = 150/100. **That was wrong.** `UserObserver` was **never registered** — it is **absent** from `AppServiceProvider::boot()`'s `observe()` list, and `User` carries **no `#[ObservedBy]` attribute** — so `UserObserver::created()` (+50 "هدية انضمام") was **dead code that never executed**. The real totals were therefore: **normal email/phone signup = +100** (`RegisteredUserController` welcome gift, the only live grant), **Socialite first-time signup = +100** (`SocialiteController`), and **phone OTP verify = +50** separately on first verification (`OtpController::verify()`, guarded by `!$wasAlreadyVerified`, creates a real `PointTransaction` shown in history).
-
-**What was changed (exact):**
-- `RegisteredUserController::store()` — welcome credit `100 → 50` (the single live source for normal signup; description unchanged: "هدية ترحيبية بمناسبة الانضمام لمنصة نايلكس 🎁").
-- `SocialiteController` — first-time social signup credit `100 → 50` (**decision: unify ALL signup paths to 50, no exception** — social and normal signups now match).
-- **Deleted `app/Observers/UserObserver.php` entirely** (the dead, unregistered +50 grant). Rationale: keeping it was a latent foot-gun — if anyone later wired `User::observe(UserObserver::class)`, the result would silently become 50 (observer) + 50 (controller) = 100 again. Deleting guarantees a **single source of truth** per path. It was referenced only in `CONTINUE.md` docs (no app code, no tests).
-- **Text updated 100 → 50 (ar + en):** `ui.footer.gift_teaser` ("احصل على 50 نقطة هدية! 🎁" / "Get 50 gift points! 🎁", shown in `components/footer.blade.php`) and the `points/history.blade.php` earn-guide register row (`'+100' → '+50'`). These were the **only two user-facing surfaces** promising 100 (all other "100" hits in Blade are Tailwind classes / SVG coords; `docs/*.html` are internal docs, intentionally left).
-
-**Net result:** normal signup **100 → 50**, Socialite signup **100 → 50**, phone-OTP **+50 unchanged** (still credited once, still in history). **NO migration** — `users.points`/`points_balance`/`point_transactions` all already exist; this is credit-value + text + dead-code-deletion only.
-
-**Tests:** `tests/Feature/Auth/SignupBonusUnifiedTest.php` (Pest, 4 cases) — first-time Socialite signup grants **exactly 50** (mocked Google provider), OTP verify adds **+50 on top** and writes the `point_transactions` history row ("مكافأة توثيق رقم الهاتف"), OTP credit is **not** applied twice on a repeat verify, and the earn-guide/footer advertise 50 not 100. Plus `NilexAuthPointsTest` updated: "awards exactly 50 welcome points on registration (no doubled bonus)" (was 100). Suite: **401 passing, 0 failures** (was 397; +4).
-
-## OTP Input Field Order — RTL Flexbox Fix
-
-**The bug:** the 4 OTP digit boxes rendered in reversed visual order (right-to-left) in Arabic locale, and `autofocus` landed on the rightmost box instead of the leftmost. Root cause: the flex container `<div class="flex justify-center gap-3">` in `auth/verify-otp.blade.php` inherited `dir="rtl"` from its ancestor wrapper (`x-data` div, L2), which caused CSS Flexbox to reverse the visual order of children (DOM index 0 appeared rightmost). The individual `dir="ltr"` on each `<input>` only controls text direction *within* the box, not the flex layout order. **Fix:** added `dir="ltr"` explicitly on the flex container itself (L33) — this prevents RTL inheritance at the layout level, so DOM order 0→3 maps correctly to visual order left→right, and `moveToNext`/`moveToPrev` (index+1/index-1) work correctly with no JS changes. **No migration.**
-
-## Delete-Account Modal — Alpine Scope Fix
-
-**The bug (button did nothing):** in `resources/views/profile/edit.blade.php` the delete-account modal (`x-show="deleteOpen"`) was rendered as a **sibling placed AFTER** the `x-data="{ deleteOpen: false }"` wrapper `</div>` closed — i.e. **outside** the Alpine component scope. The "حذف حسابي نهائياً" button (inside the scope) toggled `deleteOpen = true` correctly, but the modal in a separate (no) scope read an **undefined `deleteOpen`** → it never opened and threw `deleteOpen is not defined` in the console (same family as the earlier `@entangle`/morph scope bugs). The form inside the modal (password → `ProfileController::destroy()`) was therefore **never reachable**, so the `hasSalesOrReviews()` delete-guard was **not** the cause (the test user had none anyway). **Fix:** moved the modal **inside** the `x-data` scope (removed the wrapper's closing `</div>` from before the modal, re-added it after) so the button and the modal share the same `deleteOpen` state. **No migration, no form/controller change** — pure Blade DOM-position fix. Verified structurally + the page still renders green under `ProfileTest`.
-
-## Phone Verification Badge — Display Fix
-
-**The semantic bug (misleading "الهاتف موثق"):** the OTP system is the registration gate (`EnsureOtpIsVerified` middleware keys the whole dashboard off `users.is_phone_verified`). But `OtpService::issue()` sends the code via **email** when the user registered by email (`$user->phone` is `null`), and `OtpService::verify()` sets `is_phone_verified = true` for **any** successful OTP — **including an email OTP**. So a user who signs up with an **email** (phone = NULL) and verifies the emailed code ends up with `is_phone_verified = true` and a **"+50 توثيق رقم الهاتف"** credit, despite having **no phone at all**. The discovery confirmed the live test user: `phone = NULL`, `is_phone_verified = true`, `points = 100` (= 50 welcome + 50 OTP — both legitimate, the 100 was **not** a regression; the signup-bonus 100→50 fix is correctly on disk). `is_phone_verified` has `default(false)` in every migration and is set `false` explicitly at registration — it is **never** auto-true; the badge was simply showing a phone-verification claim for a phone-less account.
-
-**Fix (Option A — display-only, zero risk):** the "phone verified" badge now requires **BOTH** a real phone **AND** the verified flag — `@if($user->phone && ($user->is_phone_verified ?? false))` — in **two places**: `resources/views/profile/edit.blade.php` (the trust-card badge **and** the `verified_suffix` next to the phone field label) and `resources/views/components/seller-trust-card.blade.php` (the public detail-page card). **Deliberately untouched:** `is_phone_verified` itself, `OtpService`, the `EnsureOtpIsVerified` gate, and the **+50 reward** (all unchanged — changing the gate/flag would lock email-registered users out of the dashboard, see Option B below). The **separate** "البريد موثق" badge (`profile/edit.blade.php`, `@if($user->hasVerifiedEmail())` reading `email_verified_at`) is **not** affected — only the phone-specific badge was corrected. **Note:** `home.blade.php`'s grid "موثق" badge already uses `email_verified_at` (a pre-existing inconsistency, left for the Option B unification). **`email_verified_at` already exists** (Laravel default, `2024_01_01_000000_create_users_table.php`) with a full Breeze verification flow wired in `routes/auth.php` — so **NO migration** was needed.
-
-**Tests:** `tests/Feature/Profile/PhoneVerifiedBadgeTest.php` (Pest, 4 cases) — the profile page **hides** the phone badge for a `phone = NULL` + `is_phone_verified = true` user (the exact test-user shape) and **shows** it for a real verified phone; same two assertions for the public `seller-trust-card` via `listings.show`. Suite: **405 passing, 0 failures** (was 401; +4).
-
-## Account Deletion — Anonymization Policy
-
-**Why we abandoned the hard block:** the previous `ProfileController::destroy()` **blocked deletion forever** for any user party to a `sale_confirmation`/`review` (the `User::hasSalesOrReviews()` guard + `server.account.delete_blocked` message). That guard existed only because the original `destroy()` did a **hard delete** (`$user->delete()`), which (a) would hit `restrictOnDelete` on `sale_confirmations`/`reviews` → unhandled `SQLSTATE 1451` 500, and (b) cascade-wiped the seller's listings via `listings.user_id onDelete('cascade')`. The block trapped a user's data with **no exit** — a real legal/operational risk (GDPR-style "right to erasure"). **New decision: allow deletion for EVERYONE** by replacing the physical delete with **row anonymization** instead of either blocking or hard-deleting.
-
-**Mechanism (`ProfileController::destroy()`):** the `hasSalesOrReviews()` guard is **removed entirely**. After the `current_password` check, the avatar file is deleted from disk (`Storage::disk('public')->delete(...)` — not just nulled), then inside a `DB::transaction`: (1) the user's listings are **soft-deleted** (`$user->listings()->get()->each->delete()` — `Listing` already uses `SoftDeletes`) so they vanish from all public surfaces but survive for the record; (2) the row is `forceFill`'d with anonymized values and saved — **the row keeps its ID** (protecting every `restrictOnDelete` FK on `sale_confirmations`/`reviews`):
-- `name` → `__('server.account.deleted_name')` (مستخدم محذوف / Deleted User)
-- `email` → **unique** `deleted-{id}-{unix_ts}@nilex.local` (satisfies the `users.email` unique index even if many accounts are anonymized), `email_verified_at` → null
-- `phone` → null, `is_phone_verified` → false
-- `password` → `Hash::make(Str::random(40))` (random, unknown to anyone)
-- `avatar` → null (file already removed from disk)
-- `provider_name` / `provider_id` → null (**critical:** Socialite matches by `provider_id` with no password, so nulling these prevents re-entering the anonymized account via Google/Facebook — a re-login just creates a fresh, separate account)
-- `device_id` / `ip_address` / `fingerprint_hash` / `otp_code` / `otp_expires_at` / `remember_token` → null
-- `anonymized_at` → `now()`
-Then `Auth::logout()` + session invalidate/regenerate (unchanged) → redirect `/`.
-
-**The flag column (`anonymized_at`):** migration `2026_06_28_000001_add_anonymized_at_to_users_table.php` adds a nullable `timestamp anonymized_at` (after `is_banned`, `Schema::hasColumn`-guarded). Chosen over an `is_deleted` boolean because it gives **both** the flag (`whereNotNull` / `User::isAnonymized()`) **and** an audit timestamp in one column. **It is NOT SoftDeletes and has NO global scope** — the row stays fully queryable normally; the column is only a marker for login-blocking + (future) visual distinction. `anonymized_at` is in `$fillable` + cast `datetime`; the old `User::hasSalesOrReviews()` method was replaced with `User::isAnonymized()`.
-
-**Login defense-in-depth:** anonymization already makes login practically impossible (the email is now `deleted-…@nilex.local` and the password is a random hash nobody knows; the wiped `provider_id` blocks Socialite re-entry). On top of that, `EnsureUserIsNotBanned` middleware (appended to the whole `web` group in `bootstrap/app.php`) now **explicitly** logs out + redirects to `login` with `server.account.deleted_login_blocked` whenever `$user->isAnonymized()` — so even a leaked/stale session for an anonymized account is killed on the next authenticated request (the check runs **before** the ban check).
-
-**Graceful display:** because the row survives, every place that reads a seller/buyer name (`seller-trust-card`, listing cards, the buyer `dashboard.purchases` page reading `$sc->seller?->name`, Filament) renders **"مستخدم محذوف" / "Deleted User"** with no broken links or null crashes. Old `sale_confirmation`/`review` records keep pointing at the same (now anonymized) user id; the soft-deleted listing is still reachable through the `withTrashed()` relations already on `SaleConfirmation`/`Review`/`Offer`/`SellerLead`.
-
-**i18n (AR/EN from the first line):** `server.account.deleted_name` + `server.account.deleted_login_blocked` added to `lang/{ar,en}/server.php`; the obsolete `server.account.delete_blocked` was **removed** (only referenced by the deleted guard).
-
-**Tests:** `tests/Feature/Profile/AccountAnonymizationTest.php` (Pest, 8 cases) — anonymization succeeds for a user party to a sale + review (old guard gone, sale/review survive); sensitive fields wiped + unique anonymized email; per-account email uniqueness; normal email/password login impossible after anonymization; an already-authenticated anonymized session is killed by the middleware; a Socialite re-login does **not** re-enter the anonymized account (creates a different user); the user's listings 404 from the public after anonymization (soft-deleted); and an old sale renders "Deleted User" gracefully on `dashboard.purchases`. Existing `ProfileTest::test_user_can_delete_their_account` + the `SaleConfirmationDataLayerTest` "account-deletion" block were rewritten from the old "row becomes null / blocked" assertions to the new anonymization semantics. Suite: **413 passing, 0 failures** (was 405; +8).
-
-## Profile Mobile/WhatsApp Icon Overlap — CSS Fix
-
-**The bug:** in `resources/views/profile/edit.blade.php` the phone (`🇪🇬 +20`) and WhatsApp icons sat **on top of** the field text. Root cause was a logical/physical mismatch under the RTL page: the icon `<span>` used `absolute end-3.5` (a **logical** inset that follows the page `dir="rtl"` → resolves to the **left**), while the input — which is forced `dir="ltr"` — used `pe-20`/`pe-12` (which on an LTR element resolves to **right** padding). So the reserved space was on the right but the icon was on the left → text slid under it. There was also a latent `px-4` vs `pe-*` conflict (both set right padding; the winner depends on Tailwind class ordering in the bundle). **Fix:** icons are now `right-3.5` (physical right, stable in AR **and** EN), and the inputs use explicit physical `pl-4 pr-20` (phone) / `pl-4 pr-12` (WhatsApp) — no logical/physical ambiguity. Ran `npm run build` because `right-3.5`/`pr-20`/`pr-12` were new utility classes not yet compiled. Pure presentation fix (no migration, no logic).
-
-## Phone vs Email Verification Separation (phased — IN PROGRESS)
-
-Implements the long-deferred "Option B": cleanly separate **"account confirmed"** (the dashboard gate, satisfied by registration OTP via **either** email or phone) from **"a real, deliberately-verified phone"** (the only thing that earns the **+50 phone bonus**). Driven as sequential, individually-committed phases; each phase ends with a report awaiting approval before the next (phases 1+2 share a commit).
-
-**Approved design decisions (locked):**
-- **+50 phone bonus** is granted **once per account lifetime**, tied to a **dedicated permanent flag** (`users.phone_bonus_claimed_at`, to be added in Phase 5) — **never** re-granted even if the user later changes and re-verifies a different phone number.
-- **Registration OTP confirmation grants NO separate reward** beyond the unified welcome **+50** (the +50 phone bonus moves entirely to the new post-registration profile flow).
-- **Social signups** → set `email_verified_at` instead of `is_phone_verified` (pending the Phase 3 provider-trust investigation before applying).
-- New phone is staged in a **`pending_phone`** column (the live verified `phone` is not overwritten until the new code is confirmed); channel disambiguated via a new **`otp_channel`** column.
-- Gate widened to accept `is_phone_verified || email_verified_at` (hard prerequisite — else email-registered users get locked in an `otp.notice` redirect loop).
-
-**Schema reality (discovery):** `users.phone_verified_at` **already exists** (nullable timestamp from the original `create_users_table`) but is **completely unused** today (not in `$fillable`/`$casts`, no reader/writer) — a clean column ready for the real-phone-verified timestamp. `email_verified_at` exists and is used (`MustVerifyEmail`). No `pending_phone`/`otp_channel`/`phone_bonus_claimed_at` columns yet.
-
-**Phase 1 — gate widening (`EnsureOtpIsVerified`):** the gate now redirects to `otp.notice` only when `! $user->is_phone_verified && $user->email_verified_at === null` (was: `! is_phone_verified`). Additive/forward-looking and harmless on its own — existing/new users still pass via `is_phone_verified` (which registration verify still sets today); the new `email_verified_at` branch becomes meaningful after the channel-split + backfill. The `otp.notice`/`otp.verify`/`otp.resend` allowlist is unchanged.
-
-**Phase 2 — remove the registration +50 (`OtpController::verify()`):** deleted the `if (! $wasAlreadyVerified) { $pointService->credit($user, 50, 'مكافأة توثيق رقم الهاتف'); }` block (and its `$wasAlreadyVerified` guard variable) — registration OTP confirmation no longer grants any points. Replaced with an explanatory comment. **Note:** `PointService` is still injected in the controller constructor (left in place to avoid deleting unapproved code — it is now unused in this controller and can be removed later on approval). **Expected test impact (deferred to Phase 6 per the agreed ordering):** `SignupBonusUnifiedTest` has **2 now-failing assertions** that assert OTP verify adds +50 (`points === 100`) and the `'مكافأة توثيق رقم الهاتف'` history row — these are the exact removed behavior and will be reconciled when the new bonus path lands.
-
-**Phase 3 — investigation reports (no code, no data changes):**
-- **(3a) Social provider email-trust:** the app uses **base `laravel/socialite` ^5.27** (not SocialiteProviders). Routes allow `google|facebook|tiktok|instagram`, but `config/services.php` only configures **`google`** (real) + a **`tiktok`** stub — **no `facebook`/`instagram` blocks**, so only Google is realistically functional. `SocialiteController` currently reads **only** `getId()`/`getEmail()`/`getName()`/`getNickname()`/`getAvatar()` and **unconditionally** sets `is_phone_verified=true` — it never inspects any provider verification flag. **Findings:** **Google** returns a real `email_verified` boolean in its OIDC payload (readable via `$socialUser->user['email_verified']` / `getRaw()`) → we **can** trust a real value. **Facebook** exposes **no** `email_verified` field (Graph default fields omit it) → would be an assumption. **TikTok/Instagram** typically return **no email at all** → nothing to verify. **Recommendation (per the "don't assume true" rule):** when the social change lands, set `email_verified_at = now()` **only** when the provider actually reports verified (Google's real flag); otherwise leave it null — never blanket-assume `true`.
-- **(3b) Backfill dry-run (READ-ONLY, ran via tinker on the local dev DB — production numbers must be re-checked on prod before Phase 4):** local snapshot = 2 active users + 1 anonymized (excluded). **[A]** `is_phone_verified=true & phone IS NULL` (mis-flagged email/social) = **2** (1 already has `email_verified_at`, 1 needs `email_verified_at=now()`; 0 email-null; 0 social). **[B]** `is_phone_verified=true & phone NOT NULL` (real phone → set `phone_verified_at`) = **0**. **[C]** `is_phone_verified=false` (pending) = **0**. The dev DB is tiny but confirms the exact bug shape (verified flag set on phone-less accounts). **Planned backfill rules (Phase 4, after approval):** for **[A]** → `is_phone_verified=false` + `email_verified_at=now()` (only where currently null), so they stay gated-in via email; for **[B]** → `phone_verified_at=now()` (only where currently null); **never touch anonymized users**; the real run will be a proper `php artisan` command (defaulting to `--dry-run`, writing only with an explicit `--execute` flag, mirroring `MigrateListingMediaToImages`).
-
-**Phase 4 — safe backfill command built (NO production write performed):** added `app/Console/Commands/BackfillUserVerification.php` (`php artisan users:backfill-verification`) following the `MigrateListingMediaToImages` pattern but with the **safer inverse default** — it is **read-only/dry-run by default** and writes **only** with an explicit `--execute` flag. It always prints the per-state counts first (both modes), and **never touches anonymized users** (`anonymized_at NOT NULL`). Rules: **[A]** `is_phone_verified=true & phone IS NULL` → **every** such row ends `is_phone_verified=false` (regardless of `email_verified_at`); `email_verified_at` is stamped `now()` **only where it was NULL**, and rows that already have a timestamp keep their original value (implemented as two disjoint updates inside one transaction: notNull-timestamp rows flip the flag only; NULL-timestamp rows flip the flag + stamp). **[B]** `is_phone_verified=true & phone NOT NULL` → `phone_verified_at=now()`, **only where currently NULL**. The local dev dry-run printed: total_active=2, anonymized=1, [A] total=2 (all WILL UPDATE → is_phone_verified=false: 1 stamped now(), 1 keeps existing), [B]=0. **The real `--execute` run is intentionally NOT performed by the agent on any DB (local or production)** — the production write is the operator's manual step after reviewing the dry-run on real prod data. The backfill query uses Eloquent builder `update()`, so `users.updated_at` is bumped on changed rows (harmless — no UI reads it; "member since" uses `created_at`). **Production dry-run steps:** SSH to the prod server → `cd` to the app root → `php artisan users:backfill-verification` (no flag = dry-run) → review counts; only then (after explicit sign-off) `php artisan users:backfill-verification --execute`.
-
-**Remaining phases (not yet done):** Phase 4b — operator runs `--execute` on production (manual, after dry-run review + explicit approval); Phase 5 — the new profile phone-verification flow (`pending_phone` + `otp_channel` + `phone_bonus_claimed_at` permanent flag + `POST /profile/phone` & `POST /profile/phone/verify`); Phase 6 — test updates (`SignupBonusUnifiedTest`, `OtpVerificationTest`, etc.) + AR/EN i18n for the new screens.
-
-**Phase 4 execution (local-only, the ONLY environment that exists):** the operator confirmed the project is **not deployed anywhere yet** — local Laragon is the sole DB, so there is no separate "production". `php artisan users:backfill-verification --execute` was run on the local DB after a full `mysqldump` backup. Result matched the dry-run exactly: **1 row** → `is_phone_verified=false` only (original `email_verified_at` preserved); **1 row** → `is_phone_verified=false` + `email_verified_at=now()` (was null); **[B] = 0** rows (no change). Phase 4 is therefore complete.
-
-**Phase 5 — profile phone-verification flow (DONE, awaiting `php artisan migrate` + Phase-6 approval):** a dedicated post-registration path to add & verify a real phone number from the profile page, granting the one-time +50 bonus. **⚠️ NEW MIGRATION — run `php artisan migrate` locally before testing.**
-- **Migration `2026_06_29_000001_add_phone_verification_columns_to_users_table`** (all `Schema::hasColumn`-guarded; `down()` drops them): `pending_phone` (string, nullable, after `phone`) — stages the new number while awaiting OTP so the live verified `phone` is never overwritten until confirmed; `otp_channel` (string, nullable, after `otp_expires_at`) — records which channel the active OTP went through (`'email'`|`'phone'`); `phone_bonus_claimed_at` (timestamp, nullable, after `phone_verified_at`) — the **permanent once-per-lifetime marker** for the +50 phone bonus. `phone_verified_at` already existed (original create_users_table) and is reused, **not** re-added.
-- **`User` model:** added `otp_channel`, `phone_verified_at`, `pending_phone`, `phone_bonus_claimed_at` to `$fillable`; added `phone_verified_at` + `phone_bonus_claimed_at` casts (`datetime`).
-- **`OtpService` (additive — existing `verify()`/`issue()` NOT modified except one additive line):** new `issueForPhone(User, string $phone)` (generates OTP, `forceFill`s `pending_phone` + otp fields + `otp_channel='phone'`, dispatches a new `SendPhoneVerificationSmsJob`) and new `verifyPhone(User, string): bool` (locks the row, validates expiry/match/attempts/throttle via the existing private `recordFailedAttempt`/`lockKey`, clears OTP fields on success — but deliberately does **not** touch `phone`/`is_phone_verified`/`phone_verified_at`/points; those side effects belong to the controller, keeping it independent of the registration-gate `verify()`'s `is_phone_verified` early-return semantics). The existing `issue()` also now sets `otp_channel` (`$viaEmail ? 'email' : 'phone'`) — one additive line, purely metadata (nothing reads it yet).
-- **New `SendPhoneVerificationSmsJob`** (mirrors `SendOtpSmsJob` but takes an **explicit** `$phone` arg instead of reading `$user->phone`, because the number being verified is the staged `pending_phone`, not yet committed). Locally `SmsService::sendOtp()` just logs the code to `storage/logs/laravel.log` (`app()->environment('local')`).
-- **New `PhoneVerificationController`** (inside the existing `['auth','otp.verified']` group): `POST /profile/phone` → `send()` validates the phone (`required`, regex `^01[0-9]{9}$`, `unique:users,phone,{id}`) → `issueForPhone()` → redirect with `status=phone-otp-sent`. `POST /profile/phone/verify` → `verify()` validates the 4-digit code, requires a `pending_phone`, runs `ensureNotLocked()` + `verifyPhone()`, does a **TOCTOU uniqueness re-check** (another account may have grabbed the number since `send()`), then in one `DB::transaction` commits `phone=pending_phone` + `is_phone_verified=true` + `phone_verified_at=now()` + clears `pending_phone`/`otp_channel`, and grants **+50 only when `phone_bonus_claimed_at IS NULL`** (then stamps it `now()` — the permanent guard, so changing & re-verifying a phone later never re-grants). Bonus description stays the persisted Arabic literal `'مكافأة توثيق رقم الهاتف'` (matches every other `PointTransaction` reason — the documented persisted-Arabic exception).
-- **`ProfileController::update()` — phone removed from direct save:** the `phone` validation rule was removed so the profile-info form no longer silently writes `phone` (it's now managed **only** through the verified OTP flow). `name`/`email`/`whatsapp`/`avatar`/`governorate`/`city`/`bio` unchanged.
-- **`profile/edit.blade.php`:** the old free-text phone `<input name="phone">` was removed from the info form and replaced by a new **"توثيق رقم الموبايل / Mobile Number Verification"** card (placed between the info form and the ratings section) — shows the current verified number (+ verified badge) or "not verified yet", a one-time-+50 bonus hint (or "already claimed"), and either an **entry step** (phone input → "send code") or, when `pending_phone` is set, an **OTP step** (code input → "confirm") plus a "change number / resend" sub-form. Pure server-rendered conditionals (no Alpine); reuses the `right-3.5` + `pr-20` physical-positioning pattern from the earlier CSS fix.
-- **i18n (AR/EN from the first line):** new `ui.profile.phone_verify.*` group (heading/description/current_verified/verified_badge/none_yet/phone_label/phone_placeholder/send_code/note_sms/bonus_hint/bonus_claimed/otp_sent_to `:phone`/otp_label/otp_placeholder/verify_btn/resend/change_number/sent_flash/verified_flash) + new `server.phone.*` group (required/invalid/already_taken/no_pending/otp_invalid) — both in `lang/{ar,en}`. OTP-code validation messages reuse the existing `server.auth.otp_required`/`otp_digits`; throttle reuses `server.auth.otp_throttled` (from `ensureNotLocked`).
-- **Gate interaction:** these routes sit behind `otp.verified`, which Phase 1 widened to `is_phone_verified || email_verified_at`, so the backfilled email users (now `is_phone_verified=false` + `email_verified_at` set) can reach the profile and verify a phone. **Known residual gap (out of Phase-5 scope, NOT changed):** registration `OtpService::verify()` still sets `is_phone_verified=true` for **email** registrants (phone=null), so brand-new email accounts are still mis-flagged like the pre-backfill state — this is the registration channel-split, a separate future task (the "Planned Next Steps / Option B" item), deliberately left untouched here.
-- **No code deleted beyond what the approved design requires** (the profile phone `<input>` + its `phone` validation rule); existing `verify()`/`issue()`/`SendOtpSmsJob` untouched. **Tests NOT run / NOT modified** — Phase 6 (test updates) awaits explicit approval per the agreed rules.
-
-**Phase 5.5 — registration OTP channel separation (DONE; the root bug of the whole project, now closed in the registration path):** the operator flagged that `OtpService::verify()` (the **registration** confirmation, called by `OtpController`) still flipped `is_phone_verified=true` for **email** registrants (phone=null) — re-polluting exactly the data Phase 4's backfill cleaned, for **every new email signup**. The reason it wasn't done earlier: (1) the numbered phase plan scoped Phase 1 to only widening `EnsureOtpIsVerified` + Phase 2 to removing the reward; the registration channel-split lived in "Planned Next Steps / Option B"; and (2) it is **not** a one-liner — Phase 1 had widened only **one of four** gates that key on `is_phone_verified`. Phase 5.5 fixes it properly:
-- **`OtpService::verify()` is now channel-aware:** resolves `otp_channel` (set by `issue()` since Phase 5; **falls back** to inferring from `phone ? 'phone' : 'email'` for any legacy in-flight OTP) and on success stamps the matching column — **email → `email_verified_at=now()`** (leaves `is_phone_verified` false), **phone → `is_phone_verified=true` + `phone_verified_at=now()`** — then clears `otp_*`/`otp_channel`. The early "already confirmed" short-circuit now accepts **either** channel (`is_phone_verified || email_verified_at !== null`). Written via `forceFill()->save()` because `email_verified_at` is not in `$fillable` (a plain `update()` would silently drop it — this was caught by the new test). The dedicated **+50 phone** bonus stays **only** in the Phase-5 profile flow; registration confirmation grants no separate reward (Phase 2).
-- **The 3 remaining gates widened to `(is_phone_verified || email_verified_at !== null)`**, mirroring Phase 1's `EnsureOtpIsVerified` exactly, so an email-confirmed user (no phone) is never bounced into the OTP-redirect loop: `OtpController::show()`, `RedirectIfAuthenticated` (web-guest redirect), and `AuthenticatedSessionController::store()` (post-login redirect). All four gates now agree.
-- **Production behavior verified correct (not just unit-level):** the real `/register` flow tests **pass** — `RegistrationTest` + `NilexAuthPointsTest` (incl. "sets is_phone_verified=false after registration" and "redirects to /verify-otp"), which only pass if a freshly-registered email user has `email_verified_at = null` and is therefore correctly gated to `otp.notice`. New focused suite `tests/Feature/Auth/Otp/ChannelSplitTest.php` (Pest, 7 cases, all green): email-channel → `email_verified_at` (not `is_phone_verified`); phone-channel → `is_phone_verified` + `phone_verified_at`; null-channel fallback both ways; email-confirmed user passes the gate to the dashboard; email-confirmed user redirected off `otp.notice`; fully-unconfirmed user still gated. Built with **explicit** verification attributes (not the factory defaults).
-- **Known Phase-6 fallout (mapped, deliberately NOT fixed here — test updates await approval):** running the existing auth/OTP suite shows **8 failures**, all test-fixture/assertion mismatches, **no production bug**. Two buckets: **(a) already-red before 5.5** — `OtpVerificationTest::it_blocks_protected_routes...` (Phase 1 gate widening) and `SignupBonusUnifiedTest` ×2 (expect 100 pts incl. the +50 that Phase 2 removed); **(b) newly surfaced by 5.5** — `OtpVerificationTest::{it_renders_otp_screen, it_verifies_otp_grants_dashboard, it_rejects_wrong_otp}` and `OtpServiceTest` ×2. **Single root cause for almost all:** `UserFactory`'s "unverified" states (`phoneUnverified()`, `withPendingOtp()`) inherit the default `email_verified_at => now()` (so they aren't truly unverified) and set no `phone` — clashing with the new "either channel confirms" semantics + email-channel inference. **The highest-leverage Phase-6 fix** is to null `email_verified_at` in those factory states, then update the handful of assertions (`is_phone_verified` → channel-appropriate; `SignupBonusUnifiedTest` → 50 not 100). **No migration.** Files changed: `OtpService.php`, `OtpController.php`, `RedirectIfAuthenticated.php`, `AuthenticatedSessionController.php`, + new `ChannelSplitTest.php`.
-
-**Phase 6 — test reconciliation (DONE; ZERO production-code changes — only `tests/` + `database/factories/`):** closed all the Phase-5.5 fallout. **No migration. No `app/` touch.**
-- **`UserFactory`:** the two "unconfirmed" states now null `email_verified_at` so they are genuinely unverified on *both* channels (the default state keeps `email_verified_at=now()`): `phoneUnverified()` → `email_verified_at=null`; `withPendingOtp()` → `email_verified_at=null` + `otp_channel='email'` (the default factory user has an email and no phone, so a pending OTP is naturally an **email**-channel code → confirmation stamps `email_verified_at`, not `is_phone_verified`).
-- **`OtpVerificationTest`:** `it_verifies_otp_and_grants_dashboard_access` now asserts `email_verified_at` is set + `is_phone_verified` stays false (email-channel via `withPendingOtp`); `it_rejects_wrong_otp` adds `email_verified_at=null` to its inline fixture so `verify()` doesn't short-circuit on the inherited default. **`it_renders_otp_screen` and `it_blocks_protected_routes` needed NO assertion change** — the factory fix alone restored them (cleaner than the Phase-5.5 prediction, which expected `it_blocks_protected_routes` to need an edit).
-- **`OtpServiceTest`:** `it_verifies_a_valid_otp_and_clears_replay_state` → asserts `email_verified_at` set + `is_phone_verified` false; `it_rejects_expired_otp_codes` → adds `email_verified_at=null` to its inline fixture.
-- **`SignupBonusUnifiedTest`:** the two `+50`-on-OTP tests were repurposed to the post-Phase-2/5 reality — renamed to *"grants no extra points on registration OTP confirmation (the +50 moved to the profile phone flow)"* (expect `points=50`, `assertDatabaseMissing` the removed `'مكافأة توثيق رقم الهاتف'` credit) and *"never credits extra points on repeated registration OTP verification"* (stays 50 across two verifies). Docblock updated to match.
-- **`AuthenticationTest::test_unverified_users_are_redirected_to_otp_after_login`** also restored by the factory fix (no body change) — it uses `phoneUnverified()`.
-- **Full-suite regression result: `php artisan test` → 420 passed (1290 assertions), 0 failed, exit 0** (was 413 before the verification work; +7 = the Phase-5.5 `ChannelSplitTest`). No regressions anywhere in the project. **The entire phone-vs-email verification separation (Phases 1 → 6) is now complete, with a fully green suite.**
-
-## Visual Identity Refresh — Navy/Teal (IN PROGRESS, Phases 0+1+1.5 committed)
-
-Re-skinning the public frontend from the **old green brand** (`#1D9E75`, token `nilex`) to a **navy-blue + Sahel turquoise CTA identity** (final values from Lovable `src/styles.css`), driven as sequential individually-approved phases. Phases **0 and 1 are complete + committed**; **Phase 1.5** (teal CTA + listing-card utility system) applied the Lovable-final palette. Three locked decisions: (1) keep the `nilex` token **name** but **remap its value to navy** (alias, no rename) — config + `app.css` literal definitions updated **in parallel**; (2) **Filament admin is fully excluded**; (3) **semantic colors protected** — `green/emerald` (success/verified), `red/rose` (error), `amber` (warning) are never repurposed as brand tokens (card `badge-new`/`badge-featured` are **visual identity** badges, not semantic alerts).
-
-**Approved final palette (`tailwind.config.js`):** `nilex` = navy scale (`DEFAULT #11407A`, `light #3D8BD4`, `dark #0B2F5C`, full 50→900); `nilex-teal` = Sahel turquoise (`DEFAULT #14A5A8`, `deep #0D7377`, `light #14BDBC`) — **replaces the interim `nilex-petrol` token** (deleted); `nilex-orange` (`DEFAULT #E8431D`, `light #FF9A4D`) — **prices** via `.price-tag`; `nilex-ink #11203D` (listing titles/headings); `nilex-bg #F4F6FB` (light page bg). Card-image placeholder gradient: `#3D8BD4 → #11407A`.
-
-**Primary CTA system — `.btn-nilex-primary`:** Sahel turquoise gradient `linear-gradient(135deg, #0C7F82, #12B5B8)` (hex proxy for Lovable oklch), dual-layer teal glow (`rgba(14,165,168,…)` + `rgba(13,115,119,…)`), hover `brightness(1.05)` + lighter gradient, `active: scale(0.98)`, `focus-visible: 2px #14BDBC outline offset 3px`. Reusable via `<x-primary-button>`.
-
-**Listing-card utility system (`@layer utilities` in `app.css`):** `.card-listing` (14px radius, hover lift + teal-tinted border), `.card-image` (4/3 navy gradient placeholder + radial white overlay), `.badge-new` (emerald gradient + glow), `.badge-featured` (amber gradient + glow), `.fav-icon-btn` (glass circle, orange heart on hover), `.pill-category` (`#E6F1FB` bg, navy text), `.trust-badge` (frosted white + teal text), `.price-tag` (`#E8431D`, fw-800). Applied in `frontend/partials/listing-card.blade.php`; home sticky category bar uses `.pill-category`.
-
-**`.btn-nilex-primary` coverage (committed):** `layouts/frontend.blade.php`, `layouts/navigation.blade.php`, `frontend/home.blade.php`, `components/footer.blade.php`, `components/cookie-consent.blade.php`, `components/ad-popup.blade.php`, `components/upgrade-prompt.blade.php`, `components/primary-button.blade.php`, `dashboard/ads/{index,create}.blade.php`, `dashboard/favorites.blade.php`, `profile/edit.blade.php`, `livewire/frontend/{user-dashboard,business-dashboard,buyer-purchases,seller-lead-detail}.blade.php`.
-
-**Explicitly excluded:** Auth screens (`layouts/guest.blade.php`, `auth/*`); `frontend/listings/create.blade.php` (wizard); Filament `/admin`; Chart.js dataset colors.
-
-**Phase 0 — foundation:** `tailwind.config.js` + `app.css` navy remap + `.btn-nilex-primary` (was petrol, now teal in Phase 1.5).
-
-**Phase 1 — homepage + shared chrome:** `home.blade.php`, `layouts/frontend.blade.php`, `layouts/navigation.blade.php`, `listing-card.blade.php` (navy brand surfaces + `.btn-nilex-primary` CTAs).
-
-**Phase 1.5 — Lovable-final teal + card utilities:** replaced `nilex-petrol` with `nilex-teal`; updated `.btn-nilex-primary` to Sahel turquoise gradient/glow; added full listing-card utility set; `listing-card.blade.php` migrated to `.card-listing`/`.card-image`/`.badge-*`/`.fav-icon-btn`/`.price-tag`/`.text-nilex-ink`; home sticky categories → `.pill-category`; home inline card photos renamed `.card-photo` (avoids clash with placeholder `.card-image`); prices → `.price-tag` (orange).
-
-**Not started (await approval):** Phase 2 (`category`, `search-results`, `listings/show`), Phase 3 (`listings/create` wizard), Phase 4 (remaining authenticated chrome).
-
-## Planned Next Steps
-
-- **Phone vs Email verification — architectural separation (deferred "Option B", standalone task):** today the OTP system conflates two concepts onto one column — `is_phone_verified` is set `true` even when the verified contact was an **email** (phone = NULL). The display fix above only corrects the misleading badge; the underlying data is still semantically wrong. The clean fix is to **split the two paths**: an email OTP sets `email_verified_at`, a phone OTP sets `is_phone_verified`. **Hard prerequisite:** `EnsureOtpIsVerified` must first be widened to accept **any** verification (`is_phone_verified || email_verified_at`) as the gate — otherwise email-registered users (who never get `is_phone_verified`) would be **locked out of the dashboard in an infinite redirect to `otp.notice`**. This task also needs: a **real phone-OTP path** for users to add+verify a phone post-registration; **unifying all four verification surfaces** (`profile/edit` ×2, `seller-trust-card`, `home.blade.php` — which already uses `email_verified_at`); and deciding the **+50 reward** split (currently granted once on any OTP — likely keep it as a single "contact verified" reward rather than creating a separate email reward, to avoid doubling welcome points). Touches the gate + registration + 4 views + the reward, so it needs its own broader test pass.
-
-- **Points for a positive seller review (deferred PRODUCT feature, not just code):** the "+25 positive rating" promise was **removed** from the points earn-guide (above) to stop misleading users, because **no such reward is implemented** (no point credit tied to `Review`). Building it for real is a **standalone product task that needs decisions first**, not just wiring: **(a)** define "positive" (e.g. `rating >= 4`, or any review at all?); **(b)** anti-abuse / anti-gaming — prevent fake repeated reviews farming points (who can review whom, one-review-per-sale is already enforced by the `reviews.unique(sale_confirmation_id)` constraint, but collusion/sock-puppet sales must be considered), and decide whether points are reversed if a review is later deleted/edited; **(c)** **who exactly is rewarded** — the rated **seller** (reviewee), the **buyer** for leaving a review, or both? Only after these are locked should it be wired (likely in `ReviewObserver::created()` via `PointService::credit()` with a real `PointTransaction` + duplicate guard), then re-add the earn-guide row.
-- **`store()` image validation (deferred security parity):** `update()` now validates image **mime + size + count** server-side (`image|mimes:jpeg,png,webp|max:5120`, `max:10`), but **`HomeController::store()` still has the same gap** — it accepts uploads without server-side mime/size checks (client-side only). This is a **real security vulnerability**, not an optional polish: it must get the **exact same validation rules + `wizard.server.*` messages** in a dedicated follow-up task.
-- **Sale-confirmation follow-ups:** (1) **Auto-reject pending offers on listing close** — when a listing is closed via `sold_platform`/`sold_external`/`canceled`, its still-`pending` `Offer`s become moot and should be auto-rejected (inside the same transaction) so they stop showing in the seller's "incoming offers" pointing at a removed listing (small standalone task, after this fix is visually verified). (2) Buyer notification (`SaleConfirmationRequested`) + buyer-side confirmation screen + rating form (the Step 2 deferred phase).
-- **Hosting:** Deploy via **Laravel Forge** (planned)
-- **UI/UX:** Hire a designer from **خمسات (Khamsat)** for frontend redesign
-- **SMS Provider:** Integrate an Egyptian SMS gateway — candidates are **Connekio** or **Sentry SMS** — to replace the log driver for OTP delivery
+### Not done yet (launch blockers / decisions)
+| Item | Current state |
+|---|---|
+| **SMS gateway** | `SmsService` logs OTPs to `storage/logs/laravel.log` locally; production API URL is a placeholder. Candidates: Connekio or Sentry SMS (Egyptian gateways). No `SMS_*` keys in `.env`. |
+| **Paymob live mode** | Test credentials only; `PAYMOB_IFRAME_ID` missing from `.env`. |
+| **Hosting / deployment** | Not deployed anywhere — local Laragon is the only environment. Plan: Laravel Forge. |
+| **Production infra switches** | Queue `sync`→Redis (priority channels already defined), cache `file`→Redis, Scout `collection`→Meilisearch, `MAIL_MAILER` `log`→real SMTP. |
+| **UI/UX designer pass** | Planned hire via خمسات (Khamsat). |
+| Store() image validation | Must ship before launch (see §8 — security). |
