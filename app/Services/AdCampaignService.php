@@ -36,25 +36,14 @@ class AdCampaignService
 
     public function getForPlacement(string $placement, ?int $categoryId = null): ?AdCampaign
     {
+        if (app()->environment('local')) {
+            return $this->fetchFromDb($placement, $categoryId);
+        }
+
         $cacheKey = $this->placementCacheKey($placement, $categoryId);
 
         $campaign = Cache::remember($cacheKey, self::PLACEMENT_CACHE_TTL_SECONDS, function () use ($placement, $categoryId) {
-            return AdCampaign::query()
-                ->where('placement', $placement)
-                ->when(
-                    self::selfServiceEnabled(),
-                    fn ($builder) => $builder->displayable()->where('status', 'active'),
-                    fn ($builder) => $builder->active(),
-                )
-                ->when(
-                    $placement === 'category_page',
-                    fn ($builder) => $builder->where('category_id', $categoryId)
-                )
-                ->orderByDesc('priority')
-                ->inRandomOrder()
-                ->with('media')
-                ->limit(1)
-                ->first();
+            return $this->fetchFromDb($placement, $categoryId);
         });
 
         if ($campaign instanceof AdCampaign && ! $campaign->isDisplayable()) {
@@ -64,6 +53,26 @@ class AdCampaignService
         }
 
         return $campaign;
+    }
+
+    private function fetchFromDb(string $placement, ?int $categoryId = null): ?AdCampaign
+    {
+        return AdCampaign::query()
+            ->where('placement', $placement)
+            ->when(
+                self::selfServiceEnabled(),
+                fn ($builder) => $builder->displayable()->where('status', 'active'),
+                fn ($builder) => $builder->active(),
+            )
+            ->when(
+                $placement === 'category_page',
+                fn ($builder) => $builder->where('category_id', $categoryId)
+            )
+            ->orderByDesc('priority')
+            ->inRandomOrder()
+            ->with('media')
+            ->limit(1)
+            ->first();
     }
 
     public function trackImpression(AdCampaign $campaign, Request $request): void

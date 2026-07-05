@@ -1,125 +1,83 @@
 @php
     $popupCampaign = app(\App\Services\AdCampaignService::class)->getForPlacement('popup');
-    $popupImageUrl = $popupCampaign?->getFirstMediaUrl('ad_image');
+    $popupImageUrl = $popupCampaign?->getFirstMediaUrl('ad_image', 'desktop') 
+                  ?: $popupCampaign?->getFirstMediaUrl('ad_image');
     $popupTargetUrl = $popupCampaign?->target_url;
 @endphp
 
 @if($popupCampaign && $popupImageUrl)
-    <div
-        x-data="{
-            open: false,
-            countdown: 5,
-            skipEnabled: false,
-            _timer: null,
-            storageKey: 'popup_last_seen',
-            dayMs: 86400000,
-            init() {
-                var lastSeen = localStorage.getItem(this.storageKey);
-                if (lastSeen && (Date.now() - parseInt(lastSeen, 10)) < this.dayMs) {
-                    return;
-                }
-                this.open = true;
-                this.trackImpression();
-                this.startCountdown();
-            },
-            startCountdown() {
-                var self = this;
-                self.countdown = 5;
-                self.skipEnabled = false;
-                self._timer = setInterval(function () {
-                    self.countdown -= 1;
-                    if (self.countdown <= 0) {
-                        clearInterval(self._timer);
-                        self._timer = null;
-                        self.skipEnabled = true;
-                    }
-                }, 1000);
-            },
-            close() {
-                if (!this.skipEnabled) return;
-                if (this._timer) { clearInterval(this._timer); this._timer = null; }
-                localStorage.setItem(this.storageKey, String(Date.now()));
+<div
+    x-data="{
+        open: true,
+        seconds: 5,
+        canSkip: false,
+        timer: null,
+        init() {
+            const key = 'popup_last_seen';
+            const last = localStorage.getItem(key);
+            const day = 24 * 60 * 60 * 1000;
+            if (last && (Date.now() - parseInt(last)) < day) {
                 this.open = false;
-            },
-            trackImpression() {
-                fetch(@json(route('ads.impression', $popupCampaign)), {
-                    method: 'GET',
-                    headers: {'X-Requested-With': 'XMLHttpRequest'},
-                }).catch(function () {});
+                return;
             }
-        }"
-        x-show="open"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        x-cloak
-        class="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-label="إعلان"
-        data-ad-id="{{ $popupCampaign->id }}"
-    >
-        {{-- Modal card --}}
-        <div class="w-full max-w-2xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            this.timer = setInterval(() => {
+                this.seconds--;
+                if (this.seconds <= 0) {
+                    this.seconds = 0;
+                    this.canSkip = true;
+                    clearInterval(this.timer);
+                }
+            }, 1000);
+        },
+        close() {
+            if (!this.canSkip) return;
+            clearInterval(this.timer);
+            this.open = false;
+            localStorage.setItem('popup_last_seen', Date.now().toString());
+        }
+    }"
+    x-show="open"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    style="display:none"
+    class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+    data-ad-id="{{ $popupCampaign->id }}"
+>
+    {{-- Modal Card --}}
+    <div class="relative w-full max-w-6xl rounded-2xl overflow-hidden shadow-2xl" style="max-height:85vh;">
 
-            {{-- Upper section: image --}}
-            <div class="flex-1 relative overflow-hidden">
+        {{-- X Button --}}
+        <button
+            type="button"
+            @click="close()"
+            :class="canSkip ? 'bg-black/50 hover:bg-black/70 cursor-pointer' : 'bg-black/20 cursor-not-allowed'"
+            class="absolute top-3 right-3 z-10 text-white rounded-full w-9 h-9 flex items-center justify-center transition-colors"
+        >✕</button>
 
-                {{-- X close button — top-right (RTL: visual top-left) --}}
-                <button type="button"
-                        @click="close()"
-                        :disabled="!skipEnabled"
-                        :class="skipEnabled ? 'hover:bg-black/60 cursor-pointer' : 'cursor-not-allowed opacity-60'"
-                        class="absolute top-3 right-3 z-10 bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors duration-200"
-                        aria-label="إغلاق">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+        {{-- Image --}}
+        @if($popupTargetUrl)
+            <a href="{{ route('ads.click', $popupCampaign) }}" target="_blank" rel="noopener" class="block w-full h-full">
+                <img src="{{ $popupImageUrl }}" alt="" class="w-full h-full object-cover" style="max-height:70vh;">
+            </a>
+        @else
+            <img src="{{ $popupImageUrl }}" alt="" class="w-full h-full object-cover" style="max-height:70vh;">
+        @endif
 
-                {{-- Ad image (wrapped in link when target URL exists) --}}
-                @if($popupTargetUrl)
-                    <a href="{{ route('ads.click', $popupCampaign) }}"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       class="block w-full h-full">
-                        <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
-                             alt="{{ $popupCampaign->title }}"
-                             class="w-full h-full object-cover min-h-[300px] max-h-[500px]">
-                    </a>
-                @else
-                    <img src="{{ $popupCampaign->getFirstMediaUrl('ad_image', 'tablet') }}"
-                         alt="{{ $popupCampaign->title }}"
-                         class="w-full h-full object-cover min-h-[300px] max-h-[500px]">
-                @endif
-            </div>
-
-            {{-- Lower section: skip bar --}}
-            <div class="bg-white px-6 py-4 flex items-center justify-between">
-
-                {{-- Right: countdown label (hidden once timer hits 0) --}}
-                <p class="text-sm text-zinc-500" x-show="!skipEnabled">
-                    تخطي بعد
-                    <span class="font-bold" x-text="countdown"></span>
-                    ثوانٍ
-                </p>
-                {{-- Spacer when countdown hidden so skip button stays left-aligned --}}
-                <span x-show="skipEnabled"></span>
-
-                {{-- Left: skip button --}}
-                <button type="button"
-                        @click="close()"
-                        :disabled="!skipEnabled"
-                        :class="skipEnabled
-                            ? 'text-nilex-teal font-bold cursor-pointer'
-                            : 'text-zinc-300 cursor-not-allowed'"
-                        class="text-sm transition-colors duration-200">
-                    تخطي ←
-                </button>
-            </div>
+        {{-- Skip Bar --}}
+        <div class="bg-white px-6 py-4 flex items-center justify-between">
+            <button
+                type="button"
+                @click="close()"
+                :class="canSkip ? 'text-[#14A5A8] font-bold cursor-pointer hover:underline' : 'text-zinc-300 cursor-not-allowed'"
+                class="text-sm transition-colors"
+                x-text="canSkip ? 'تخطي ←' : 'تخطي'"
+            ></button>
+            <span x-show="!canSkip" class="text-sm text-zinc-400" x-text="'يمكنك التخطي بعد ' + seconds + ' ثوانٍ'"></span>
         </div>
     </div>
+</div>
 @endif

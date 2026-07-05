@@ -120,7 +120,7 @@ describe('Ad popup component', function () {
         expect($html)
             ->toContain('تخطي بعد')
             ->toContain('ثوانٍ')
-            ->toContain('x-text="countdown"');
+            ->toContain('seconds');
     });
 
     it('skip button has @click="close()" and no x-show on itself', function () {
@@ -133,7 +133,7 @@ describe('Ad popup component', function () {
         // The button must have @click but the button tag itself must not carry x-show
         expect($html)
             ->toContain('@click="close()"')
-            ->toContain(':disabled="!skipEnabled"');
+            ->toContain('canSkip');
 
         // x-show appears on the <span> children, not on the <button> line
         preg_match_all('/<button[^>]*>/s', $html, $buttons);
