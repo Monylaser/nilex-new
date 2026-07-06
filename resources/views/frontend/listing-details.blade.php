@@ -129,7 +129,7 @@
                 {{-- Description --}}
                 <div class="bg-white rounded-2xl border border-zinc-100 p-5" style="box-shadow:0 1px 4px rgba(0,0,0,0.04);">
                     <h2 class="text-base font-black text-zinc-900 mb-4">وصف الإعلان</h2>
-                    <div class="text-zinc-600 leading-relaxed text-sm">{!! $listing->description !!}</div>
+                    <div class="text-zinc-600 leading-relaxed text-sm">{!! nl2br(e($listing->description)) !!}</div>
                 </div>
             </div>
 

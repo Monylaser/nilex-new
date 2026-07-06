@@ -15,8 +15,31 @@ class ListingController extends Controller
     /**
      * عرض صفحة تفاصيل الإعلان.
      */
+    /**
+     * الإعلان قابل للعرض إما لو كان منشوراً، أو لو المستخدم الحالي هو صاحبه،
+     * أو لو كان من فريق الإدارة (super_admin / admin / moderator).
+     * أي حالة أخرى (pending / rejected / flagged لغير المخوّلين) => 404.
+     */
+    private function canViewListing(Listing $listing): bool
+    {
+        if ($listing->status === Listing::STATUS_PUBLISHED) {
+            return true;
+        }
+
+        $user = Auth::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $listing->user_id === $user->id
+            || $user->hasAnyRole(['super_admin', 'admin', 'moderator']);
+    }
+
     public function show(Request $request, Listing $listing, ListingLeadTrackingService $leadTracking): View
     {
+        abort_unless($this->canViewListing($listing), 404);
+
         if ($leadTracking->recordView($listing, auth()->user(), $request->ip())) {
             $listing->increment('views_count');
         }
@@ -53,6 +76,10 @@ class ListingController extends Controller
     {
         if (! Auth::check()) {
             return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        if (! $this->canViewListing($listing)) {
+            return response()->json(['error' => 'Not found'], 404);
         }
 
         $listing->loadMissing('user');
@@ -96,6 +123,10 @@ class ListingController extends Controller
     // 🟢 دالة استقبال العروض الجديدة (Make an Offer)
     public function makeOffer(Request $request, Listing $listing)
     {
+        // 0. لا يُسمح بتقديم عروض إلا على إعلان منشور (دفاع في العمق:
+        //    زر العرض لا يظهر أصلاً على الإعلانات غير المنشورة).
+        abort_unless($listing->status === Listing::STATUS_PUBLISHED, 404);
+
         // 1. التحقق من البيانات
         $request->validate([
             'amount' => 'required|numeric|min:1',

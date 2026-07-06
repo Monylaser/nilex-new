@@ -14,9 +14,10 @@ class SmsService
     {
         $message = "أهلاً بك في نايلكس. كود التفعيل الخاص بك هو: {$otpCode}";
         
-        // 🟢 لو إحنا على الـ Localhost (التطوير)، اطبعها في اللوج ومتبعتش بفلوس
+        // 🟢 لو إحنا على الـ Localhost (التطوير)، منسجّلش الكود نفسه في اللوج
+        //    (أمان: كود الـ OTP يجب ألا يظهر أبداً في السجلات).
         if (app()->environment('local')) {
-            Log::info("مُحاكاة SMS للرقم {$phone}: {$message}");
+            Log::info("OTP SMS dispatched (local simulation) to phone {$phone}.");
             return true;
         }
 

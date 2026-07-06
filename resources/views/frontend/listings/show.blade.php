@@ -508,7 +508,7 @@
                 <div class="bg-white rounded-xl border border-zinc-200 p-5">
                     <h2 class="text-base font-black text-zinc-900 mb-4">{{ __('listing.detail.description_heading') }}</h2>
                     <div class="text-zinc-600 leading-relaxed text-sm">
-                        {!! $listing->description !!}
+                        {!! nl2br(e($listing->description)) !!}
                     </div>
                 </div>
 
