@@ -45,12 +45,13 @@ class SocialiteController extends Controller
             $user = User::where('email', $socialUser->getEmail())->first();
 
             if ($user) {
-                $user->update([
+                // is_phone_verified حقل حسّاس خارج $fillable — يُكتب عبر forceFill.
+                $user->forceFill([
                     'provider_name' => $provider,
                     'provider_id' => $socialUser->getId(),
                     'avatar' => $user->avatar ?? $socialUser->getAvatar(),
                     'is_phone_verified' => true,
-                ]);
+                ])->save();
             }
         }
 
@@ -63,7 +64,7 @@ class SocialiteController extends Controller
             $device = $this->fingerprints->resolveDeviceCookie(request());
 
             $user = DB::transaction(function () use ($socialUser, $provider, $device) {
-                return User::create([
+                $newUser = User::create([
                     'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? 'مستخدم نايلكس',
                     'email' => $socialUser->getEmail(),
                     'password' => Hash::make(Str::random(24)),
@@ -73,8 +74,12 @@ class SocialiteController extends Controller
                     'ip_address' => request()->ip(),
                     'device_id' => $device['id'],
                     'fingerprint_hash' => $this->fingerprints->compute(request()),
-                    'is_phone_verified' => true,
                 ]);
+
+                // is_phone_verified حقل حسّاس خارج $fillable — يُكتب عبر forceFill.
+                $newUser->forceFill(['is_phone_verified' => true])->save();
+
+                return $newUser;
             });
 
             $this->pointService->credit($user, (int) config('pricing.registration_welcome_points', 20), 'هدية تسجيل الدخول عبر '.ucfirst($provider).' 🎁');
@@ -95,6 +100,8 @@ class SocialiteController extends Controller
         }
 
         Auth::login($user);
+        // منع تثبيت الجلسة (session fixation): جدّد مُعرّف الجلسة بعد تسجيل الدخول.
+        request()->session()->regenerate();
 
         return redirect()->intended(route('dashboard'))
             ->with('success', __('server.auth.login_success'));

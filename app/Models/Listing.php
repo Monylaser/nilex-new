@@ -30,7 +30,10 @@ class Listing extends Model implements HasMedia
             ->setDescriptionForEvent(fn (string $event) => "Listing {$event}");
     }
 
-    protected $guarded = [];
+    // حماية من mass-assignment: هذه الحقول لا تُملأ إلا عبر كود موثوق
+    // (تعيين مباشر للخصائص في HomeController، أو forceFill في دوال النموذج
+    // approve/reject/flag/featureWithPoints/unfeature)، وليس من إدخال المستخدم.
+    protected $guarded = ['id', 'user_id', 'status', 'is_featured', 'views_count', 'fraud_score'];
 
     // ── Status Constants ──────────────────────────────────────────────────────
 
@@ -283,31 +286,34 @@ class Listing extends Model implements HasMedia
 
     public function approve(int $adminId): void
     {
-        $this->update([
+        // status محمي في $guarded — يُكتب عبر forceFill.
+        $this->forceFill([
             'status'       => self::STATUS_PUBLISHED,
             'moderated_by' => $adminId,
             'moderated_at' => now(),
-        ]);
+        ])->save();
     }
 
     public function reject(int $adminId, string $reason): void
     {
-        $this->update([
+        // status محمي في $guarded — يُكتب عبر forceFill.
+        $this->forceFill([
             'status'           => self::STATUS_REJECTED,
             'rejection_reason' => $reason,
             'moderated_by'     => $adminId,
             'moderated_at'     => now(),
-        ]);
+        ])->save();
     }
 
     public function flag(int $adminId, string $reason): void
     {
-        $this->update([
+        // status محمي في $guarded — يُكتب عبر forceFill.
+        $this->forceFill([
             'status'       => self::STATUS_FLAGGED,
             'flag_reason'  => $reason,
             'moderated_by' => $adminId,
             'moderated_at' => now(),
-        ]);
+        ])->save();
     }
 
     public function rejectionCausesStrike(string $reason): bool
@@ -377,13 +383,14 @@ class Listing extends Model implements HasMedia
         $user->decrement('points', $cost);
 
         // ✅ تسجيل معاملة النقاط (لو جدول point_transactions موجود)
+        // ملاحظة: جدول point_transactions لا يحتوي عمودَي type/meta، لذا كانت
+        // قيمهما تُهمَل دائماً عبر حماية $fillable — أُزيلت هنا لتفادي محاولة
+        // إدراج أعمدة غير موجودة (نفس السلوك الفعلي في قاعدة البيانات).
         if (class_exists(\App\Models\PointTransaction::class)) {
             \App\Models\PointTransaction::create([
                 'user_id'     => $user->id,
                 'amount'      => -$cost,
-                'type'        => 'feature_listing',
                 'description' => "تمييز إعلان #{$this->id} لمدة {$days} أيام",
-                'meta'        => json_encode(['listing_id' => $this->id, 'days' => $days]),
             ]);
         }
 
@@ -392,10 +399,11 @@ class Listing extends Model implements HasMedia
             ? $this->featured_until
             : now();
 
-        $this->update([
+        // is_featured محمي في $guarded — يُكتب عبر forceFill.
+        $this->forceFill([
             'is_featured'    => true,
             'featured_until' => $from->addDays($days),
-        ]);
+        ])->save();
 
         $entitlements->recordUsage($user, \App\Services\EntitlementService::FEATURE_MONTHLY_BOOST_LIMIT);
     }
@@ -405,10 +413,11 @@ class Listing extends Model implements HasMedia
      */
     public function unfeature(): void
     {
-        $this->update([
+        // is_featured محمي في $guarded — يُكتب عبر forceFill.
+        $this->forceFill([
             'is_featured'    => false,
             'featured_until' => null,
-        ]);
+        ])->save();
     }
 
     /**

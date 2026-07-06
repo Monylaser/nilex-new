@@ -101,12 +101,20 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // 3.1 توثيق رقم الهاتف (مسار منفصل بعد التسجيل) — إرسال OTP للرقم الجديد ثم تأكيده
-    Route::post('/profile/phone', [PhoneVerificationController::class, 'send'])->name('profile.phone.send');
-    Route::post('/profile/phone/verify', [PhoneVerificationController::class, 'verify'])->name('profile.phone.verify');
+    Route::post('/profile/phone', [PhoneVerificationController::class, 'send'])
+        ->middleware('throttle:otp-profile')
+        ->name('profile.phone.send');
+    Route::post('/profile/phone/verify', [PhoneVerificationController::class, 'verify'])
+        ->middleware('throttle:otp-profile')
+        ->name('profile.phone.verify');
 
     // 3.2 توثيق البريد الإلكتروني (للمستخدمين المسجّلين بالموبايل) — +20 نقطة مرة واحدة
-    Route::post('/profile/email', [EmailVerificationProfileController::class, 'send'])->name('profile.email.send');
-    Route::post('/profile/email/verify', [EmailVerificationProfileController::class, 'verify'])->name('profile.email.verify');
+    Route::post('/profile/email', [EmailVerificationProfileController::class, 'send'])
+        ->middleware('throttle:otp-profile')
+        ->name('profile.email.send');
+    Route::post('/profile/email/verify', [EmailVerificationProfileController::class, 'verify'])
+        ->middleware('throttle:otp-profile')
+        ->name('profile.email.verify');
 
     // 4. سجل النقاط
     Route::get('/points/history', function () {

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Category;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -52,11 +53,12 @@ class DatabaseSeeder extends Seeder
         }
 
         // 3. إنشاء مستخدم "أدمن" (نفس كودك بالظبط)
+        // كلمة سر الأدمن تُقرأ من .env؛ وفي غيابها تُولَّد عشوائية (غير ثابتة في الكود).
         User::updateOrCreate(
             ['email' => 'admin@nilex.com'], 
             [
                 'name' => 'سنيور نايلكس',
-                'password' => Hash::make('12345678'), 
+                'password' => Hash::make(env('ADMIN_DEFAULT_PASSWORD', Str::random(32))), 
                 'email_verified_at' => now(),
             ]
         );

@@ -40,5 +40,15 @@ class AuthSecurityServiceProvider extends ServiceProvider
                 Limit::perHour(10)->by($request->ip()),
             ];
         });
+
+        // حماية نقاط توثيق الهاتف/البريد في الملف الشخصي (إرسال + تأكيد):
+        // 5 محاولات كل 60 ثانية لكل (IP + مستخدم) لمنع القصف وتخمين الكود.
+        RateLimiter::for('otp-profile', function (Request $request) {
+            $identity = $request->user()?->id ?? 'guest';
+
+            return [
+                Limit::perMinute(5)->by('otp-profile|'.$request->ip().'|'.$identity),
+            ];
+        });
     }
 }

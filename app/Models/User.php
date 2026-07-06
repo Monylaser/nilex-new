@@ -40,9 +40,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'governorate',
         'city',
         'location_id',
-        'points',
+        // ملاحظة أمان: 'points' و'is_banned' و'is_phone_verified' حقول حسّاسة
+        // أُخرجت عمداً من $fillable — تُكتب فقط عبر خدمات موثوقة (PointService،
+        // User::ban()/unban()، OtpService) باستخدام increment/decrement أو forceFill،
+        // ولا يجوز ملؤها من إدخال المستخدم عبر mass-assignment.
         'points_balance',
-        'is_banned',
         'ban_reason',
         'strike_count',
         'avatar',
@@ -53,7 +55,6 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'otp_expires_at',
         'otp_attempts',
         'otp_channel',
-        'is_phone_verified', 
         'phone_verified_at',
         'pending_phone',
         'pending_email',
@@ -230,12 +231,14 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function ban(string $reason = ''): void
     {
-        $this->update(['is_banned' => true, 'ban_reason' => $reason]);
+        // is_banned خارج $fillable (حقل حسّاس) — يُكتب عبر forceFill.
+        $this->forceFill(['is_banned' => true, 'ban_reason' => $reason])->save();
     }
 
     public function unban(): void
     {
-        $this->update(['is_banned' => false, 'ban_reason' => null]);
+        // is_banned خارج $fillable (حقل حسّاس) — يُكتب عبر forceFill.
+        $this->forceFill(['is_banned' => false, 'ban_reason' => null])->save();
     }
 
     public function addStrike(): void

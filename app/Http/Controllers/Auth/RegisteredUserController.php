@@ -80,7 +80,6 @@ class RegisteredUserController extends Controller
             'ip_address'        => $request->ip(),
             'device_id'         => $device['id'],
             'fingerprint_hash'  => $this->fingerprints->compute($request),
-            'is_phone_verified' => false,
         ]);
 
         // ── 7. Issue OTP ─────────────────────────────────────────────
@@ -113,6 +112,8 @@ class RegisteredUserController extends Controller
         // ── 10. Fire event + login ───────────────────────────────────
         event(new Registered($user));
         Auth::login($user);
+        // منع تثبيت الجلسة (session fixation): جدّد مُعرّف الجلسة بعد تسجيل الدخول.
+        $request->session()->regenerate();
 
         // ── 11. Redirect with device cookie if new ───────────────────
         $response = redirect()->route('otp.notice');

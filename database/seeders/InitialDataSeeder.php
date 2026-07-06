@@ -13,11 +13,12 @@ class InitialDataSeeder extends Seeder
     public function run(): void
     {
         // 1. إنشاء حساب أدمن (عشان تدخل بيه علطول)
+        // كلمة سر الأدمن تُقرأ من .env؛ وفي غيابها تُولَّد عشوائية (غير ثابتة في الكود).
         User::updateOrCreate(
             ['email' => 'admin@nilex.com'], // الإيميل اللي هتدخل بيه
             [
                 'name' => 'Admin Nilex',
-                'password' => Hash::make('12345678'), // الباسوورد
+                'password' => Hash::make(env('ADMIN_DEFAULT_PASSWORD', Str::random(32))), // الباسوورد
                 'email_verified_at' => now(),
             ]
         );
