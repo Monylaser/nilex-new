@@ -156,8 +156,15 @@ class HomeController extends Controller
             'car_model_id' => 'nullable|exists:car_models,id',
             // optional featuring after creation (0 = none)
             'feature_days' => 'nullable|integer|in:0,1,3,7,14',
+            // ── أمان الصور: تحقق خادمي من النوع والحجم (لا نعتمد على الـ client) ──
+            'images'   => 'nullable|array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:5120',
         ], [
-            'price.max' => __('wizard.server.price_max'),
+            'price.max'      => __('wizard.server.price_max'),
+            'images.max'     => __('wizard.server.images_max'),
+            'images.*.image' => __('wizard.server.image_invalid'),
+            'images.*.mimes' => __('wizard.server.image_mimes'),
+            'images.*.max'   => __('wizard.server.image_max'),
         ]);
 
         // category_id تم التحقق من وجوده أعلاه؛ نعيد الاستخدام لتفادي استعلام مكرّر.
