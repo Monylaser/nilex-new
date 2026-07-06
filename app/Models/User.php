@@ -74,6 +74,10 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'password',
         'remember_token',
         'otp_code',
+        // احترازي: العمود غير موجود حالياً (لا يوجد 2FA) لكن لو أُضيف مستقبلاً
+        // (Fortify/Jetstream) يكون مخفياً من أول يوم.
+        'two_factor_secret',
+        'two_factor_recovery_codes',
         // بيانات داخلية/تتبّعية لا يجوز خروجها في أي JSON serialization
         // (الوصول المباشر للخاصية في Blade لا يتأثر بـ $hidden).
         'otp_expires_at',
@@ -83,6 +87,10 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'device_id',
         'fingerprint_hash',
         'ip_address',
+        // رقم الهاتف لا يخرج في أي serialization تلقائي (مثل message->load('sender')).
+        // الكشف المتعمَّد يتم حصراً عبر revealPhone (auth + throttle) الذي يبني
+        // الـ JSON يدوياً فلا يتأثر بهذا الإخفاء.
+        'phone',
     ];
 
     protected $casts = [
