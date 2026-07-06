@@ -15,7 +15,7 @@ class SocialiteCallbackTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function it_marks_social_users_as_phone_verified_without_otp(): void
+    public function it_marks_social_users_as_email_verified_not_phone_verified(): void
     {
         $socialUser = Mockery::mock(SocialiteUserContract::class);
         $socialUser->shouldReceive('getId')->andReturn('social-123');
@@ -31,8 +31,12 @@ class SocialiteCallbackTest extends TestCase
 
         $this->get('/auth/google/callback')->assertRedirect();
 
-        $this->assertTrue(
-            User::where('email', 'social@example.com')->first()?->is_phone_verified ?? false
-        );
+        $user = User::where('email', 'social@example.com')->first();
+
+        // السوشيال يوثّق الإيميل فقط — بوابة OTP تقبل أي القناتين فيمرّ المستخدم،
+        // لكن الهاتف يظل غير موثّق حتى يمرّ بمسار OTP الخاص به.
+        $this->assertNotNull($user);
+        $this->assertNotNull($user->email_verified_at);
+        $this->assertFalse((bool) $user->is_phone_verified);
     }
 }

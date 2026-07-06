@@ -35,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // فرض HTTPS في الإنتاج: كل الروابط المولَّدة (asset/route/pagination)
+        // تخرج https حتى خلف proxy/load balancer يمرّر الطلب http داخلياً.
+        if ($this->app->isProduction()) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         Model::preventLazyLoading(! app()->isProduction());
 
         // ── Spatie Translatable fallback (config/translatable.php) ─────────────

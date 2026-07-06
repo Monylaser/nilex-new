@@ -30,6 +30,8 @@ class ProfileTest extends TestCase
             ->patch('/profile', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
+                // تغيير الإيميل عملية حسّاسة تتطلب إعادة مصادقة بكلمة المرور الحالية.
+                'current_password' => 'password',
             ]);
 
         $response

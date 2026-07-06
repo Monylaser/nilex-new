@@ -9,6 +9,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
+        // تفويض قنوات البث الخاصة (الشات): الاشتراك مقصور على صاحب القناة.
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
             Route::middleware('web')

@@ -43,13 +43,22 @@ class ProfileController extends Controller
             ? ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id]
             : ['prohibited']; // المستخدمون بالموبايل يضيفون إيميلهم عبر قسم توثيق الإيميل
 
+        // إعادة مصادقة للعملية الحسّاسة: تغيير الإيميل يفتح باب الاستيلاء على
+        // الحساب (تغيير الإيميل ثم password reset عليه)، لذلك نطلب كلمة المرور
+        // الحالية فقط عندما يختلف الإيميل المُرسَل عن الحالي. تعديل الاسم/الواتساب
+        // وغيرها لا يتطلبها.
+        $emailIsChanging = $user->email
+            && $request->filled('email')
+            && strtolower(trim((string) $request->input('email'))) !== strtolower($user->email);
+
         $validated = $request->validate([
-            'name'        => ['required', 'string', 'max:255'],
-            'email'       => $emailRules,
-            'whatsapp'    => ['nullable', 'string', 'max:20'],
-            'avatar'      => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
-            'bio'         => ['nullable', 'string', 'max:500'],
+            'name'             => ['required', 'string', 'max:255'],
+            'email'            => $emailRules,
+            'current_password' => $emailIsChanging ? ['required', 'current_password'] : ['nullable', 'string'],
+            'whatsapp'         => ['nullable', 'string', 'max:20'],
+            'avatar'           => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'location_id'      => ['nullable', 'integer', 'exists:locations,id'],
+            'bio'              => ['nullable', 'string', 'max:500'],
         ]);
 
         // Preserve the original email for dirty-checking before any writes.

@@ -45,12 +45,13 @@ class SocialiteController extends Controller
             $user = User::where('email', $socialUser->getEmail())->first();
 
             if ($user) {
-                // is_phone_verified حقل حسّاس خارج $fillable — يُكتب عبر forceFill.
+                // السوشيال يثبت ملكية الإيميل فقط — لا نلمس is_phone_verified إطلاقاً.
+                // email_verified_at خارج $fillable فيُكتب عبر forceFill.
                 $user->forceFill([
                     'provider_name' => $provider,
                     'provider_id' => $socialUser->getId(),
                     'avatar' => $user->avatar ?? $socialUser->getAvatar(),
-                    'is_phone_verified' => true,
+                    'email_verified_at' => $user->email_verified_at ?? now(),
                 ])->save();
             }
         }
@@ -76,8 +77,10 @@ class SocialiteController extends Controller
                     'fingerprint_hash' => $this->fingerprints->compute(request()),
                 ]);
 
-                // is_phone_verified حقل حسّاس خارج $fillable — يُكتب عبر forceFill.
-                $newUser->forceFill(['is_phone_verified' => true])->save();
+                // السوشيال يوثّق الإيميل فقط (وليس الهاتف): نضبط email_verified_at
+                // ويظل توثيق الهاتف مساراً منفصلاً (OTP) لو أراد مكافأة الهاتف.
+                // الحقل خارج $fillable فيُكتب عبر forceFill.
+                $newUser->forceFill(['email_verified_at' => now()])->save();
 
                 return $newUser;
             });
