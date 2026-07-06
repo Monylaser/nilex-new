@@ -21,6 +21,12 @@ class SecurityHeaders
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
+        // الصفحات المصادق عليها (dashboard/profile/admin…): لا تُخزَّن في cache
+        // المتصفح/الـ proxy حتى لا تبقى بيانات حساسة بعد logout أو على جهاز مشترك.
+        if ($request->user()) {
+            $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        }
+
         return $response;
     }
 }
