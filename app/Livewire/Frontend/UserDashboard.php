@@ -264,7 +264,16 @@ class UserDashboard extends Component
                 'success',
                 __('server.dashboard.featured_success')
             );
+        } catch (\Illuminate\Database\QueryException | \PDOException $e) {
+            // أخطاء تقنية غير متوقعة: لا نعرض تفاصيل SQL/الاستعلام للمستخدم —
+            // رسالة عامة فقط، والتفاصيل تذهب للّوج.
+            \Illuminate\Support\Facades\Log::error('featureListing failed', [
+                'listing_id' => $listing->id,
+                'message'    => $e->getMessage(),
+            ]);
+            session()->flash('error', __('server.ai.unknown_error'));
         } catch (\Exception $e) {
+            // استثناءات featureWithPoints المتوقعة تحمل رسائل معرَّبة موجهة للمستخدم.
             session()->flash(
                 'error',
                 $e->getMessage()

@@ -147,7 +147,9 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
 Route::get('/listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
 
 // 🟢 كشف الرقم وتتبع النقرات (يجب أن يكونوا هنا تحت الـ middleware جروب أو داخله حسب متطلباتك)
+// throttle:phone-reveal = 20 كشفاً/ساعة لكل مستخدم — يمنع حصاد أرقام البائعين بالجملة.
 Route::post('/listings/{listing}/reveal-phone', [ListingController::class, 'revealPhone'])
+    ->middleware('throttle:phone-reveal')
     ->name('listings.reveal-phone');
 Route::post('/listings/{listing}/whatsapp-click', [ListingController::class, 'trackWhatsappClick'])
     ->name('listings.whatsapp-click');

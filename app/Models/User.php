@@ -74,6 +74,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'password',
         'remember_token',
         'otp_code',
+        // بيانات داخلية/تتبّعية لا يجوز خروجها في أي JSON serialization
+        // (الوصول المباشر للخاصية في Blade لا يتأثر بـ $hidden).
+        'otp_expires_at',
+        'pending_phone',
+        'pending_email',
+        'provider_id',
+        'device_id',
+        'fingerprint_hash',
+        'ip_address',
     ];
 
     protected $casts = [

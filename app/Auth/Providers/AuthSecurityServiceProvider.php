@@ -50,5 +50,16 @@ class AuthSecurityServiceProvider extends ServiceProvider
                 Limit::perMinute(5)->by('otp-profile|'.$request->ip().'|'.$identity),
             ];
         });
+
+        // كشف رقم الهاتف في الإعلانات: 20 كشفاً في الساعة لكل مستخدم
+        // (أو IP للزوّار — يصلهم 401 أصلاً لكن نحدّ الطرق قبل الوصول للمنطق)
+        // لمنع حصاد أرقام البائعين بالجملة (scraping).
+        RateLimiter::for('phone-reveal', function (Request $request) {
+            $key = $request->user()?->id ?? $request->ip();
+
+            return [
+                Limit::perHour(20)->by('phone-reveal|'.$key),
+            ];
+        });
     }
 }

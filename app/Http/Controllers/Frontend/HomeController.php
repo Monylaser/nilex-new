@@ -574,10 +574,24 @@ class HomeController extends Controller
      */
     public function search(Request $request)
     {
-        $query      = $request->input('q', '');
-        $lat        = $request->input('lat');
-        $lng        = $request->input('lng');
-        $radius     = $request->input('radius', 50);
+        // تحقق خادمي من كل مدخلات البحث: يمنع حقن فلاتر Meilisearch (lat/lng/radius
+        // تُدرَج داخل filter string) ويقصّ الكلمة المفتاحية لطول معقول (ضد ReDoS/DoS).
+        $request->validate([
+            'q'           => ['nullable', 'string', 'max:150'],
+            'lat'         => ['nullable', 'numeric', 'between:-90,90'],
+            'lng'         => ['nullable', 'numeric', 'between:-180,180'],
+            'radius'      => ['nullable', 'numeric', 'min:1', 'max:1000'],
+            'min_price'   => ['nullable', 'numeric', 'min:0'],
+            'max_price'   => ['nullable', 'numeric', 'min:0'],
+            'category_id' => ['nullable', 'integer'],
+            'province_id' => ['nullable', 'integer'],
+        ]);
+
+        $query      = (string) $request->input('q', '');
+        // بعد التحقق أعلاه نضمن أنها أرقام بحتة قبل إدراجها في فلتر Meilisearch.
+        $lat        = $request->filled('lat') ? (float) $request->input('lat') : null;
+        $lng        = $request->filled('lng') ? (float) $request->input('lng') : null;
+        $radius     = (float) $request->input('radius', 50);
         $minPrice   = $request->input('min_price');
         $maxPrice   = $request->input('max_price');
         $categoryId = $request->input('category_id');
