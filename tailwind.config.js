@@ -19,6 +19,10 @@ export default {
                 cairo: ['Cairo', 'sans-serif'],
             },
 
+            maxWidth: {
+                '8xl': '96rem',
+            },
+
             colors: {
                 // Nilex brand — navy blue (was green; remapped per visual-identity refresh).
                 // `nilex` keeps its name (alias) so existing bg-nilex/text-nilex usages turn blue.

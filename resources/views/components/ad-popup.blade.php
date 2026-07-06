@@ -48,7 +48,7 @@
     data-ad-id="{{ $popupCampaign->id }}"
 >
     {{-- Modal Card --}}
-    <div class="relative w-full max-w-6xl rounded-2xl overflow-hidden shadow-2xl" style="max-height:85vh;">
+    <div class="relative w-full max-w-8xl rounded-2xl overflow-hidden shadow-2xl" style="max-height:95vh;">
 
         {{-- X Button --}}
         <button
