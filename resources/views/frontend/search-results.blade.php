@@ -122,6 +122,9 @@
                         </select>
                     @endif
 
+                    {{-- Sort --}}
+                    @include('frontend.partials.listing-sort-select', ['sort' => $sort ?? \App\Support\ListingSort::DEFAULT])
+
                     {{-- Clear filters --}}
                     @if($query || $categoryId || $minPrice || $maxPrice || request('lat'))
                         <a href="{{ route('listings.search') }}"
@@ -134,7 +137,7 @@
                 </div>
 
                 {{-- Geo active indicator --}}
-                @if(request('lat') && request('lng'))
+                @if(request('lat') && request('lng') && ($sort ?? \App\Support\ListingSort::DEFAULT) === \App\Support\ListingSort::DEFAULT)
                     <div class="flex items-center gap-1.5 mt-3 text-xs text-[#1D9E75] font-semibold">
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
                         النتائج مرتبة حسب قربها من موقعك

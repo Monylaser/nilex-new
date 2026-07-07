@@ -21,8 +21,9 @@ use App\Models\Category;
 use App\Models\Listing;
 use App\Models\Location;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared setup
@@ -33,34 +34,34 @@ beforeEach(function () {
 
     // Categories
     $this->catElectronics = Category::create([
-        'name_ar'   => 'إلكترونيات',
-        'name_en'   => 'Electronics',
-        'slug'      => 'electronics',
+        'name_ar' => 'إلكترونيات',
+        'name_en' => 'Electronics',
+        'slug' => 'electronics',
         'is_active' => true,
     ]);
 
     $this->catCars = Category::create([
-        'name_ar'   => 'سيارات',
-        'name_en'   => 'Cars',
-        'slug'      => 'cars',
+        'name_ar' => 'سيارات',
+        'name_en' => 'Cars',
+        'slug' => 'cars',
         'is_active' => true,
     ]);
 
     // Governorates (provinces)
     $this->provinceCairo = Location::create([
-        'name_ar'  => 'القاهرة',
-        'name_en'  => 'Cairo',
-        'slug'     => 'cairo',
-        'level'    => 0,
-        'is_active'=> true,
+        'name_ar' => 'القاهرة',
+        'name_en' => 'Cairo',
+        'slug' => 'cairo',
+        'level' => 0,
+        'is_active' => true,
     ]);
 
     $this->provinceAlex = Location::create([
-        'name_ar'  => 'الإسكندرية',
-        'name_en'  => 'Alexandria',
-        'slug'     => 'alexandria',
-        'level'    => 0,
-        'is_active'=> true,
+        'name_ar' => 'الإسكندرية',
+        'name_en' => 'Alexandria',
+        'slug' => 'alexandria',
+        'level' => 0,
+        'is_active' => true,
     ]);
 });
 
@@ -68,10 +69,10 @@ beforeEach(function () {
 function makePublishedListing(array $attrs): Listing
 {
     return Listing::create(array_merge([
-        'slug'        => 'listing-' . uniqid(),
+        'slug' => 'listing-'.uniqid(),
         'description' => 'وصف تجريبي',
-        'price'       => 10_000,
-        'status'      => Listing::STATUS_PUBLISHED,
+        'price' => 10_000,
+        'status' => Listing::STATUS_PUBLISHED,
     ], $attrs));
 }
 
@@ -85,15 +86,15 @@ describe('Advanced Search', function () {
 
     it('search with no query returns all published listings', function () {
         makePublishedListing([
-            'title'       => 'سامسونج جالاكسي S24',
+            'title' => 'سامسونج جالاكسي S24',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'تويوتا كورولا 2023',
+            'title' => 'تويوتا كورولا 2023',
             'category_id' => $this->catCars->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         $response = $this->get(route('listings.search'));
@@ -104,15 +105,15 @@ describe('Advanced Search', function () {
 
     it('search by keyword returns matching listings', function () {
         makePublishedListing([
-            'title'       => 'آيفون 15 برو ماكس',
+            'title' => 'آيفون 15 برو ماكس',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'تويوتا كورولا 2023',
+            'title' => 'تويوتا كورولا 2023',
             'category_id' => $this->catCars->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         $response = $this->get(route('listings.search', ['q' => 'آيفون']));
@@ -126,19 +127,19 @@ describe('Advanced Search', function () {
 
     it('does not return pending listings in search results', function () {
         makePublishedListing([
-            'title'       => 'إعلان منشور',
+            'title' => 'إعلان منشور',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         Listing::create([
-            'title'       => 'إعلان قيد المراجعة',
-            'slug'        => 'pending-ad',
+            'title' => 'إعلان قيد المراجعة',
+            'slug' => 'pending-ad',
             'description' => 'وصف.',
-            'price'       => 5_000,
+            'price' => 5_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
-            'status'      => Listing::STATUS_PENDING,
+            'user_id' => $this->seller->id,
+            'status' => Listing::STATUS_PENDING,
         ]);
 
         $response = $this->get(route('listings.search'));
@@ -154,24 +155,24 @@ describe('Advanced Search', function () {
 
     it('min_price filter excludes listings below the threshold', function () {
         makePublishedListing([
-            'title'       => 'منتج رخيص',
-            'price'       => 500,
+            'title' => 'منتج رخيص',
+            'price' => 500,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'منتج متوسط',
-            'price'       => 5_000,
+            'title' => 'منتج متوسط',
+            'price' => 5_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'منتج غالي',
-            'price'       => 50_000,
+            'title' => 'منتج غالي',
+            'price' => 50_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         $response = $this->get(route('listings.search', ['min_price' => 3_000]));
@@ -185,17 +186,17 @@ describe('Advanced Search', function () {
 
     it('max_price filter excludes listings above the threshold', function () {
         makePublishedListing([
-            'title'       => 'لابتوب اقتصادي',
-            'price'       => 8_000,
+            'title' => 'لابتوب اقتصادي',
+            'price' => 8_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'لابتوب فاخر',
-            'price'       => 80_000,
+            'title' => 'لابتوب فاخر',
+            'price' => 80_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         $response = $this->get(route('listings.search', ['max_price' => 20_000]));
@@ -209,24 +210,24 @@ describe('Advanced Search', function () {
 
     it('price range filter returns only listings within the band', function () {
         makePublishedListing([
-            'title'       => 'في النطاق',
-            'price'       => 15_000,
+            'title' => 'في النطاق',
+            'price' => 15_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'أرخص من النطاق',
-            'price'       => 1_000,
+            'title' => 'أرخص من النطاق',
+            'price' => 1_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'أغلى من النطاق',
-            'price'       => 100_000,
+            'title' => 'أغلى من النطاق',
+            'price' => 100_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         $response = $this->get(route('listings.search', [
@@ -245,15 +246,15 @@ describe('Advanced Search', function () {
 
     it('category_id filter returns only listings in that category', function () {
         makePublishedListing([
-            'title'       => 'سامسونج A54',
+            'title' => 'سامسونج A54',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'هوندا سيفيك 2022',
+            'title' => 'هوندا سيفيك 2022',
             'category_id' => $this->catCars->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         $response = $this->get(route('listings.search', ['category_id' => $this->catElectronics->id]));
@@ -267,9 +268,9 @@ describe('Advanced Search', function () {
 
     it('category filter returns zero results for a category with no listings', function () {
         makePublishedListing([
-            'title'       => 'إعلان إلكترونيات',
+            'title' => 'إعلان إلكترونيات',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         $response = $this->get(route('listings.search', ['category_id' => $this->catCars->id]));
@@ -282,16 +283,16 @@ describe('Advanced Search', function () {
 
     it('province_id filter returns only listings from the selected governorate', function () {
         makePublishedListing([
-            'title'       => 'إعلان القاهرة',
+            'title' => 'إعلان القاهرة',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
             'province_id' => $this->provinceCairo->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'إعلان الإسكندرية',
+            'title' => 'إعلان الإسكندرية',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
             'province_id' => $this->provinceAlex->id,
         ]);
 
@@ -310,30 +311,30 @@ describe('Advanced Search', function () {
 
     it('combining category and price filters narrows results correctly', function () {
         makePublishedListing([
-            'title'       => 'إلكترونيات رخيصة',
-            'price'       => 2_000,
+            'title' => 'إلكترونيات رخيصة',
+            'price' => 2_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'إلكترونيات غالية',
-            'price'       => 50_000,
+            'title' => 'إلكترونيات غالية',
+            'price' => 50_000,
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'سيارة ضمن النطاق',
-            'price'       => 10_000,
+            'title' => 'سيارة ضمن النطاق',
+            'price' => 10_000,
             'category_id' => $this->catCars->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
         ]);
 
         $response = $this->get(route('listings.search', [
             'category_id' => $this->catElectronics->id,
-            'min_price'   => 1_000,
-            'max_price'   => 30_000,
+            'min_price' => 1_000,
+            'max_price' => 30_000,
         ]));
 
         $response->assertOk();
@@ -345,23 +346,23 @@ describe('Advanced Search', function () {
 
     it('combining governorate and category filters returns only matching listings', function () {
         makePublishedListing([
-            'title'       => 'موبايل في القاهرة',
+            'title' => 'موبايل في القاهرة',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
             'province_id' => $this->provinceCairo->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'موبايل في الإسكندرية',
+            'title' => 'موبايل في الإسكندرية',
             'category_id' => $this->catElectronics->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
             'province_id' => $this->provinceAlex->id,
         ]);
 
         makePublishedListing([
-            'title'       => 'سيارة في القاهرة',
+            'title' => 'سيارة في القاهرة',
             'category_id' => $this->catCars->id,
-            'user_id'     => $this->seller->id,
+            'user_id' => $this->seller->id,
             'province_id' => $this->provinceCairo->id,
         ]);
 
@@ -384,6 +385,6 @@ describe('Advanced Search', function () {
 
         $response->assertOk()
             ->assertViewIs('frontend.search-results')
-            ->assertViewHasAll(['listings', 'query', 'lat', 'lng', 'radius']);
+            ->assertViewHasAll(['listings', 'query', 'lat', 'lng', 'radius', 'sort']);
     });
 });

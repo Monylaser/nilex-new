@@ -96,6 +96,10 @@
             <x-ad-banner placement="category_page" :category-id="$category->id ?? null" />
         @endif
 
+        <form method="GET" action="{{ route('category.show', $category) }}" class="flex items-center justify-end mb-4">
+            @include('frontend.partials.listing-sort-select', ['sort' => $sort ?? \App\Support\ListingSort::DEFAULT])
+        </form>
+
         @if($listings->count() > 0)
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 @foreach($listings as $listing)
@@ -104,7 +108,7 @@
             </div>
 
             <div class="mt-8 flex justify-center">
-                {{ $listings->links() }}
+                {{ $listings->appends(request()->query())->links() }}
             </div>
 
         @else
