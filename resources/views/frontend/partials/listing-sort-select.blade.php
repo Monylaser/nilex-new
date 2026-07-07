@@ -4,7 +4,8 @@
 <div class="relative inline-block">
     <select id="listing-sort"
             name="sort"
-            class="appearance-none bg-white border border-zinc-200 rounded-lg px-3 py-2 pe-9 text-sm font-semibold text-zinc-700 cursor-pointer transition-colors hover:border-nilex-teal focus:outline-none focus:border-nilex-teal"
+            class="appearance-none bg-white border border-zinc-200 rounded-lg px-3 py-2 pe-9 text-sm font-semibold text-zinc-700 cursor-pointer transition-colors hover:border-nilex-teal focus:outline-none focus:border-nilex-teal [&::-ms-expand]:hidden"
+            style="-webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none;"
             onchange="this.form.submit()">
         <option value="latest" @selected($currentSort === 'latest')>{{ __('ui.sort.latest') }}</option>
         <option value="oldest" @selected($currentSort === 'oldest')>{{ __('ui.sort.oldest') }}</option>
