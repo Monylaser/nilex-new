@@ -273,7 +273,26 @@ it('rejects the seller selecting themselves as the buyer', function () {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 8) Ownership re-check inside confirmSaleToBuyer
+// 8) Ownership re-check inside buyerLeads
+// ═══════════════════════════════════════════════════════════════════════════
+
+it('rejects viewing buyer leads for a listing owned by someone else (IDOR)', function () {
+    $listing = step2Listing($this->seller, $this->category);
+    $buyer   = User::factory()->create();
+    step2Lead($this->seller, $buyer, $listing, SellerLead::SOURCE_OFFER);
+
+    $intruder = User::factory()->create(['is_phone_verified' => true]);
+
+    Livewire::actingAs($intruder)
+        ->test(UserDashboard::class)
+        ->set('closingListingId', $listing->id)
+        ->set('closingModalOpen', true)
+        ->set('closingStep', 2)
+        ->assertForbidden();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 9) Ownership re-check inside confirmSaleToBuyer
 // ═══════════════════════════════════════════════════════════════════════════
 
 it('rejects confirming a sale on a listing owned by someone else (IDOR)', function () {
@@ -296,7 +315,7 @@ it('rejects confirming a sale on a listing owned by someone else (IDOR)', functi
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 9) selectBuyer toggles off on a repeat click
+// 10) selectBuyer toggles off on a repeat click
 // ═══════════════════════════════════════════════════════════════════════════
 
 it('toggles the selected buyer off when picked twice', function () {
@@ -314,7 +333,7 @@ it('toggles the selected buyer off when picked twice', function () {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10) backToStep1 returns to type selection and clears the buyer choice
+// 11) backToStep1 returns to step 1 and clears the buyer selection on back
 // ═══════════════════════════════════════════════════════════════════════════
 
 it('returns to step 1 and clears the buyer selection on back', function () {
@@ -334,7 +353,7 @@ it('returns to step 1 and clears the buyer selection on back', function () {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 11) REGRESSION — a real pending Offer on a sold_platform-closed listing must
+// 12) REGRESSION — a real pending Offer on a sold_platform-closed listing must
 //     NOT crash the dashboard re-render (Offer::listing() withTrashed).
 //
 //     Real offers create BOTH an Offer (pending) AND a SellerLead (via

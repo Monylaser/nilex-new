@@ -165,8 +165,15 @@ class UserDashboard extends Component
             return collect();
         }
 
+        // إعادة التحقق من الملكية خادمياً — لا نثق بأي قيمة من الواجهة
+        $listing = Listing::where('user_id', Auth::id())->find($this->closingListingId);
+
+        if ($listing === null) {
+            abort(403, __('ui.leads.unauthorized_listing'));
+        }
+
         return SellerLead::query()
-            ->where('listing_id', $this->closingListingId)
+            ->where('listing_id', $listing->id)
             ->whereIn('source_type', self::BUYER_LEAD_SOURCES)
             ->whereNotNull('buyer_id')
             ->with('buyer')

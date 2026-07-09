@@ -505,6 +505,7 @@ return [
         'status_qualified' => 'Qualified',
         'status_closed' => 'Closed',
         'nav_link' => 'My Leads',
+        'unauthorized_listing' => 'You are not allowed to view leads for this listing.',
     ],
 
     'analytics' => [

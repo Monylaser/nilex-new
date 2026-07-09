@@ -440,7 +440,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | **Hosting / deployment** | Not deployed — local Laragon only. Plan: Laravel Forge. |
 | **Production infra switches** | Queue `sync`→Redis, cache `file`→Redis, Scout `collection`→Meilisearch, `MAIL_MAILER` `log`→real SMTP. |
 | **Performance indexes** | Missing `listings.status` composites — see §12. |
-| **High-severity bugs** | Referral + feature points races fixed 2026-07-09; buyerLeads IDOR (M3) still open — see §11. |
+| **High-severity bugs** | Referral + feature points races fixed 2026-07-09; buyerLeads IDOR (M3) **fixed 2026-07-09**. |
 | **UI/UX designer pass** | Planned hire via خمسات (Khamsat). |
 | **Search page i18n** | **Fixed 2026-07-09** — bilingual AR/EN with `ui.search.*`. |
 
@@ -468,7 +468,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 |---|---|---|---|
 | M1 | **`points_balance` desync after featuring** | `Listing::featureWithPoints()` | **Fixed 2026-07-09** |
 | M2 | **Referral `used_count` race** | `RegisteredUserController` + `CampaignLink` | **Fixed 2026-07-09** |
-| M3 | **IDOR in `buyerLeads()`** — no `listing.user_id === Auth::id()` check (unlike `confirmSaleToBuyer()`) | `UserDashboard.php` ~162–177 |
+| M3 | **IDOR in `buyerLeads()`** — no `listing.user_id === Auth::id()` check (unlike `confirmSaleToBuyer()`) | `UserDashboard.php` ~162–177 | **Fixed 2026-07-09** — ownership re-verified via `Listing::where('user_id', Auth::id())`; `abort(403)` on mismatch |
 | M4 | **WhatsApp click tracking unauthenticated** — no auth/status gate; metric inflation possible | `ListingController::trackWhatsappClick()` |
 | M5 | **Null phone in `revealPhone()`** — `ltrim(null)` on missing phone | `ListingController.php` ~87–88 |
 | M6 | **`featureWithPoints()` not atomic** | `Listing.php` | **Fixed 2026-07-09** |

@@ -505,6 +505,7 @@ return [
         'status_qualified' => 'مؤهل',
         'status_closed' => 'مغلق',
         'nav_link' => 'عملائي المحتملون',
+        'unauthorized_listing' => 'ليس لديك صلاحية عرض عملاء هذا الإعلان.',
     ],
 
     'analytics' => [
