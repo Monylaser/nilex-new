@@ -1,2 +1,9 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /profile
+Disallow: /dashboard
+Disallow: /api
+Disallow: /otp
+Disallow: /confirm-password
+Disallow: /reset-password
+Allow: /

@@ -632,7 +632,10 @@
 </div>
 
 @section('footer-scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+{{-- نسخة مثبَّتة + SRI: أي تلاعب بملف الـ CDN يمنع المتصفح من تنفيذه --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ"
+        crossorigin="anonymous"></script>
 <script>
     (function () {
         const chartInstances = {};
