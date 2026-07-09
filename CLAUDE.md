@@ -367,7 +367,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Facebook / Instagram / TikTok login | Routes allow them; only Google configured. |
 | `lang/en/types.php` | Missing (`lang/ar/types.php` exists AR-only). |
 | **`search-results.blade.php` i18n** | **Fixed 2026-07-09** — moved to `ui.search.*` AR/EN keys. |
-| **Custom error pages** | No `resources/views/errors/` — Laravel defaults. |
+| **Custom error pages** | **Fixed 2026-07-09** — custom Nilex-styled pages added for `403/404/419/429/500` under `resources/views/errors/` with AR/EN `ui.errors.*` translations. |
 | `PAYMOB_IFRAME_ID` | Referenced by `config/services.php` but absent from `.env`. |
 | Legal page `content` EN | Arabic-only by decision; EN visitors see Arabic body via `ar` fallback. |
 | Re-skin residual green | See §5 — points-badge, Chart.js, prose links, search/category accents. |
@@ -460,7 +460,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | H4 | **Search page entirely hardcoded Arabic** | `search-results.blade.php` | **Fixed 2026-07-09** |
 | H5 | **Search-priority re-sort post-pagination** | `HomeController::search()` | **Fixed 2026-07-09** |
 | H6 | **OTP gate error not shown** | Middleware + auth view | **Fixed 2026-07-09** |
-| H7 | **No custom error pages** | `resources/views/errors/` absent | Open |
+| H7 | **No custom error pages** | `resources/views/errors/` absent | **Fixed 2026-07-09** |
 
 ### Medium
 

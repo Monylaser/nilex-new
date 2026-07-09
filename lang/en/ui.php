@@ -571,6 +571,23 @@ return [
         'failed_cta' => 'Back to Home',
     ],
 
+    'errors' => [
+        'subtitle' => 'Something went wrong while trying to access this page.',
+        'back_home' => 'Back to Home',
+        'contact_us' => 'Contact Us',
+        'support_email' => 'support@nilex.eg',
+        '404_title' => 'Page Not Found',
+        '404_message' => 'The page you are looking for does not exist or has been moved.',
+        '500_title' => 'Server Error',
+        '500_message' => 'An unexpected server error occurred. We are working to resolve it as soon as possible.',
+        '403_title' => 'Forbidden',
+        '403_message' => 'You do not have permission to access this page right now.',
+        '419_title' => 'Session Expired',
+        '419_message' => 'Your session expired for security reasons. Please refresh and try again.',
+        '429_title' => 'Too Many Requests',
+        '429_message' => 'You sent too many requests in a short time. Please wait a bit and try again.',
+    ],
+
     'pages' => [
         'breadcrumb_aria' => 'Breadcrumb',
         'official_doc' => 'Nilex — Official Document',
