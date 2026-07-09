@@ -16,6 +16,9 @@
         </div>
 
         {{-- Status --}}
+        @if(session('error'))
+            <div class="alert-error mb-5 text-sm" role="alert">{{ session('error') }}</div>
+        @endif
         @if(session('status'))
             <div class="alert-success mb-5 text-sm" role="status">{{ session('status') }}</div>
         @endif

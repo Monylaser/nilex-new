@@ -2,10 +2,12 @@
 
 @extends('layouts.frontend')
 
-@section('title', ($query ? 'نتائج البحث عن: ' . $query : 'تصفح جميع الإعلانات') . ' | نايلكس')
+@section('title', $query
+    ? __('ui.search.title_with_query', ['query' => $query, 'brand' => __('ui.footer.brand')])
+    : __('ui.search.title_browse_all', ['brand' => __('ui.footer.brand')]))
 
 @push('meta')
-    <meta name="description" content="ابحث في آلاف الإعلانات على منصة نايلكس — سيارات، عقارات، إلكترونيات والمزيد.">
+    <meta name="description" content="{{ __('ui.search.meta_description') }}">
 @endpush
 
 @push('styles')
@@ -34,10 +36,14 @@
     <div class="border-b border-zinc-100 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 py-3 text-sm text-zinc-400 font-medium flex-wrap" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
-                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">الرئيسية</a>
+                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">{{ __('ui.footer.link_home') }}</a>
                 <svg class="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                <span class="text-zinc-600">
-                    @if($query)نتائج البحث عن "{{ $query }}"@else كل الإعلانات @endif
+                <span class="text-zinc-600" dir="auto">
+                    @if($query)
+                        {{ __('ui.search.breadcrumb_results_for', ['query' => $query]) }}
+                    @else
+                        {{ __('ui.search.breadcrumb_all_listings') }}
+                    @endif
                 </span>
             </nav>
         </div>
@@ -56,7 +62,7 @@
                 <div class="flex gap-2.5 mb-4">
                     <div class="relative flex-1">
                         <input type="text" name="q" value="{{ $query }}"
-                               placeholder="بتدور على إيه؟"
+                               placeholder="{{ __('ui.search.placeholder') }}"
                                class="w-full bg-white border border-zinc-200 rounded-xl py-3 px-4 pe-11 font-semibold text-zinc-800 text-sm focus:outline-none focus:border-zinc-400"
                                style="direction:{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};"
                                autofocus>
@@ -66,7 +72,7 @@
                     </div>
                     <button type="submit"
                             class="btn-nilex-primary px-5 sm:px-7 py-3 rounded-xl text-sm shrink-0">
-                        بحث
+                        {{ __('ui.search.submit') }}
                     </button>
                 </div>
 
@@ -83,22 +89,22 @@
                     <select name="category_id"
                             class="bg-white border border-zinc-200 rounded-xl py-2.5 px-3.5 text-sm font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400 cursor-pointer"
                             onchange="this.form.submit()">
-                        <option value="">كل الأقسام</option>
+                        <option value="">{{ __('ui.search.all_categories') }}</option>
                         @foreach($allCategories as $cat)
                             <option value="{{ $cat->id }}" {{ $categoryId == $cat->id ? 'selected' : '' }}>
-                                @if($cat->icon){{ $cat->icon }} @endif{{ $cat->name_ar }}
+                                @if($cat->icon){{ $cat->icon }} @endif{{ $cat->name }}
                             </option>
                         @endforeach
                     </select>
 
                     {{-- Price range --}}
                     <div class="flex items-center gap-1 bg-white border border-zinc-200 rounded-xl px-3 py-0.5">
-                        <input type="number" name="min_price" value="{{ $minPrice }}" placeholder="من"
+                        <input type="number" name="min_price" value="{{ $minPrice }}" placeholder="{{ __('ui.search.price_from') }}"
                                class="w-16 bg-transparent py-2 text-sm font-semibold text-zinc-700 focus:outline-none placeholder-zinc-400 text-center">
                         <span class="text-zinc-300 text-xs select-none">—</span>
-                        <input type="number" name="max_price" value="{{ $maxPrice }}" placeholder="إلى"
+                        <input type="number" name="max_price" value="{{ $maxPrice }}" placeholder="{{ __('ui.search.price_to') }}"
                                class="w-16 bg-transparent py-2 text-sm font-semibold text-zinc-700 focus:outline-none placeholder-zinc-400 text-center">
-                        <span class="text-xs text-zinc-400 font-medium select-none me-1">ج.م</span>
+                        <span class="text-xs text-zinc-400 font-medium select-none me-1">{{ __('ui.sections.currency') }}</span>
                     </div>
 
                     {{-- GPS button --}}
@@ -107,7 +113,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        <span id="locBtnLabel">الأقرب لي</span>
+                        <span id="locBtnLabel">{{ __('ui.search.near_me') }}</span>
                     </button>
 
                     {{-- Radius (only when geo is active) --}}
@@ -115,10 +121,10 @@
                         <select name="radius"
                                 class="bg-white border border-zinc-200 rounded-xl py-2.5 px-3.5 text-sm font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400 cursor-pointer"
                                 onchange="this.form.submit()">
-                            <option value="5"   {{ $radius == 5   ? 'selected' : '' }}>5 كم</option>
-                            <option value="10"  {{ $radius == 10  ? 'selected' : '' }}>10 كم</option>
-                            <option value="50"  {{ $radius == 50  ? 'selected' : '' }}>50 كم</option>
-                            <option value="200" {{ $radius == 200 ? 'selected' : '' }}>200 كم</option>
+                            <option value="5"   {{ $radius == 5   ? 'selected' : '' }}>{{ __('ui.search.radius_km', ['km' => 5]) }}</option>
+                            <option value="10"  {{ $radius == 10  ? 'selected' : '' }}>{{ __('ui.search.radius_km', ['km' => 10]) }}</option>
+                            <option value="50"  {{ $radius == 50  ? 'selected' : '' }}>{{ __('ui.search.radius_km', ['km' => 50]) }}</option>
+                            <option value="200" {{ $radius == 200 ? 'selected' : '' }}>{{ __('ui.search.radius_km', ['km' => 200]) }}</option>
                         </select>
                     @endif
 
@@ -130,7 +136,7 @@
                         <a href="{{ route('listings.search') }}"
                            class="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-700 border border-zinc-200 hover:border-zinc-300 px-3.5 py-2.5 rounded-xl text-sm font-semibold">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            مسح
+                            {{ __('ui.search.clear_filters') }}
                         </a>
                     @endif
 
@@ -140,8 +146,8 @@
                 @if(request('lat') && request('lng') && ($sort ?? \App\Support\ListingSort::DEFAULT) === \App\Support\ListingSort::DEFAULT)
                     <div class="flex items-center gap-1.5 mt-3 text-xs text-[#1D9E75] font-semibold">
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
-                        النتائج مرتبة حسب قربها من موقعك
-                        <a href="{{ route('listings.search', array_merge(request()->except(['lat', 'lng']), [])) }}" class="text-zinc-400 hover:text-zinc-600 underline">إلغاء</a>
+                        {{ __('ui.search.geo_sorted') }}
+                        <a href="{{ route('listings.search', array_merge(request()->except(['lat', 'lng']), [])) }}" class="text-zinc-400 hover:text-zinc-600 underline">{{ __('ui.search.geo_cancel') }}</a>
                     </div>
                 @endif
             </form>
@@ -153,12 +159,15 @@
             {{-- Results summary bar --}}
             <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <p class="text-sm text-zinc-500 font-medium">
-                    <span class="font-black text-zinc-900">{{ number_format($listings->total()) }}</span> إعلان
+                    <span class="font-black text-zinc-900">
+                        {{ trans_choice('ui.search.results_count', $listings->total(), ['count' => number_format($listings->total())]) }}
+                    </span>
                     @if($query)
-                        عن "<span class="text-[#1D9E75] font-bold">{{ $query }}</span>"
+                        {{ __('ui.search.results_for_query') }}
+                        "<span class="text-[#1D9E75] font-bold" dir="auto">{{ $query }}</span>"
                     @endif
                     @if($categoryId && $allCategories->firstWhere('id', $categoryId))
-                        في {{ $allCategories->firstWhere('id', $categoryId)->name_ar }}
+                        {{ __('ui.search.results_in_category') }} <span dir="auto">{{ $allCategories->firstWhere('id', $categoryId)->name }}</span>
                     @endif
                 </p>
             </div>
@@ -187,7 +196,7 @@
                                 <div class="absolute bottom-2 end-2">
                                     <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white"
                                           style="{{ $listing->condition === 'new' ? 'background:rgba(29,158,117,0.9);' : 'background:rgba(0,0,0,0.55);' }}">
-                                        {{ $listing->condition === 'new' ? (__('ui.sections.condition_new') ?? 'جديد') : (__('ui.sections.condition_used') ?? 'مستعمل') }}
+                                        {{ $listing->condition === 'new' ? __('ui.sections.condition_new') : __('ui.sections.condition_used') }}
                                     </span>
                                 </div>
                             @endif
@@ -199,20 +208,20 @@
                                 @if($listing->price > 0)
                                     <span class="font-bold text-zinc-900 text-sm">
                                         {{ number_format($listing->price) }}
-                                        <span class="font-normal text-zinc-400 text-[10px] ms-0.5">{{ __('ui.sections.currency') ?? 'ج.م' }}</span>
+                                        <span class="font-normal text-zinc-400 text-[10px] ms-0.5">{{ __('ui.sections.currency') }}</span>
                                     </span>
                                 @else
-                                    <span class="text-zinc-400 font-medium text-xs">{{ __('ui.sections.on_contact') ?? 'تواصل' }}</span>
+                                    <span class="text-zinc-400 font-medium text-xs">{{ __('ui.sections.on_contact') }}</span>
                                 @endif
                             </div>
 
-                            <h3 class="font-semibold text-zinc-900 text-[13px] line-clamp-1 leading-snug group-hover:text-[#1D9E75]">
+                            <h3 class="font-semibold text-zinc-900 text-[13px] line-clamp-1 leading-snug group-hover:text-[#1D9E75]" dir="auto">
                                 {{ $listing->title }}
                             </h3>
 
                             <div class="flex items-center gap-1 mt-0.5 text-[11px] text-zinc-400">
                                 @if($listing->location)
-                                    <span class="line-clamp-1">{{ $listing->location->name_ar ?? '' }}</span>
+                                    <span class="line-clamp-1" dir="auto">{{ $listing->location->name ?? '' }}</span>
                                     <span>·</span>
                                 @endif
                                 <span class="shrink-0">{{ $listing->created_at->locale(app()->getLocale())->diffForHumans() }}</span>
@@ -238,23 +247,23 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                 </div>
-                <h2 class="text-xl font-black text-zinc-800 mb-2">لا توجد نتائج مطابقة</h2>
+                <h2 class="text-xl font-black text-zinc-800 mb-2">{{ __('ui.search.empty_title') }}</h2>
                 <p class="text-zinc-500 text-sm max-w-xs mx-auto mb-7">
                     @if($query)
-                        جرّب كلمات بحث مختلفة أو وسّع نطاق الفلاتر
+                        {{ __('ui.search.empty_with_query') }}
                     @else
-                        لا توجد إعلانات منشورة حالياً، كن أول من ينشر!
+                        {{ __('ui.search.empty_no_query') }}
                     @endif
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <a href="{{ route('listings.search') }}"
                        class="btn-nilex-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm">
-                        عرض كل الإعلانات
+                        {{ __('ui.search.view_all_listings') }}
                     </a>
                     <a href="{{ route('listings.create') }}"
                        class="inline-flex items-center gap-2 border border-zinc-200 hover:border-zinc-300 text-zinc-700 hover:text-[#1D9E75] px-6 py-3 rounded-xl font-bold text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                        أضف إعلانك
+                        {{ __('ui.search.add_listing') }}
                     </a>
                 </div>
             </div>
@@ -268,6 +277,12 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const searchI18n = {!! json_encode([
+            'geoUnsupported' => __('ui.search.geo_unsupported'),
+            'nearMeLoading' => __('ui.search.near_me_loading'),
+            'nearMe' => __('ui.search.near_me'),
+            'geoDenied' => __('ui.search.geo_denied'),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!};
         const btn      = document.getElementById('getLocationBtn');
         const label    = document.getElementById('locBtnLabel');
         const latInput = document.getElementById('latInput');
@@ -278,10 +293,10 @@
 
         btn.addEventListener('click', function () {
             if (!navigator.geolocation) {
-                alert('متصفحك لا يدعم خاصية تحديد الموقع.');
+                alert(searchI18n.geoUnsupported);
                 return;
             }
-            label.textContent = 'جاري التحديد...';
+            label.textContent = searchI18n.nearMeLoading;
             btn.disabled = true;
             btn.style.opacity = '0.7';
 
@@ -292,8 +307,8 @@
                     form.submit();
                 },
                 function () {
-                    alert('يجب السماح للمتصفح بمعرفة موقعك لتشغيل ميزة (الأقرب لي). 📍');
-                    label.textContent = 'الأقرب لي';
+                    alert(searchI18n.geoDenied);
+                    label.textContent = searchI18n.nearMe;
                     btn.disabled = false;
                     btn.style.opacity = '1';
                 },

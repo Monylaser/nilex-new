@@ -5,9 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @stack('meta')
-
     <title>@yield('title', config('app.name', 'Nilex'))</title>
+
+    @php
+        $defaultMetaTitle = trim($__env->yieldContent('title', config('app.name', 'Nilex')));
+        $defaultMetaDescription = __('ui.hero.subtitle');
+        $defaultMetaImage = asset('images/logo/download.png');
+    @endphp
+
+    <meta name="description" content="{{ strip_tags($defaultMetaDescription) }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ __('ui.pages.og_site_name') }}">
+    <meta property="og:locale" content="{{ __('ui.pages.og_locale') }}">
+    <meta property="og:title" content="{{ $defaultMetaTitle }}">
+    <meta property="og:description" content="{{ strip_tags($defaultMetaDescription) }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ $defaultMetaImage }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $defaultMetaTitle }}">
+    <meta name="twitter:description" content="{{ strip_tags($defaultMetaDescription) }}">
+    <meta name="twitter:image" content="{{ $defaultMetaImage }}">
+
+    @stack('meta')
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

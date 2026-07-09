@@ -5,15 +5,22 @@
 @section('title', $listing->title . ' — ' . number_format($listing->price) . ' ' . __('ui.sections.currency') . ' | ' . __('listing.detail.brand'))
 
 @push('meta')
+    @php
+        $ogImage = $listing->getFirstMediaUrl('images', 'full_hd') ?: asset('images/logo/download.png');
+    @endphp
     <meta name="description" content="{{ Str::limit(strip_tags($listing->description), 160) }}">
     <meta property="og:type" content="product">
+    <meta property="og:site_name" content="{{ __('ui.pages.og_site_name') }}">
+    <meta property="og:locale" content="{{ __('ui.pages.og_locale') }}">
     <meta property="og:title" content="{{ $listing->title }} — {{ number_format($listing->price) }} {{ __('ui.sections.currency') }}">
     <meta property="og:description" content="{{ Str::limit(strip_tags($listing->description), 100) }}">
-    <meta property="og:image" content="{{ $listing->getFirstMediaUrl('images', 'full_hd') }}">
+    <meta property="og:image" content="{{ $ogImage }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $listing->title }}">
-    <meta name="twitter:image" content="{{ $listing->getFirstMediaUrl('images', 'full_hd') }}">
+    <meta name="twitter:description" content="{{ Str::limit(strip_tags($listing->description), 100) }}">
+    <meta name="twitter:url" content="{{ url()->current() }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
 
     {{-- JSON-LD structured data (schema.org) — additive, SEO only. --}}
     {{-- Cars use the multi-type ["Product","Car"] (Car is a Product subtype, so --}}
