@@ -28,9 +28,9 @@
             .prose-arabic ul,
             .prose-arabic ol  { padding-right: 1.5rem; margin-bottom: 1rem; }
             .prose-arabic li  { line-height: 2; color: #3f3f46; margin-bottom: 0.25rem; }
-            .prose-arabic a   { color: #1D9E75; text-decoration: underline; }
+            .prose-arabic a   { color: #14A5A8; text-decoration: underline; }
             .prose-arabic blockquote {
-                border-right: 4px solid #1D9E75;
+                border-right: 4px solid #14A5A8;
                 border-left: none;
                 padding: 0.75rem 1.25rem;
                 background: #f0faf5;

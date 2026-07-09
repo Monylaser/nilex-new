@@ -171,8 +171,8 @@
                     datasets: [{
                         label: '{{ __('ui.dashboard.chart_views') }}',
                         data: JSON.parse(container.getAttribute('data-values') || '[]'),
-                        borderColor: '#1D9E75',
-                        backgroundColor: 'rgba(29,158,117,0.1)',
+                        borderColor: '#14A5A8',
+                        backgroundColor: 'rgba(20,165,168,0.1)',
                         fill: true,
                         tension: 0.3,
                     }]

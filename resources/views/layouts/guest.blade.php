@@ -133,7 +133,7 @@
     if ($settings && $settings->auth_bg_type === 'image' && $bgImageUrl) {
         $bgStyle = "background-image:url('{$bgImageUrl}'); background-size:cover; background-position:center;";
     } else {
-        $bgStyle = "background:" . ($settings->auth_bg_color ?? '#085041') . ";";
+        $bgStyle = "background:" . ($settings->auth_bg_color ?? '#0D7377') . ";";
     }
 @endphp
 

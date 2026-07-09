@@ -85,7 +85,7 @@
                         <div class="w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300"
                              :class="{
                                 'bg-nilex-teal border-nilex-teal text-white': currentStep > {{ $num }},
-                                'bg-white border-nilex-teal text-nilex-teal ring-4 ring-green-100': currentStep === {{ $num }},
+                                'bg-white border-nilex-teal text-nilex-teal ring-4 ring-nilex-teal/20': currentStep === {{ $num }},
                                 'bg-white border-gray-200 text-gray-300': currentStep < {{ $num }},
                              }">
                             <template x-if="currentStep > {{ $num }}">
@@ -158,7 +158,7 @@
                         <div @click="selectRoot(categories.find(c => c.id === {{ $cat->id }}))"
                              class="rounded-2xl border-2 p-4 cursor-pointer flex flex-col items-center text-center gap-2 transition-all duration-200 hover:shadow-md hover:scale-105 min-h-[44px]"
                              :class="(selectedRootId === {{ $cat->id }})
-                                ? 'border-nilex-teal bg-green-50 ring-2 ring-green-400'
+                                ? 'border-nilex-teal bg-nilex-teal/10 ring-2 ring-nilex-teal/50'
                                 : 'border-gray-100 bg-white hover:border-gray-200'">
                             <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 overflow-hidden">
                                 @php $iconUrl = $cat->getFirstMediaUrl('icon'); @endphp
@@ -184,7 +184,7 @@
                             <button type="button" @click="selectSub(sub)"
                                     class="px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all duration-200 min-h-[44px] flex items-center gap-2"
                                     :class="(formData.category_id == sub.id)
-                                        ? 'border-nilex-teal bg-green-50 text-nilex-teal ring-2 ring-green-300'
+                                        ? 'border-nilex-teal bg-nilex-teal/10 text-nilex-teal ring-2 ring-nilex-teal/40'
                                         : 'border-gray-200 text-zinc-600 hover:border-nilex-teal'">
                                 <span class="w-8 h-8 flex items-center justify-center shrink-0">
                                     <template x-if="sub.icon_url">
@@ -216,7 +216,7 @@
                 {{-- ────────────────────────────────────────
                      🤖 المساعد الذكي (Gemini) — إضافة فقط
                 ──────────────────────────────────────── --}}
-                <div class="mb-6 rounded-2xl border border-nilex-teal/30 bg-gradient-to-br from-green-50 to-white p-4">
+                <div class="mb-6 rounded-2xl border border-nilex-teal/30 bg-gradient-to-br from-nilex-teal/10 to-white p-4">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-lg">🤖</span>
                         <h3 class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.ai_title') }}</h3>
@@ -239,7 +239,7 @@
                     <div x-show="aiMessage" x-cloak
                          class="mt-3 text-xs font-semibold rounded-xl px-3 py-2"
                          :class="aiMessage && aiMessage.type === 'success'
-                            ? 'bg-green-100 text-nilex-teal'
+                            ? 'bg-nilex-teal/20 text-nilex-teal'
                             : 'bg-amber-50 text-amber-700 border border-amber-200'"
                          x-text="aiMessage ? aiMessage.text : ''"></div>
                 </div>
@@ -275,13 +275,13 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div @click="formData.condition = 'new'"
                                  class="rounded-2xl border-2 p-4 cursor-pointer text-center transition-all duration-200 min-h-[44px]"
-                                 :class="formData.condition === 'new' ? 'border-nilex-teal bg-green-50 ring-2 ring-green-300' : 'border-gray-200 hover:border-gray-300'">
+                                 :class="formData.condition === 'new' ? 'border-nilex-teal bg-nilex-teal/10 ring-2 ring-nilex-teal/40' : 'border-gray-200 hover:border-gray-300'">
                                 <div class="text-2xl mb-1">✨</div>
                                 <span class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.condition_new') }}</span>
                             </div>
                             <div @click="formData.condition = 'used'"
                                  class="rounded-2xl border-2 p-4 cursor-pointer text-center transition-all duration-200 min-h-[44px]"
-                                 :class="formData.condition === 'used' ? 'border-nilex-teal bg-green-50 ring-2 ring-green-300' : 'border-gray-200 hover:border-gray-300'">
+                                 :class="formData.condition === 'used' ? 'border-nilex-teal bg-nilex-teal/10 ring-2 ring-nilex-teal/40' : 'border-gray-200 hover:border-gray-300'">
                                 <div class="text-2xl mb-1">🔄</div>
                                 <span class="text-sm font-bold text-zinc-800">{{ __('wizard.step2.condition_used') }}</span>
                             </div>
@@ -307,7 +307,7 @@
                             <template x-for="opt in priceTypes" :key="opt.value">
                                 <button type="button" @click="formData.price_type = opt.value"
                                         class="px-2 py-2.5 rounded-xl border-2 text-[13px] font-semibold transition-all duration-200 min-h-[44px]"
-                                        :class="formData.price_type === opt.value ? 'border-nilex-teal bg-green-50 text-nilex-teal' : 'border-gray-200 text-zinc-600 hover:border-gray-300'">
+                                        :class="formData.price_type === opt.value ? 'border-nilex-teal bg-nilex-teal/10 text-nilex-teal' : 'border-gray-200 text-zinc-600 hover:border-gray-300'">
                                     <span x-text="opt.label"></span>
                                 </button>
                             </template>
@@ -643,7 +643,7 @@
                      @dragover.prevent="isDragging = true"
                      @dragleave.prevent="isDragging = false"
                      @drop.prevent="isDragging = false; addImages($event.dataTransfer.files)">
-                    <div class="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mb-3">
+                    <div class="w-14 h-14 rounded-2xl bg-nilex-teal/10 flex items-center justify-center mb-3">
                         <svg class="w-7 h-7 text-nilex-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
@@ -744,7 +744,7 @@
                 </div>
 
                 {{-- Completion checklist --}}
-                <div class="bg-green-50 border border-green-100 rounded-2xl p-4 mb-6">
+                <div class="bg-nilex-teal/10 border border-nilex-teal/20 rounded-2xl p-4 mb-6">
                     <h3 class="text-sm font-bold text-zinc-800 mb-3">{{ __('wizard.step4.checklist_title') }}</h3>
                     <ul class="space-y-2 text-sm">
                         <template x-for="item in checklist" :key="item.label">
@@ -783,7 +783,7 @@
                         <div class="flex flex-wrap gap-2 mt-3">
                             <span class="text-[11px] font-semibold bg-gray-50 text-zinc-600 px-2.5 py-1 rounded-lg" x-text="conditionLabel()"></span>
                             <span class="text-[11px] font-semibold bg-gray-50 text-zinc-600 px-2.5 py-1 rounded-lg" x-text="priceTypeLabel()"></span>
-                            <span class="text-[11px] font-bold bg-green-50 text-nilex-teal px-2.5 py-1 rounded-lg">
+                            <span class="text-[11px] font-bold bg-nilex-teal/10 text-nilex-teal px-2.5 py-1 rounded-lg">
                                 <span x-text="formData.price ? Number(formData.price).toLocaleString('en-US') : '0'"></span> {{ __('wizard.common.currency') }}
                             </span>
                         </div>

@@ -73,7 +73,7 @@ composer test
 | `Frontend/CategoryController` | Category page; increments `views_count`, paginates published listings with `ListingSort` + search-priority boost (default sort), eager-loads `category,location,user` |
 | `Frontend/LegalPageController` | Renders `LegalPage` by slug at `/{slug}` |
 | `Frontend/PaymentController` | Points checkout → Paymob iframe (requires `refund_policy_accepted`); user-facing success/failed callback views (credit happens in webhook) |
-| `ListingController` | Detail page + view tracking + similar listings; `revealPhone()` (auth, 401 guests, 20/hr throttle), `trackWhatsappClick()`, `makeOffer()` |
+| `ListingController` | Detail page + view tracking + similar listings; `revealPhone()` (auth, 401 guests, 20/hr throttle), `trackWhatsappClick()` (auth, 401 guests, published-only), `makeOffer()` |
 | `ProfileController` | Profile edit/update (phone/email managed via OTP flows, not here); `destroy()` **anonymizes** (see §9) |
 | `PhoneVerificationController` | Profile phone add+verify: `send()` stages `pending_phone`, `verify()` commits + one-time **+20** (`phone_bonus_claimed_at`) |
 | `EmailVerificationProfileController` | Mirror flow for email: `pending_email`, one-time **+20** (`email_bonus_claimed_at`) |
@@ -310,7 +310,7 @@ Token name `nilex` kept, value remapped to navy. Filament `/admin` is fully excl
 
 ### Re-skin status
 
-Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, both pricing pages' CTAs, trust card, footer, dashboard/profile/ads/Livewire CTAs, the **listing wizard** (teal chrome), and the **auth pages + guest layout** (all committed). Residual legacy green `#1D9E75` accents remain in: `components/points-badge.blade.php`, Chart.js dataset colors (user/business dashboards), `pages/show.blade.php` prose links, footer accent bars, and assorted breadcrumb/icon accents on **search-results** and category pages.
+Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, both pricing pages' CTAs, trust card, footer, dashboard/profile/ads/Livewire CTAs, the **listing wizard** (teal chrome), auth pages + guest layout, points badge, Chart.js dashboards, legal prose links, footer accent bars, search/category breadcrumbs, cookie consent, pricing/ad-pricing pages, PDF report styles, SEO image generator, and profile avatar fallbacks (all committed or fixed in working tree). **Residual legacy green `#1D9E75` fully replaced — Fixed 2026-07-09.**
 
 ---
 
@@ -370,7 +370,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | **Custom error pages** | **Fixed 2026-07-09** — custom Nilex-styled pages added for `403/404/419/429/500` under `resources/views/errors/` with AR/EN `ui.errors.*` translations. |
 | `PAYMOB_IFRAME_ID` | Referenced by `config/services.php` but absent from `.env`. |
 | Legal page `content` EN | Arabic-only by decision; EN visitors see Arabic body via `ar` fallback. |
-| Re-skin residual green | See §5 — points-badge, Chart.js, prose links, search/category accents. |
+| Re-skin residual green | **Fixed 2026-07-09** — all `#1D9E75` / `#085041` brand accents replaced with `nilex-teal` / `nilex-teal-deep`; semantic emerald retained for success states only. |
 | **Search-priority sort** | Fixed 2026-07-09 — boost applies in SQL `ORDER BY` before pagination in `HomeController::search()` and `CategoryController::show()` (default sort only). |
 | **Scout production readiness** | `collection` driver locally; Meilisearch + queue indexing needed for prod. |
 
@@ -439,7 +439,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | **Paymob live mode** | Test credentials only; `PAYMOB_IFRAME_ID` missing from `.env`. |
 | **Hosting / deployment** | Not deployed — local Laragon only. Plan: Laravel Forge. |
 | **Production infra switches** | Queue `sync`→Redis, cache `file`→Redis, Scout `collection`→Meilisearch, `MAIL_MAILER` `log`→real SMTP. |
-| **Performance indexes** | Missing `listings.status` composites — see §12. |
+| **Performance indexes** | **Fixed 2026-07-09** — migration `2026_07_09_000001_add_performance_indexes_to_core_tables.php` (see §12). |
 | **High-severity bugs** | Referral + feature points races fixed 2026-07-09; buyerLeads IDOR (M3) **fixed 2026-07-09**. |
 | **UI/UX designer pass** | Planned hire via خمسات (Khamsat). |
 | **Search page i18n** | **Fixed 2026-07-09** — bilingual AR/EN with `ui.search.*`. |
@@ -469,7 +469,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | M1 | **`points_balance` desync after featuring** | `Listing::featureWithPoints()` | **Fixed 2026-07-09** |
 | M2 | **Referral `used_count` race** | `RegisteredUserController` + `CampaignLink` | **Fixed 2026-07-09** |
 | M3 | **IDOR in `buyerLeads()`** — no `listing.user_id === Auth::id()` check (unlike `confirmSaleToBuyer()`) | `UserDashboard.php` ~162–177 | **Fixed 2026-07-09** — ownership re-verified via `Listing::where('user_id', Auth::id())`; `abort(403)` on mismatch |
-| M4 | **WhatsApp click tracking unauthenticated** — no auth/status gate; metric inflation possible | `ListingController::trackWhatsappClick()` |
+| M4 | **WhatsApp click tracking unauthenticated** — no auth/status gate; metric inflation possible | `ListingController::trackWhatsappClick()` | **Fixed 2026-07-09** — `auth` middleware + published-only guard; 401 guests, 404 non-published |
 | M5 | **Null phone in `revealPhone()`** — `ltrim(null)` on missing phone | `ListingController.php` ~87–88 |
 | M6 | **`featureWithPoints()` not atomic** | `Listing.php` | **Fixed 2026-07-09** |
 | M7 | **Message spam — no rate limit** | `MessageController.php` | **Fixed 2026-07-09** — 5 messages/min per authenticated user via `RateLimiter`; JSON 429 or redirect with `ui.messages.rate_limit_exceeded` |
@@ -529,7 +529,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Priority | Issue | Location |
 |---|---|---|
 | **P1** | **Media N+1 on all public listing grids** — controllers eager-load relations but not `media`; views call `getFirstMediaUrl()` per card (~12+ queries/page) | `HomeController`, `CategoryController`, `listing-card.blade.php`, `search-results.blade.php` | **Fixed 2026-07-09** — `with('media')` on homepage (`index`), search (`search`), and category (`show`) listing queries |
-| **P2** | **Missing `listings.status` indexes** — no index on `status`, `(status, created_at)`, `(user_id, status)`, `(category_id, status)` | migrations |
+| **P2** | **Missing `listings.status` indexes** — no index on `status`, `(status, created_at)`, `(user_id, status)`, `(category_id, status)` | migrations | **Fixed 2026-07-09** — `2026_07_09_000001_add_performance_indexes_to_core_tables.php` adds: `listings` — `(status)`, `(status, created_at)`, `(user_id, status)`, `(user_id, created_at)`, `(category_id, status)`, `(is_featured, featured_until)`, `(deleted_at)`; `offers` — `(receiver_id, status)`; `media` — `(model_type, model_id, collection_name)` |
 | **P3** | **UserDashboard query storm** — 5+ separate count queries + chart queries + unbounded `incomingOffers->get()` every render | `UserDashboard.php` |
 | **P4** | **Scout `collection` driver** — full in-memory scan; unusable at scale until Meilisearch | `config/scout.php` |
 | **P5** | **Competitor pricing N+1** — `Listing::avg('price')` per listing in loop | `SellerListingAnalyticsService.php` ~226–251 |
@@ -549,23 +549,21 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Ad impression dedup non-atomic (`has` + `put`) | `AdCampaignService.php` |
 | Wizard location tree ignores `Location::getCachedAll()` | `HomeController.php` |
 
-### Recommended index additions (new migration)
+### Index additions — **applied 2026-07-09** (`2026_07_09_000001_add_performance_indexes_to_core_tables.php`)
 
-```sql
--- listings
-INDEX (status)
-INDEX (status, created_at)
-INDEX (user_id, status)
-INDEX (category_id, status)
-INDEX (is_featured, featured_until)
-INDEX (deleted_at)  -- soft delete scope
+| Table | Index | Query paths served |
+|---|---|---|
+| `listings` | `(status)` | Filament moderation tabs, `StatsOverviewWidget` published count |
+| `listings` | `(status, created_at)` | Homepage `latestListings`, category/search default sort |
+| `listings` | `(user_id, status)` | Seller dashboard status badge counts |
+| `listings` | `(user_id, created_at)` | Seller dashboard paginated listing list (`latest()`) |
+| `listings` | `(category_id, status)` | Category page `where status=published` |
+| `listings` | `(is_featured, featured_until)` | Homepage featured carousel, `scopeFeatured()`, `activeFeaturedCount()` |
+| `listings` | `(deleted_at)` | Soft-delete global scope on every listing query |
+| `offers` | `(receiver_id, status)` | Dashboard pending incoming offers inbox |
+| `media` | `(model_type, model_id, collection_name)` | Spatie `images` collection lookup per listing card (morph index lacks `collection_name`) |
 
--- offers
-INDEX (receiver_id, status)
-
--- media (Spatie)
-INDEX (model_type, model_id, collection_name)
-```
+`user_entitlements` already has `UNIQUE (user_id, feature_key)` plus single-column indexes on `user_id` and `feature_key` — sufficient for `EntitlementService` lookups and search-priority JOINs; no additional index added.
 
 ---
 

@@ -12,9 +12,9 @@ class GenerateSeoImages extends Command
     protected $signature   = 'nilex:generate-seo-images {--force : Overwrite existing images}';
     protected $description = 'توليد صور OG (1200×630) لجميع محافظات مصر باستخدام GD Library';
 
-    // ألوان التدرج: #1D9E75 → #085041
-    private const GRADIENT_START = ['r' => 0x1D, 'g' => 0x9E, 'b' => 0x75];
-    private const GRADIENT_END   = ['r' => 0x08, 'g' => 0x50, 'b' => 0x41];
+    // ألوان التدرج: #14A5A8 → #0D7377
+    private const GRADIENT_START = ['r' => 0x14, 'g' => 0xA5, 'b' => 0xA8];
+    private const GRADIENT_END   = ['r' => 0x0D, 'g' => 0x73, 'b' => 0x77];
 
     private const IMAGE_WIDTH  = 1200;
     private const IMAGE_HEIGHT = 630;

@@ -49,7 +49,7 @@ class BestSellingPlansChart extends ChartWidget
                 [
                     'label'           => 'عدد المشتريات',
                     'data'            => $purchaseCounts,
-                    'backgroundColor' => '#1D9E75',
+                    'backgroundColor' => '#14A5A8',
                     'borderColor'     => '#178a66',
                     'borderWidth'     => 1,
                 ],

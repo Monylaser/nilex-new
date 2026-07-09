@@ -666,8 +666,8 @@
                         {
                             label: '{{ __('ui.dashboard.chart_views') }}',
                             data: views,
-                            backgroundColor: 'rgba(29,158,117,0.15)',
-                            borderColor: '#1D9E75',
+                            backgroundColor: 'rgba(20,165,168,0.15)',
+                            borderColor: '#14A5A8',
                             borderWidth: 2,
                             borderRadius: 6,
                         },
@@ -712,8 +712,8 @@
                         datasets: [{
                             label: '{{ __('ui.dashboard.chart_views') }}',
                             data: JSON.parse(viewsContainer.getAttribute('data-values') || '[]'),
-                            borderColor: '#1D9E75',
-                            backgroundColor: 'rgba(29,158,117,0.1)',
+                            borderColor: '#14A5A8',
+                            backgroundColor: 'rgba(20,165,168,0.1)',
                             fill: true,
                             tension: 0.3,
                         }]
@@ -757,7 +757,7 @@
             const catCanvas    = document.getElementById('categoryPerformanceChart');
             if (catContainer && catCanvas) {
                 destroyChart('category');
-                const colors = ['#1D9E75','#25D366','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#71717a'];
+                const colors = ['#14A5A8','#25D366','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#71717a'];
                 chartInstances.category = new Chart(catCanvas, {
                     type: 'doughnut',
                     data: {

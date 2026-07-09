@@ -22,7 +22,7 @@
                     {{-- Avatar --}}
                     <div class="relative self-start shrink-0">
                         <img id="avatar-preview"
-                             src="{{ $user->avatar ? Storage::url($user->avatar) : 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=1D9E75&color=fff&size=80' }}"
+                             src="{{ $user->avatar ? Storage::url($user->avatar) : 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=14A5A8&color=fff&size=80' }}"
                              class="w-20 h-20 rounded-2xl object-cover border-2 border-zinc-100"
                              alt="{{ $user->name }}">
                     </div>
@@ -101,7 +101,7 @@
                     <div class="flex items-center gap-4">
                         <div class="relative shrink-0">
                             <img id="avatar-preview-form"
-                                 src="{{ $user->avatar ? Storage::url($user->avatar) : 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=1D9E75&color=fff&size=64' }}"
+                                 src="{{ $user->avatar ? Storage::url($user->avatar) : 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=14A5A8&color=fff&size=64' }}"
                                  class="w-16 h-16 rounded-2xl object-cover border border-zinc-200"
                                  alt="">
                             <label for="avatar"

@@ -283,10 +283,10 @@
     <div class="border-b border-zinc-100 bg-white">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 py-3 text-sm text-zinc-400 font-medium flex-wrap" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
-                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">{{ __('ui.footer.link_home') }}</a>
+                <a href="{{ route('home') }}" class="hover:text-nilex-teal transition-colors">{{ __('ui.footer.link_home') }}</a>
                 @if($listing->category)
                     <svg class="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    <a href="{{ route('category.show', $listing->category->slug) }}" class="hover:text-[#1D9E75] transition-colors">{{ $listing->category->name }}</a>
+                    <a href="{{ route('category.show', $listing->category->slug) }}" class="hover:text-nilex-teal transition-colors">{{ $listing->category->name }}</a>
                 @endif
                 <svg class="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 <span class="text-zinc-600 truncate max-w-[200px] sm:max-w-xs">{{ Str::limit($listing->title, 45) }}</span>
@@ -350,7 +350,7 @@
                             @foreach($media as $i => $img)
                                 <button @click="openLightbox({{ $i }})"
                                         :class="activeIdx === {{ $i }}
-                                            ? 'border-[#1D9E75] ring-2 ring-[#1D9E75]/20 opacity-100'
+                                            ? 'border-nilex-teal ring-2 ring-nilex-teal/20 opacity-100'
                                             : 'border-transparent opacity-50 hover:opacity-80'"
                                         class="w-16 h-16 shrink-0 rounded-xl overflow-hidden border-2 transition-opacity">
                                     <img src="{{ $img->getUrl('thumb') }}" alt="" class="w-full h-full object-cover">
@@ -363,7 +363,7 @@
                 {{-- Title + meta strip -------------------------------------------- --}}
                 <div class="bg-white rounded-xl border border-zinc-200 p-5">
                     @if($listing->is_featured)
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-[#1D9E75] bg-[#1D9E75]/8 px-3 py-1 rounded-full mb-3 border border-[#1D9E75]/15">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-nilex-teal bg-nilex-teal/10 px-3 py-1 rounded-full mb-3 border border-nilex-teal/15">
                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                             {{ __('listing.detail.featured') }}
                         </span>
@@ -457,10 +457,10 @@
                          }"
                          @keydown.escape.window="shareMenuOpen = false">
                         <button type="button" @click="shareNative()"
-                                class="inline-flex items-center gap-2 border border-zinc-200 hover:border-[#1D9E75] hover:text-[#1D9E75] text-zinc-600 px-4 py-2 rounded-xl font-bold text-sm transition-colors">
+                                class="inline-flex items-center gap-2 border border-zinc-200 hover:border-nilex-teal hover:text-nilex-teal text-zinc-600 px-4 py-2 rounded-xl font-bold text-sm transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                             <span x-show="!shareCopied">{{ __('ui.share.button') }}</span>
-                            <span x-show="shareCopied" style="display:none;" class="text-[#1D9E75]">{{ __('ui.share.copied') }}</span>
+                            <span x-show="shareCopied" style="display:none;" class="text-nilex-teal">{{ __('ui.share.copied') }}</span>
                         </button>
 
                         {{-- Manual fallback menu (shown when Web Share API is unavailable) --}}
@@ -502,7 +502,7 @@
                             @if($listing->condition)
                                 <div class="bg-zinc-50 rounded-xl px-4 py-3 border border-zinc-100">
                                     <p class="text-[11px] text-zinc-400 font-semibold mb-0.5">{{ __('listing.detail.condition_heading') }}</p>
-                                    <p class="font-bold text-sm {{ $listing->condition === 'new' ? 'text-[#1D9E75]' : 'text-amber-700' }}">
+                                    <p class="font-bold text-sm {{ $listing->condition === 'new' ? 'text-nilex-teal' : 'text-amber-700' }}">
                                         {{ $listing->condition === 'new' ? '✦ ' . __('listing.detail.condition_new') : '◉ ' . __('listing.detail.condition_used') }}
                                     </p>
                                 </div>
@@ -532,7 +532,7 @@
 
                 {{-- Seller info ---------------------------------------------------- --}}
                 <div class="bg-white rounded-xl border border-zinc-200 p-5 flex items-center gap-4">
-                    <div class="w-12 h-12 bg-[#1D9E75]/10 rounded-full flex items-center justify-center font-black text-[#1D9E75] text-lg shrink-0">
+                    <div class="w-12 h-12 bg-nilex-teal/10 rounded-full flex items-center justify-center font-black text-nilex-teal text-lg shrink-0">
                         {{ mb_substr($listing->user->name, 0, 1) }}
                     </div>
                     <div class="flex-1 min-w-0">
@@ -554,12 +554,12 @@
                     {{-- Price card --}}
                     <div class="bg-white rounded-xl border border-zinc-200 p-5">
                         <p class="text-xs text-zinc-400 font-semibold mb-1.5">{{ __('listing.detail.asking_price') }}</p>
-                        <div class="text-3xl font-black text-[#1D9E75]">
+                        <div class="text-3xl font-black text-nilex-orange">
                             {{ number_format($listing->price) }}
                             <span class="text-base font-bold text-zinc-400">{{ __('ui.sections.currency') }}</span>
                         </div>
                         @if($listing->condition)
-                            <span class="inline-block mt-2 text-xs font-bold px-2.5 py-1 rounded-full {{ $listing->condition === 'new' ? 'bg-[#1D9E75]/8 text-[#1D9E75]' : 'bg-amber-50 text-amber-700' }}">
+                            <span class="inline-block mt-2 text-xs font-bold px-2.5 py-1 rounded-full {{ $listing->condition === 'new' ? 'bg-nilex-teal/10 text-nilex-teal' : 'bg-amber-50 text-amber-700' }}">
                                 {{ $listing->condition === 'new' ? __('listing.detail.condition_new') : __('listing.detail.condition_used') }}
                             </span>
                         @endif
@@ -602,7 +602,7 @@
                         @if($listing->category)
                             <div class="flex justify-between items-center py-2.5 border-b border-zinc-50">
                                 <span class="text-zinc-400 font-semibold">{{ __('listing.detail.category') }}</span>
-                                <a href="{{ route('category.show', $listing->category->slug) }}" class="font-bold text-zinc-800 hover:text-[#1D9E75] transition-colors">{{ $listing->category->name }}</a>
+                                <a href="{{ route('category.show', $listing->category->slug) }}" class="font-bold text-zinc-800 hover:text-nilex-teal transition-colors">{{ $listing->category->name }}</a>
                             </div>
                         @endif
                         @if($listing->province || $listing->location)
@@ -649,7 +649,7 @@
         <div class="flex items-center gap-3">
             {{-- Price chip --}}
             <div class="shrink-0 min-w-0">
-                <p class="text-lg font-black text-[#1D9E75] leading-none">{{ number_format($listing->price) }}</p>
+                <p class="text-lg font-black text-nilex-orange leading-none">{{ number_format($listing->price) }}</p>
                 <p class="text-xs text-zinc-400 font-medium leading-none mt-0.5">{{ __('ui.sections.currency') }}</p>
             </div>
 
@@ -740,10 +740,10 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <p class="text-zinc-500 text-sm mb-5">{{ __('listing.detail.offer_asking') }} <strong class="text-[#1D9E75]">{{ number_format($listing->price) }} {{ __('ui.sections.currency') }}</strong></p>
+                <p class="text-zinc-500 text-sm mb-5">{{ __('listing.detail.offer_asking') }} <strong class="text-nilex-orange">{{ number_format($listing->price) }} {{ __('ui.sections.currency') }}</strong></p>
 
                 <template x-if="offerFeedback">
-                    <div :class="offerFeedback.type === 'success' ? 'bg-[#1D9E75]/8 text-[#178a64] border-[#1D9E75]/20' : 'bg-red-50 text-red-700 border-red-200'"
+                    <div :class="offerFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'"
                          class="p-3.5 rounded-xl border text-sm font-bold mb-4" x-text="offerFeedback.text"></div>
                 </template>
 

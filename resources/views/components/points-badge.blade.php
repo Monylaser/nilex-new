@@ -3,12 +3,12 @@
 @php
     if ($points > 1000) {
         $label    = 'مميز';
-        $bg       = 'background: linear-gradient(135deg, #085041, #1D9E75);';
+        $bg       = 'background: linear-gradient(135deg, #0D7377, #14A5A8);';
         $textColor = 'color: white;';
         $icon     = '★';
     } elseif ($points > 500) {
         $label    = 'نشيط';
-        $bg       = 'background: linear-gradient(135deg, #1D9E75, #085041);';
+        $bg       = 'background: linear-gradient(135deg, #14A5A8, #0D7377);';
         $textColor = 'color: white;';
         $icon     = '●';
     } elseif ($points > 100) {

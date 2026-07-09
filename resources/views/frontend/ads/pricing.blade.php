@@ -29,13 +29,13 @@
 <main class="bg-white min-h-screen" dir="{{ $isRtl ? 'rtl' : 'ltr' }}" style="padding-top:64px;">
 
     {{-- HERO --}}
-    <section class="border-b border-zinc-100 bg-gradient-to-b from-[#1D9E75]/[0.05] to-white">
+    <section class="border-b border-zinc-100 bg-gradient-to-b from-nilex-teal/[0.05] to-white">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
-            <p class="text-[11px] font-semibold uppercase tracking-widest text-[#1D9E75] mb-4">
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-nilex-teal mb-4">
                 {{ __('adspaces.hero.eyebrow') }}
             </p>
             <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-zinc-900 leading-tight">
-                {{ __('adspaces.hero.title') }} <span class="text-[#1D9E75]">Nilex</span>
+                {{ __('adspaces.hero.title') }} <span class="text-nilex-teal">Nilex</span>
             </h1>
             <p class="text-zinc-500 text-sm sm:text-base mt-4 leading-relaxed max-w-2xl mx-auto">
                 {{ __('adspaces.hero.subtitle') }}
@@ -73,7 +73,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
                 @foreach($placementCards as $key => $placement)
                     @php $desc = $localeDesc($placement); @endphp
-                    <div class="bg-white rounded-2xl border border-zinc-200 p-6 hover:border-[#1D9E75]/30 hover:shadow-md transition-all duration-200">
+                    <div class="bg-white rounded-2xl border border-zinc-200 p-6 hover:border-nilex-teal/30 hover:shadow-md transition-all duration-200">
                         <h3 class="font-bold text-zinc-900 text-lg mb-2">
                             {{ $localeLabel($placement, $key) }}
                         </h3>
@@ -143,17 +143,17 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-3xl mx-auto">
                 @php $flow = $selfServiceEnabled ? 'self' : 'email'; @endphp
                 <div class="text-center">
-                    <div class="w-12 h-12 rounded-full bg-[#1D9E75]/10 text-[#1D9E75] font-black text-lg flex items-center justify-center mx-auto mb-3">{{ $stepNums[0] }}</div>
+                    <div class="w-12 h-12 rounded-full bg-nilex-teal/10 text-nilex-teal font-black text-lg flex items-center justify-center mx-auto mb-3">{{ $stepNums[0] }}</div>
                     <h3 class="font-bold text-zinc-900 text-sm mb-1">{{ __('adspaces.how.' . $flow . '.step1_title') }}</h3>
                     <p class="text-zinc-400 text-xs">{{ __('adspaces.how.' . $flow . '.step1_desc') }}</p>
                 </div>
                 <div class="text-center">
-                    <div class="w-12 h-12 rounded-full bg-[#1D9E75]/10 text-[#1D9E75] font-black text-lg flex items-center justify-center mx-auto mb-3">{{ $stepNums[1] }}</div>
+                    <div class="w-12 h-12 rounded-full bg-nilex-teal/10 text-nilex-teal font-black text-lg flex items-center justify-center mx-auto mb-3">{{ $stepNums[1] }}</div>
                     <h3 class="font-bold text-zinc-900 text-sm mb-1">{{ __('adspaces.how.' . $flow . '.step2_title') }}</h3>
                     <p class="text-zinc-400 text-xs">{{ __('adspaces.how.' . $flow . '.step2_desc') }}</p>
                 </div>
                 <div class="text-center">
-                    <div class="w-12 h-12 rounded-full bg-[#1D9E75]/10 text-[#1D9E75] font-black text-lg flex items-center justify-center mx-auto mb-3">{{ $stepNums[2] }}</div>
+                    <div class="w-12 h-12 rounded-full bg-nilex-teal/10 text-nilex-teal font-black text-lg flex items-center justify-center mx-auto mb-3">{{ $stepNums[2] }}</div>
                     <h3 class="font-bold text-zinc-900 text-sm mb-1">{{ __('adspaces.how.' . $flow . '.step3_title') }}</h3>
                     <p class="text-zinc-400 text-xs">{{ __('adspaces.how.' . $flow . '.step3_desc') }}</p>
                 </div>
@@ -162,7 +162,7 @@
 
         {{-- CTA --}}
         <section>
-            <div class="rounded-2xl bg-gradient-to-br from-[#1D9E75] to-[#085041] px-6 sm:px-10 py-10 sm:py-12 text-center text-white">
+            <div class="rounded-2xl bg-gradient-to-br from-nilex-teal to-nilex-teal-deep px-6 sm:px-10 py-10 sm:py-12 text-center text-white">
                 <h2 class="text-xl sm:text-2xl font-black mb-2">{{ __('adspaces.cta.heading') }}</h2>
                 <p class="text-white/80 text-sm mb-6 max-w-md mx-auto">
                     @if($selfServiceEnabled)
@@ -173,12 +173,12 @@
                 </p>
                 @if($selfServiceEnabled)
                     <a href="{{ $ctaUrl }}"
-                       class="inline-flex items-center gap-2 bg-white text-[#1D9E75] hover:bg-zinc-50 font-bold px-6 py-3 rounded-xl text-sm transition-colors">
+                       class="inline-flex items-center gap-2 bg-white text-nilex-teal hover:bg-zinc-50 font-bold px-6 py-3 rounded-xl text-sm transition-colors">
                         {{ __('adspaces.cta.btn_self') }}
                     </a>
                 @else
                     <a href="mailto:ads@nilex.com"
-                       class="inline-flex items-center gap-2 bg-white text-[#1D9E75] hover:bg-zinc-50 font-bold px-6 py-3 rounded-xl text-sm transition-colors">
+                       class="inline-flex items-center gap-2 bg-white text-nilex-teal hover:bg-zinc-50 font-bold px-6 py-3 rounded-xl text-sm transition-colors">
                         {{ __('adspaces.cta.btn_email') }}
                     </a>
                 @endif

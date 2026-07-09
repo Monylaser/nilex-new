@@ -6,7 +6,7 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #fafafa; color: #18181b; padding: 2rem; }
         .card { background: #fff; border: 1px solid #e4e4e7; border-radius: 16px; padding: 2rem; max-width: 640px; margin: 0 auto; }
-        h1 { color: #1D9E75; font-size: 1.5rem; margin-bottom: 0.5rem; }
+        h1 { color: #14A5A8; font-size: 1.5rem; margin-bottom: 0.5rem; }
         .meta { color: #71717a; font-size: 0.875rem; margin-bottom: 1.5rem; }
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
         .stat { background: #f4f4f5; border-radius: 12px; padding: 1rem; text-align: center; }

@@ -18,7 +18,7 @@ class SiteSetting extends Model
         return static::query()->orderBy('id')->first()
             ?? static::create([
                 'auth_bg_type' => 'color',
-                'auth_bg_color' => '#085041',
+                'auth_bg_color' => '#0D7377',
                 'is_active' => true,
             ]);
     }

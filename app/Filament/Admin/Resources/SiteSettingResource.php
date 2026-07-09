@@ -96,7 +96,7 @@ class SiteSettingResource extends Resource
 
                     ColorPicker::make('auth_bg_color')
                         ->label('لون الخلفية')
-                        ->default('#085041')
+                        ->default('#0D7377')
                         ->visible(fn ($get) => $get('auth_bg_type') === 'color'),
 
                     FileUpload::make('auth_bg_image')

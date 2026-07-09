@@ -17,7 +17,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             // حقول الإعلانات على شاشة اللوجن
             $table->string('auth_bg_type')->default('color'); // color | image
-            $table->string('auth_bg_color')->nullable()->default('#085041');
+            $table->string('auth_bg_color')->nullable()->default('#0D7377');
             $table->text('auth_headline')->nullable();
             $table->text('auth_subtext')->nullable();
         });

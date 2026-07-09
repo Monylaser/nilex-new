@@ -17,7 +17,7 @@
     class="fixed bottom-0 left-0 right-0 z-50 translate-y-full opacity-0 transition-all duration-500 ease-out"
     style="display:none;"
 >
-    <div class="bg-[#0f172a] border-t-2 border-[#1D9E75] shadow-2xl">
+    <div class="bg-[#0f172a] border-t-2 border-nilex-teal shadow-2xl">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4"
                  dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
@@ -28,7 +28,7 @@
                     <p class="text-gray-300 text-sm leading-relaxed">
                         {{ trans('ui.cookies.message') }}
                         <a href="{{ route('legal.show', 'cookies-policy') }}"
-                           class="text-[#1D9E75] underline hover:text-emerald-400 transition-colors ms-1 whitespace-nowrap">
+                           class="text-nilex-teal underline hover:text-nilex-teal-light transition-colors ms-1 whitespace-nowrap">
                             {{ trans('ui.cookies.learn_more') }}
                         </a>
                     </p>

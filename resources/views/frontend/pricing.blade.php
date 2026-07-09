@@ -45,9 +45,9 @@
     {{-- ════════════════════════════════════════════
          SECTION 1 — HERO (enhanced, legacy copy preserved in lang keys)
     ════════════════════════════════════════════ --}}
-    <section class="border-b border-zinc-100 bg-gradient-to-b from-[#1D9E75]/[0.04] to-white">
+    <section class="border-b border-zinc-100 bg-gradient-to-b from-nilex-teal/[0.04] to-white">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 text-center">
-            <p class="text-[11px] font-semibold uppercase tracking-widest text-[#1D9E75] mb-3">
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-nilex-teal mb-3">
                 {{ __('ui.pricing.page_title') }}
             </p>
             <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 leading-snug tracking-tight">
@@ -58,7 +58,7 @@
             </p>
 
             @if(($registrationWelcomePoints ?? 0) > 0)
-                <div class="mt-5 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#1D9E75] bg-[#1D9E75]/8 border border-[#1D9E75]/20 px-4 py-2 rounded-full">
+                <div class="mt-5 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-nilex-teal bg-nilex-teal/10 border border-nilex-teal/20 px-4 py-2 rounded-full">
                     {{ __('ui.pricing.welcome_gift', ['points' => number_format($registrationWelcomePoints)]) }}
                 </div>
             @endif
@@ -74,16 +74,16 @@
         <section id="plans" x-data="{ refundAccepted: false }">
             @auth
                 @if($plans->isNotEmpty())
-                    <div class="mb-5 sm:mb-6 bg-[#1D9E75]/[0.05] border border-[#1D9E75]/20 rounded-2xl px-4 py-3.5 sm:px-5 sm:py-4">
+                    <div class="mb-5 sm:mb-6 bg-nilex-teal/[0.05] border border-nilex-teal/20 rounded-2xl px-4 py-3.5 sm:px-5 sm:py-4">
                         <label class="flex items-start gap-3 cursor-pointer select-none">
                             <input type="checkbox"
                                    x-model="refundAccepted"
-                                   class="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-[#1D9E75] focus:ring-[#1D9E75]">
+                                   class="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-nilex-teal focus:ring-nilex-teal">
                             <span class="text-xs sm:text-sm text-zinc-700 leading-relaxed">
                                 أوافق على
                                 <a href="{{ route('legal.show', 'refund-policy') }}"
                                    target="_blank" rel="noopener"
-                                   class="font-semibold text-[#1D9E75] underline hover:text-[#178a64]">سياسة الاسترجاع والاسترداد</a>
+                                   class="font-semibold text-nilex-teal underline hover:text-nilex-teal-deep">سياسة الاسترجاع والاسترداد</a>
                             </span>
                         </label>
                     </div>
@@ -92,8 +92,8 @@
 
             @if($plans->isEmpty())
                 <div class="flex flex-col items-center justify-center py-12 text-center bg-white rounded-3xl border border-zinc-200 shadow-sm">
-                    <div class="w-10 h-10 rounded-xl bg-[#1D9E75]/10 flex items-center justify-center mb-3">
-                        <svg class="w-5 h-5 text-[#1D9E75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-10 h-10 rounded-xl bg-nilex-teal/10 flex items-center justify-center mb-3">
+                        <svg class="w-5 h-5 text-nilex-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                   d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
@@ -115,10 +115,10 @@
                         @endphp
 
                         <div class="relative flex flex-col h-full bg-white rounded-3xl border shadow-sm p-5 sm:p-6 transition-shadow hover:shadow-md
-                                    {{ $isPopular ? 'border-[#1D9E75] ring-1 ring-[#1D9E75]/20' : 'border-zinc-200' }}">
+                                    {{ $isPopular ? 'border-nilex-teal ring-1 ring-nilex-teal/20' : 'border-zinc-200' }}">
 
                             @if($isPopular)
-                                <span class="absolute -top-2.5 start-4 sm:start-5 inline-block text-[10px] font-semibold text-[#1D9E75] bg-white border border-[#1D9E75]/30 px-2.5 py-0.5 rounded-full leading-none shadow-sm">
+                                <span class="absolute -top-2.5 start-4 sm:start-5 inline-block text-[10px] font-semibold text-nilex-teal bg-white border border-nilex-teal/30 px-2.5 py-0.5 rounded-full leading-none shadow-sm">
                                     {{ __('ui.pricing.most_popular') }}
                                 </span>
                             @endif
@@ -206,8 +206,8 @@
                         ['M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z', __('ui.pricing.analytics_chart')],
                     ] as [$icon, $label])
                         <li class="flex items-center gap-3 bg-white rounded-2xl border border-zinc-200 px-4 py-3.5 shadow-sm">
-                            <span class="w-9 h-9 rounded-xl bg-[#1D9E75]/10 flex items-center justify-center shrink-0">
-                                <svg class="w-4 h-4 text-[#1D9E75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span class="w-9 h-9 rounded-xl bg-nilex-teal/10 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4 text-nilex-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $icon }}"/>
                                 </svg>
                             </span>
@@ -244,7 +244,7 @@
                         __('ui.pricing.dashboard_offers'),
                     ] as $feature)
                         <li class="flex items-center gap-2.5 bg-zinc-50 rounded-2xl border border-zinc-200 px-4 py-3.5">
-                            <span class="text-[#1D9E75] text-sm shrink-0" aria-hidden="true">✅</span>
+                            <span class="text-nilex-teal text-sm shrink-0" aria-hidden="true">✅</span>
                             <span class="text-xs sm:text-sm font-semibold text-zinc-700 leading-snug">{{ $feature }}</span>
                         </li>
                     @endforeach
@@ -265,15 +265,15 @@
                     <span class="inline-flex items-center px-4 py-2 rounded-full bg-white/10 text-white border border-white/10">
                         {{ __('ui.pricing.value_step_visibility') }}
                     </span>
-                    <span class="text-[#1D9E75] hidden sm:inline" aria-hidden="true">→</span>
+                    <span class="text-nilex-teal hidden sm:inline" aria-hidden="true">→</span>
                     <span class="inline-flex items-center px-4 py-2 rounded-full bg-white/10 text-white border border-white/10">
                         {{ __('ui.pricing.value_step_leads') }}
                     </span>
-                    <span class="text-[#1D9E75] hidden sm:inline" aria-hidden="true">→</span>
+                    <span class="text-nilex-teal hidden sm:inline" aria-hidden="true">→</span>
                     <span class="inline-flex items-center px-4 py-2 rounded-full bg-white/10 text-white border border-white/10">
                         {{ __('ui.pricing.value_step_conversations') }}
                     </span>
-                    <span class="text-[#1D9E75] hidden sm:inline" aria-hidden="true">→</span>
+                    <span class="text-nilex-teal hidden sm:inline" aria-hidden="true">→</span>
                     <span class="inline-flex items-center px-4 py-2 rounded-full btn-nilex-primary shadow-sm">
                         {{ __('ui.pricing.value_step_sales') }}
                     </span>
@@ -339,7 +339,7 @@
                                     </svg>
                                 </span>
                                 <span class="flex-1 min-w-0">{{ $item['label'] }}</span>
-                                <span class="font-semibold text-[#1D9E75] shrink-0 tabular-nums">
+                                <span class="font-semibold text-nilex-teal shrink-0 tabular-nums">
                                     {{ __($item['points_key'] ?? 'ui.pricing.earn.points_positive', ['points' => number_format($item['points'])]) }}
                                 </span>
                             </li>

@@ -36,7 +36,7 @@
     <div class="border-b border-zinc-100 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 py-3 text-sm text-zinc-400 font-medium flex-wrap" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
-                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">{{ __('ui.footer.link_home') }}</a>
+                <a href="{{ route('home') }}" class="hover:text-nilex-teal transition-colors">{{ __('ui.footer.link_home') }}</a>
                 <svg class="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 <span class="text-zinc-600" dir="auto">
                     @if($query)
@@ -144,7 +144,7 @@
 
                 {{-- Geo active indicator --}}
                 @if(request('lat') && request('lng') && ($sort ?? \App\Support\ListingSort::DEFAULT) === \App\Support\ListingSort::DEFAULT)
-                    <div class="flex items-center gap-1.5 mt-3 text-xs text-[#1D9E75] font-semibold">
+                    <div class="flex items-center gap-1.5 mt-3 text-xs text-nilex-teal font-semibold">
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
                         {{ __('ui.search.geo_sorted') }}
                         <a href="{{ route('listings.search', array_merge(request()->except(['lat', 'lng']), [])) }}" class="text-zinc-400 hover:text-zinc-600 underline">{{ __('ui.search.geo_cancel') }}</a>
@@ -164,7 +164,7 @@
                     </span>
                     @if($query)
                         {{ __('ui.search.results_for_query') }}
-                        "<span class="text-[#1D9E75] font-bold" dir="auto">{{ $query }}</span>"
+                        "<span class="text-nilex-teal font-bold" dir="auto">{{ $query }}</span>"
                     @endif
                     @if($categoryId && $allCategories->firstWhere('id', $categoryId))
                         {{ __('ui.search.results_in_category') }} <span dir="auto">{{ $allCategories->firstWhere('id', $categoryId)->name }}</span>
@@ -215,7 +215,7 @@
                                 @endif
                             </div>
 
-                            <h3 class="font-semibold text-zinc-900 text-[13px] line-clamp-1 leading-snug group-hover:text-[#1D9E75]" dir="auto">
+                            <h3 class="font-semibold text-zinc-900 text-[13px] line-clamp-1 leading-snug group-hover:text-nilex-teal" dir="auto">
                                 {{ $listing->title }}
                             </h3>
 
@@ -261,7 +261,7 @@
                         {{ __('ui.search.view_all_listings') }}
                     </a>
                     <a href="{{ route('listings.create') }}"
-                       class="inline-flex items-center gap-2 border border-zinc-200 hover:border-zinc-300 text-zinc-700 hover:text-[#1D9E75] px-6 py-3 rounded-xl font-bold text-sm">
+                       class="inline-flex items-center gap-2 border border-zinc-200 hover:border-zinc-300 text-zinc-700 hover:text-nilex-teal px-6 py-3 rounded-xl font-bold text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                         {{ __('ui.search.add_listing') }}
                     </a>

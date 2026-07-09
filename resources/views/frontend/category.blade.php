@@ -23,15 +23,15 @@
     <div class="border-b border-zinc-100 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 py-2.5 text-xs text-zinc-400 font-medium flex-wrap" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
-                <a href="{{ route('home') }}" class="hover:text-[#1D9E75] transition-colors">{{ __('ui.footer.link_home') }}</a>
+                <a href="{{ route('home') }}" class="hover:text-nilex-teal transition-colors">{{ __('ui.footer.link_home') }}</a>
                 <svg class="w-3 h-3 rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 @if($category->parent)
-                    <a href="{{ route('category.show', $category->parent->slug) }}" class="hover:text-[#1D9E75] transition-colors">
+                    <a href="{{ route('category.show', $category->parent->slug) }}" class="hover:text-nilex-teal transition-colors">
                         {{ $category->parent->name }}
                     </a>
                     <svg class="w-3 h-3 rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 @endif
-                <span class="text-[#1D9E75] font-semibold">{{ $category->name }}</span>
+                <span class="text-nilex-teal font-semibold">{{ $category->name }}</span>
             </nav>
         </div>
     </div>
@@ -42,7 +42,7 @@
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
             <div class="flex items-start gap-3">
                 @if($category->icon)
-                    <div class="w-11 h-11 bg-[#1D9E75]/10 rounded-xl flex items-center justify-center text-xl shrink-0 border border-[#1D9E75]/10">
+                    <div class="w-11 h-11 bg-nilex-teal/10 rounded-xl flex items-center justify-center text-xl shrink-0 border border-nilex-teal/10">
                         {{ $category->icon }}
                     </div>
                 @endif
@@ -65,7 +65,7 @@
             <div class="flex gap-2 overflow-x-auto pb-1 mb-6 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
                 @foreach($category->children->where('is_active', true) as $sub)
                     <a href="{{ route('category.show', $sub->slug) }}"
-                       class="shrink-0 flex items-center gap-1.5 bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-600 hover:text-[#1D9E75] px-3.5 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors">
+                       class="shrink-0 flex items-center gap-1.5 bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-600 hover:text-nilex-teal px-3.5 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors">
                         @if($sub->icon)<span>{{ $sub->icon }}</span>@endif
                         {{ $sub->name }}
                     </a>

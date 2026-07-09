@@ -160,7 +160,7 @@
                             @if(config('features.self_service_ads'))
                             <li>
                                 <a href="{{ route('ads.pricing') }}"
-                                   class="text-zinc-400 hover:text-[#1D9E75] text-sm transition-colors">
+                                   class="text-zinc-400 hover:text-nilex-teal text-sm transition-colors">
                                     {{ __('ui.nav.ad_spaces') }}
                                 </a>
                             </li>

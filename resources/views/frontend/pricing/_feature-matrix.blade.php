@@ -52,11 +52,11 @@
                                 $colKey = $columnKeys[$index] ?? null;
                                 $isGrowthCol = $colKey === 'growth';
                             @endphp
-                            <th scope="col" class="text-center px-3 py-3.5 min-w-[88px] {{ $isGrowthCol ? 'bg-[#1D9E75]/5' : '' }}">
+                            <th scope="col" class="text-center px-3 py-3.5 min-w-[88px] {{ $isGrowthCol ? 'bg-nilex-teal/5' : '' }}">
                                 @if ($plan)
                                     <span class="block text-xs font-bold text-zinc-900 leading-snug">{{ $plan->name_ar }}</span>
                                     @if ($isGrowthCol)
-                                        <span class="inline-block mt-1 text-[10px] font-semibold text-[#1D9E75] bg-white border border-[#1D9E75]/30 px-2 py-0.5 rounded-full leading-none">
+                                        <span class="inline-block mt-1 text-[10px] font-semibold text-nilex-teal bg-white border border-nilex-teal/30 px-2 py-0.5 rounded-full leading-none">
                                             {{ __('ui.pricing.most_popular') }}
                                         </span>
                                     @endif
@@ -93,9 +93,9 @@
                             @else
                                 @foreach ($columnKeys as $colKey)
                                     @php $included = (bool) ($row[$colKey] ?? false); @endphp
-                                    <td class="text-center px-3 py-3 {{ $colKey === 'growth' ? 'bg-[#1D9E75]/[0.03]' : '' }}">
+                                    <td class="text-center px-3 py-3 {{ $colKey === 'growth' ? 'bg-nilex-teal/[0.03]' : '' }}">
                                         @if ($included)
-                                            <span class="inline-flex items-center gap-1 text-xs font-medium text-[#1D9E75]" title="{{ __('ui.pricing.status_available') }}" aria-label="{{ __('ui.pricing.status_available') }}">
+                                            <span class="inline-flex items-center gap-1 text-xs font-medium text-nilex-teal" title="{{ __('ui.pricing.status_available') }}" aria-label="{{ __('ui.pricing.status_available') }}">
                                                 <span aria-hidden="true">✅</span>
                                                 <span class="sr-only sm:not-sr-only">{{ __('ui.pricing.status_available') }}</span>
                                             </span>
