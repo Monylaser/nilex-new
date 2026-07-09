@@ -580,12 +580,16 @@ return [
     ],
 
     'payment' => [
+        'page_title_success' => 'Payment Successful',
+        'page_title_failed' => 'Payment Failed',
         'success_title' => 'Payment Successful!',
-        'success_body' => 'Thank you — points have been added to your balance. You can now feature your listings.',
+        'success_body' => 'Thank you — points have been added to your balance. You can now feature your listings or continue from your dashboard.',
         'success_cta' => 'Go to Dashboard',
+        'success_secondary_cta' => 'View Point Plans',
         'failed_title' => 'Payment Failed',
-        'failed_body' => 'Unfortunately the transaction did not complete. Please try again or contact support.',
+        'failed_body' => 'Unfortunately the transaction did not complete. You can try again or contact support if the issue persists.',
         'failed_cta' => 'Back to Home',
+        'failed_retry_cta' => 'Try Again',
     ],
 
     'errors' => [

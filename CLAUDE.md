@@ -474,8 +474,8 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | M6 | **`featureWithPoints()` not atomic** | `Listing.php` | **Fixed 2026-07-09** |
 | M7 | **Message spam — no rate limit** | `MessageController.php` | **Fixed 2026-07-09** — 5 messages/min per authenticated user via `RateLimiter`; JSON 429 or redirect with `ui.messages.rate_limit_exceeded` |
 | M8 | **Pricing Section 6 inaccurate** — advertised daily +1 (not implemented), hardcoded referral +25, omitted email +20, hardcoded feature costs | `pricing.blade.php` ~291–337 | **Fixed 2026-07-09** — bilingual `ui.pricing.earn.*` / `spend.*`; config-backed earn values; `Listing::FEATURE_COSTS` loop; referral from active `CampaignLink`; daily login removed |
-| M9 | **Payment failed CTA mismatch** — label says "Back to Home", href is `dashboard` | `payment/failed.blade.php` |
-| M10 | **Payment callbacks use Breeze layout** — not `layouts.frontend` | `payment/success.blade.php`, `failed.blade.php` |
+| M9 | **Payment failed CTA mismatch** — label says "Back to Home", href is `dashboard` | `payment/failed.blade.php` | **Fixed 2026-07-09** — primary CTA links to `route('home')`; secondary retry links to pricing |
+| M10 | **Payment callbacks use Breeze layout** — not `layouts.frontend` | `payment/success.blade.php`, `failed.blade.php` | **Fixed 2026-07-09** — both pages extend `layouts.frontend` with Nilex branding |
 | M11 | **Ad popup skip strings hardcoded Arabic** | `ad-popup.blade.php` | **Fixed 2026-07-09** — bilingual `ui.ad_popup.*` keys for skip, countdown, and close |
 | M12 | **Socialite errors not displayed on login** — `withErrors(['error'])` but no `@error('error')` | `SocialiteController` → `login.blade.php` |
 | M13 | **Search GET validation returns 422 page** — no inline form feedback | `HomeController::search()` |
@@ -576,6 +576,6 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Search implementations | `HomeController::search()` vs `ListingGrid.php` — different Meilisearch filter placement |
 | Pricing marketing | Section 6 reads config + `Listing::FEATURE_COSTS` + active `CampaignLink` rewards (fixed 2026-07-09) |
 | Translation coverage | Category/detail/profile/search/ad-popup bilingual |
-| Payment UX | Success/fail pages use Breeze layout vs frontend chrome elsewhere |
+| Payment UX | Success/fail pages use frontend layout + Nilex branding (fixed 2026-07-09) |
 | Ad tracking | Banners track impressions; popup does not |
 | Feature cost display | Wizard and pricing Section 6 both use `Listing::FEATURE_COSTS` |
