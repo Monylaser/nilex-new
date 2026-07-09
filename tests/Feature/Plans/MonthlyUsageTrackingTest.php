@@ -1,12 +1,12 @@
 <?php
 
-use App\Models\Listing;
 use App\Models\PlanEntitlement;
 use App\Models\User;
 use App\Models\UserEntitlementUsage;
 use App\Services\EntitlementService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     seedPlanEntitlementCatalog();
@@ -40,7 +40,7 @@ describe('Monthly Usage Tracking', function () {
         $listing->featureWithPoints(1);
         $listing->featureWithPoints(1);
 
-        expect(fn () => $listing->featureWithPoints(1))->toThrow(\Exception::class);
+        expect(fn () => $listing->featureWithPoints(1))->toThrow(Exception::class);
     });
 
     it('decrements remaining featured listing slots', function () {
@@ -53,6 +53,26 @@ describe('Monthly Usage Tracking', function () {
         $listing->featureWithPoints(1);
 
         expect($this->service->remainingUsage($user, EntitlementService::FEATURE_FEATURED_LISTINGS_LIMIT))->toBe(0);
+    });
+
+    it('recordUsage enforces monthly boost limit under row lock', function () {
+        $user = User::factory()->create();
+        assignPlanToUser($user, createTierPlan(PlanEntitlement::TIER_STARTER));
+
+        $this->service->recordUsage($user, EntitlementService::FEATURE_MONTHLY_BOOST_LIMIT);
+        $this->service->recordUsage($user, EntitlementService::FEATURE_MONTHLY_BOOST_LIMIT);
+
+        $usage = UserEntitlementUsage::query()
+            ->where('user_id', $user->id)
+            ->where('feature_key', EntitlementService::FEATURE_MONTHLY_BOOST_LIMIT)
+            ->where('period_key', now()->format('Y-m'))
+            ->first();
+
+        expect($usage)->not->toBeNull()
+            ->and($usage->used_count)->toBe(2);
+
+        expect(fn () => $this->service->recordUsage($user, EntitlementService::FEATURE_MONTHLY_BOOST_LIMIT))
+            ->toThrow(Exception::class);
     });
 
 });

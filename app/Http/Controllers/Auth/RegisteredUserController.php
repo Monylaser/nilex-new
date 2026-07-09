@@ -7,13 +7,13 @@ use App\Auth\Services\DeviceLimitService;
 use App\Auth\Services\OtpService;
 use App\Http\Controllers\Controller;
 use App\Models\CampaignLink;
-use App\Models\PointTransaction;
 use App\Models\User;
 use App\Services\PointService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -37,8 +37,8 @@ class RegisteredUserController extends Controller
     {
         // ── 1. Validate ──────────────────────────────────────────────
         $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'contact'  => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
+            'contact' => ['required', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -73,13 +73,13 @@ class RegisteredUserController extends Controller
 
         // ── 6. Create user ───────────────────────────────────────────
         $user = User::create([
-            'name'              => $request->name,
-            'email'             => $isEmail ? $request->contact : null,
-            'phone'             => $isPhone ? $request->contact : null,
-            'password'          => Hash::make($request->password),
-            'ip_address'        => $request->ip(),
-            'device_id'         => $device['id'],
-            'fingerprint_hash'  => $this->fingerprints->compute($request),
+            'name' => $request->name,
+            'email' => $isEmail ? $request->contact : null,
+            'phone' => $isPhone ? $request->contact : null,
+            'password' => Hash::make($request->password),
+            'ip_address' => $request->ip(),
+            'device_id' => $device['id'],
+            'fingerprint_hash' => $this->fingerprints->compute($request),
         ]);
 
         // ── 7. Issue OTP ─────────────────────────────────────────────
@@ -95,18 +95,22 @@ class RegisteredUserController extends Controller
         // ── 9. Campaign referral reward ──────────────────────────────
         $campaignCode = session('campaign_code');
         if ($campaignCode) {
-            $campaign = CampaignLink::where('code', $campaignCode)->first();
-            if ($campaign && $campaign->isValid()) {
-                $user->increment('points_balance', $campaign->points_reward);
-                PointTransaction::create([
-                    'user_id'         => $user->id,
-                    'amount'          => $campaign->points_reward,
-                    'current_balance' => $user->fresh()->points_balance,
-                    'description'     => "مكافأة رابط الإحالة: {$campaign->code}",
-                ]);
-                $campaign->increment('used_count');
-                session()->forget('campaign_code');
-            }
+            DB::transaction(function () use ($user, $campaignCode) {
+                $campaign = CampaignLink::query()
+                    ->where('code', $campaignCode)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($campaign && $campaign->isValid()) {
+                    $this->pointService->credit(
+                        $user,
+                        $campaign->points_reward,
+                        "مكافأة رابط الإحالة: {$campaign->code}",
+                    );
+                    $campaign->increment('used_count');
+                    session()->forget('campaign_code');
+                }
+            });
         }
 
         // ── 10. Fire event + login ───────────────────────────────────

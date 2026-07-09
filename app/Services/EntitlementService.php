@@ -11,6 +11,7 @@ use App\Models\UserEntitlement;
 use App\Models\UserEntitlementUsage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class EntitlementService
 {
@@ -101,8 +102,8 @@ class EntitlementService
 
         $used = match ($featureKey) {
             self::FEATURE_FEATURED_LISTINGS_LIMIT => $this->activeFeaturedCount($user, $listing),
-            self::FEATURE_MONTHLY_BOOST_LIMIT     => $this->currentPeriodUsage($user, $featureKey),
-            default                               => 0,
+            self::FEATURE_MONTHLY_BOOST_LIMIT => $this->currentPeriodUsage($user, $featureKey),
+            default => 0,
         };
 
         return max(0, $limit - $used);
@@ -135,7 +136,7 @@ class EntitlementService
             return;
         }
 
-        $currentRank  = PlanEntitlement::tierRank($user->plan_tier);
+        $currentRank = PlanEntitlement::tierRank($user->plan_tier);
         $incomingRank = PlanEntitlement::tierRank($tier);
 
         if ($currentRank > $incomingRank) {
@@ -159,17 +160,17 @@ class EntitlementService
         foreach ($planEntitlements as $planEntitlement) {
             UserEntitlement::query()->updateOrCreate(
                 [
-                    'user_id'     => $user->id,
+                    'user_id' => $user->id,
                     'feature_key' => $planEntitlement->feature_key,
                 ],
                 [
-                    'value_type'              => $planEntitlement->value_type,
-                    'value'                   => $planEntitlement->value,
-                    'source'                  => UserEntitlement::SOURCE_PURCHASE,
-                    'source_plan_id'          => $plan->id,
-                    'source_transaction_id'   => $transaction->id,
-                    'granted_at'              => now(),
-                    'expires_at'              => null,
+                    'value_type' => $planEntitlement->value_type,
+                    'value' => $planEntitlement->value,
+                    'source' => UserEntitlement::SOURCE_PURCHASE,
+                    'source_plan_id' => $plan->id,
+                    'source_transaction_id' => $transaction->id,
+                    'granted_at' => now(),
+                    'expires_at' => null,
                 ],
             );
         }
@@ -183,17 +184,53 @@ class EntitlementService
             return;
         }
 
-        $usage = UserEntitlementUsage::query()->firstOrCreate(
-            [
-                'user_id'     => $user->id,
-                'feature_key' => $featureKey,
-                'period_key'  => $this->currentPeriodKey(),
-            ],
-            ['used_count' => 0],
-        );
+        DB::transaction(function () use ($user, $featureKey, $amount) {
+            $entitlement = UserEntitlement::query()
+                ->where('user_id', $user->id)
+                ->where('feature_key', $featureKey)
+                ->lockForUpdate()
+                ->first();
 
-        $usage->increment('used_count', $amount);
-        $this->clearUserCache($user);
+            $periodKey = $this->currentPeriodKey();
+
+            $usage = UserEntitlementUsage::query()
+                ->where('user_id', $user->id)
+                ->where('feature_key', $featureKey)
+                ->where('period_key', $periodKey)
+                ->lockForUpdate()
+                ->first();
+
+            if ($usage === null) {
+                UserEntitlementUsage::query()->insertOrIgnore([
+                    'user_id' => $user->id,
+                    'feature_key' => $featureKey,
+                    'period_key' => $periodKey,
+                    'used_count' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $usage = UserEntitlementUsage::query()
+                    ->where('user_id', $user->id)
+                    ->where('feature_key', $featureKey)
+                    ->where('period_key', $periodKey)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+            }
+
+            if ($featureKey === self::FEATURE_MONTHLY_BOOST_LIMIT && $entitlement !== null && ! $entitlement->isExpired()) {
+                $limit = $entitlement->value_type === PlanEntitlement::TYPE_INTEGER
+                    ? (int) $entitlement->castValue()
+                    : null;
+
+                if ($limit !== null && ($usage->used_count + $amount) > $limit) {
+                    throw new \Exception(__('server.dashboard.feature_limit_monthly'));
+                }
+            }
+
+            $usage->increment('used_count', $amount);
+            $this->clearUserCache($user);
+        });
     }
 
     public function resolveTier(User $user): ?string
@@ -206,11 +243,11 @@ class EntitlementService
         return $this->loadUserEntitlements($user)
             ->map(fn (UserEntitlement $entitlement) => [
                 'feature_key' => $entitlement->feature_key,
-                'value_type'  => $entitlement->value_type,
-                'value'       => $entitlement->castValue(),
-                'source'      => $entitlement->source,
-                'granted_at'  => $entitlement->granted_at,
-                'expires_at'  => $entitlement->expires_at,
+                'value_type' => $entitlement->value_type,
+                'value' => $entitlement->castValue(),
+                'source' => $entitlement->source,
+                'granted_at' => $entitlement->granted_at,
+                'expires_at' => $entitlement->expires_at,
             ]);
     }
 

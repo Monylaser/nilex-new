@@ -1,4 +1,5 @@
 <?php
+
 // app/Services/PointService.php
 
 namespace App\Services;
@@ -19,8 +20,8 @@ class PointService
      * @param  Model|null  $reference  Any Eloquent model to link (Listing, Order…)
      */
     public function credit(
-        User   $user,
-        int    $amount,
+        User $user,
+        int $amount,
         string $description,
         ?Model $reference = null,
     ): PointTransaction {
@@ -37,8 +38,8 @@ class PointService
      * @throws InsufficientPointsException
      */
     public function deduct(
-        User   $user,
-        int    $amount,
+        User $user,
+        int $amount,
         string $description,
         ?Model $reference = null,
     ): PointTransaction {
@@ -61,15 +62,52 @@ class PointService
      * @throws InsufficientPointsException
      */
     public function transfer(
-        User   $from,
-        User   $to,
-        int    $amount,
+        User $from,
+        User $to,
+        int $amount,
         string $description,
         ?Model $reference = null,
     ): array {
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Transfer amount must be positive.');
+        }
+
         return DB::transaction(function () use ($from, $to, $amount, $description, $reference) {
-            $debit  = $this->deduct($from, $amount, "Transfer out: {$description}", $reference);
-            $credit = $this->credit($to,   $amount, "Transfer in: {$description}",  $reference);
+            // Lock both user rows in a stable order to prevent deadlocks under
+            // concurrent opposite-direction transfers.
+            $lockIds = [$from->id, $to->id];
+            sort($lockIds);
+
+            User::query()
+                ->whereIn('id', $lockIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            /** @var User $lockedFrom */
+            $lockedFrom = User::query()->lockForUpdate()->findOrFail($from->id);
+            /** @var User $lockedTo */
+            $lockedTo = User::query()->lockForUpdate()->findOrFail($to->id);
+
+            if ($lockedFrom->points < $amount) {
+                throw new InsufficientPointsException($amount, $lockedFrom->points);
+            }
+
+            $debit = $this->applyBalanceChangeOnLockedUser(
+                $lockedFrom,
+                -$amount,
+                "Transfer out: {$description}",
+                $reference,
+                $from,
+            );
+
+            $credit = $this->applyBalanceChangeOnLockedUser(
+                $lockedTo,
+                $amount,
+                "Transfer in: {$description}",
+                $reference,
+                $to,
+            );
 
             return ['debit' => $debit, 'credit' => $credit];
         });
@@ -96,8 +134,8 @@ class PointService
      * DB transaction, preventing race conditions under concurrent requests.
      */
     private function record(
-        User   $user,
-        int    $amount,       // already signed (+/-)
+        User $user,
+        int $amount,       // already signed (+/-)
         string $description,
         ?Model $reference,
     ): PointTransaction {
@@ -112,30 +150,49 @@ class PointService
                 throw new InsufficientPointsException(abs($amount), $lockedUser->points);
             }
 
-            // 3. Update balance atomically — keep both columns in sync.
-            //    `points`         = active balance used everywhere in the app
-            //    `points_balance` = mirrors `points` so admin panel reads the same value
-            $lockedUser->increment('points', $amount);
-            $lockedUser->update(['points_balance' => $lockedUser->points]);
-
-            // 4. Log the transaction.
-            $transaction = new PointTransaction([
-                'user_id'         => $lockedUser->id,
-                'amount'          => $amount,
-                'current_balance' => $lockedUser->points,
-                'description'     => $description,
-            ]);
-
-            if ($reference) {
-                $transaction->reference()->associate($reference);
-            }
-
-            $transaction->save();
-
-            // 5. Sync the in-memory model so callers see the new balance.
-            $user->points = $lockedUser->points;
-
-            return $transaction;
+            return $this->applyBalanceChangeOnLockedUser(
+                $lockedUser,
+                $amount,
+                $description,
+                $reference,
+                $user,
+            );
         });
+    }
+
+    /**
+     * Apply a signed balance change on a row already locked via SELECT … FOR UPDATE.
+     * Caller must hold the lock inside an open DB transaction.
+     */
+    private function applyBalanceChangeOnLockedUser(
+        User $lockedUser,
+        int $amount,
+        string $description,
+        ?Model $reference,
+        ?User $callerModel = null,
+    ): PointTransaction {
+        // Keep both columns in sync — `points` is source of truth; `points_balance` mirrors it.
+        $lockedUser->increment('points', $amount);
+        $lockedUser->update(['points_balance' => $lockedUser->points]);
+
+        $transaction = new PointTransaction([
+            'user_id' => $lockedUser->id,
+            'amount' => $amount,
+            'current_balance' => $lockedUser->points,
+            'description' => $description,
+        ]);
+
+        if ($reference) {
+            $transaction->reference()->associate($reference);
+        }
+
+        $transaction->save();
+
+        if ($callerModel !== null) {
+            $callerModel->points = $lockedUser->points;
+            $callerModel->points_balance = $lockedUser->points;
+        }
+
+        return $transaction;
     }
 }

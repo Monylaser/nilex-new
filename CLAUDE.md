@@ -188,7 +188,7 @@ Any view displaying points MUST match these values — never hardcode different 
 | Profile phone verification (once per lifetime) | **+20** | `PhoneVerificationController::verify()`, guarded by `phone_bonus_claimed_at` |
 | Profile email verification (once per lifetime) | **+20** | `EmailVerificationProfileController::verify()`, guarded by `email_bonus_claimed_at` |
 | Listing created | **+3** | `HomeController::store()` |
-| Referral signup | `CampaignLink.points_reward` (DB-driven) | `RegisteredUserController` — ⚠️ bypasses `PointService`: increments `points_balance` only + manual `PointTransaction` (known bug H1, see §11) |
+| Referral signup | `CampaignLink.points_reward` (DB-driven) | `RegisteredUserController` — via `PointService::credit()` inside `DB::transaction` + `CampaignLink::lockForUpdate()` (fixed 2026-07-09) |
 | Points purchase | plan's `points` | `PaymobWebhookService` (webhook, not the callback controller) |
 | Admin adjustment | admin-entered ± | `UserResource::adjustPointsAction()` via `PointService`, description `'تعديل إداري: '…` |
 | Daily login | **NOT IMPLEMENTED** | no scheduler, no credit logic exists — **do not advertise** (pricing Section 6 still shows +1, see §11) |
@@ -204,7 +204,7 @@ Any view displaying points MUST match these values — never hardcode different 
 
 - `Listing::featureCost(int $days)` → `null` for unsupported durations (safe for UI).
 - `Listing::featureCostStrict(int $days)` → throws for unsupported (programmatic flows).
-- `$listing->featureWithPoints(int $days)` — checks `featured_listings_limit` + `monthly_boost_limit` entitlements + balance; ⚠️ debits via `$user->decrement('points')` + manual `PointTransaction` (type `feature_listing`), not `PointService::deduct()`. Extends `featured_until` when already featured. Best-effort after creation (silent failure never blocks the listing). **Race conditions — see §11 H2/H3.**
+- `$listing->featureWithPoints(int $days)` — checks entitlements + balance inside `DB::transaction` with `User::lockForUpdate()`; debits via `PointService::deduct()`; `recordUsage()` locks entitlement + usage rows under transaction (fixed 2026-07-09).
 - Wizard reads costs from `@json(\App\Models\Listing::FEATURE_COSTS)` — single source. Pricing page Section 6 still hardcodes Arabic strings (see §11).
 
 ### Purchase Plans — DB-driven (`point_plans` table via `PointPlanSeeder`, NOT config)
@@ -320,7 +320,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 2. **AR/EN translation is mandatory for every new user-facing string from the first line** — public + authenticated area. Lang files: `lang/{ar,en}/{ui,wizard,listing,adspaces,server,auth,validation}.php` + root `ar.json`/`en.json`. Exception: `app/Filament/*` (admin) is Arabic-only by deliberate decision (Phase D deferred).
 3. **Never delete code without explicit approval** — deprecate/flag instead, and ask.
 4. **Discovery before implementation** — read the actual code/DB first; never assume from docs or memory. For risky data work, dry-run first (see `users:backfill-verification` pattern: read-only by default, `--execute` to write).
-5. **`php artisan test` after every change** — suite must stay green (currently **434 passing, 0 failures**). Tests use in-memory SQLite, sync queue, `SCOUT_DRIVER=collection` (see `phpunit.xml`).
+5. **`php artisan test` after every change** — suite must stay green (currently **439 passing, 0 failures**). Tests use in-memory SQLite, sync queue, `SCOUT_DRIVER=collection` (see `phpunit.xml`).
 6. **Commit after each approved phase/step** — small, labeled commits.
 7. **Western/Latin digits (1,2,3) everywhere, all locales** — never Arabic-Indic numerals in UI strings.
 8. **Persisted `PointTransaction.description` strings stay Arabic** (written once at credit time — the documented permanent exception to rule 2).
@@ -358,8 +358,8 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | **Phase D — Filament admin translation** | Deferred in full by business decision (staff are Arabic speakers). |
 | **Daily login +1 points** | Not implemented (no scheduler/logic). **Pricing Section 6 still advertises it — must fix copy.** |
 | **Points for positive review** | Deliberately removed from earn-guide; needs product decisions before wiring in `ReviewObserver`. |
-| **Referral credit inconsistency** | `RegisteredUserController` referral bypasses `PointService` — see §11 H1. |
-| **`featureWithPoints()` race conditions** | No transaction/lock — see §11 H2/H3. |
+| **Referral credit inconsistency** | **Fixed 2026-07-09** — now routes through `PointService::credit()` with campaign row lock. |
+| **`featureWithPoints()` points race** | **Fixed 2026-07-09** — `DB::transaction` + `lockForUpdate` + `PointService::deduct()`. Entitlement `recordUsage()` row lock also fixed 2026-07-09. |
 | `listing_detail` / `search_results` placements | Priced in config + selectable in Filament but no view renders them. |
 | Seller-side `cancelBySeller()` UI | Model method exists; no UI action yet. |
 | Auto-reject pending offers on listing close | Pending offers on closed listings stay `pending`. |
@@ -388,7 +388,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 ### Points double-column
 
-`users.points` is the **only real balance**; `points_balance` is a mirror synced by `PointService::record()`. Never write either column directly — always go through `PointService`. Exceptions still open: referral (H1) and `featureWithPoints()` (H2/M1).
+`users.points` is the **only real balance**; `points_balance` is a mirror synced by `PointService::record()`. Never write either column directly — always go through `PointService`. All production credit/debit paths now use `PointService` (referral + featuring fixed 2026-07-09). `transfer()` locks both user rows in ascending `id` order to prevent deadlocks.
 
 ### Spatie MediaLibrary collections
 
@@ -423,7 +423,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 ## 10. Launch Notes (as of July 2026)
 
 ### Done
-- **Tests: 434 passing, 0 failures** (1313 assertions; Pest; in-memory SQLite).
+- **Tests: 439 passing, 0 failures** (1331 assertions; Pest; in-memory SQLite).
 - Entire public + authenticated frontend bilingual AR/EN (with known gaps in §11); RTL/LTR correct.
 - Paymob integration verified end-to-end **in test mode** (points + ad checkouts).
 - Moderation pipeline complete with notifications + audit trail.
@@ -440,7 +440,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | **Hosting / deployment** | Not deployed — local Laragon only. Plan: Laravel Forge. |
 | **Production infra switches** | Queue `sync`→Redis, cache `file`→Redis, Scout `collection`→Meilisearch, `MAIL_MAILER` `log`→real SMTP. |
 | **Performance indexes** | Missing `listings.status` composites — see §12. |
-| **High-severity bugs** | Referral points, feature race, buyerLeads IDOR — see §11. |
+| **High-severity bugs** | Referral + feature points races fixed 2026-07-09; buyerLeads IDOR (M3) still open — see §11. |
 | **UI/UX designer pass** | Planned hire via خمسات (Khamsat). |
 | **Search page i18n** | Hardcoded Arabic — EN users blocked on `/search`. |
 
@@ -452,26 +452,26 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 ### High
 
-| ID | Issue | Location |
-|---|---|---|
-| H1 | **Referral credit bypasses `PointService`** — increments `points_balance` only, not spendable `points`; users don't actually receive referral reward | `RegisteredUserController.php` ~95–109 |
-| H2 | **`featureWithPoints()` race** — no `lockForUpdate()`; concurrent requests can double-spend or drive `points` negative (column is signed integer) | `Listing.php` ~372–408 |
-| H3 | **`featureWithPoints()` entitlement race** — concurrent boosts can exceed `monthly_boost_limit` / `featured_listings_limit` | `Listing.php` + `EntitlementService.php` |
-| H4 | **Search page entirely hardcoded Arabic** — no `ui.search.*` keys; EN locale broken on `/search` | `search-results.blade.php` |
-| H5 | **Search-priority re-sort post-pagination** — entitlement boost applies to current page only; global order wrong across pages | `HomeController::search()` ~655–665 |
-| H6 | **OTP gate error not shown** — `EnsureOtpIsVerified` sets `session('error')` but `verify-otp.blade.php` only renders `status` | Middleware + auth view |
-| H7 | **No custom error pages** — 404/500 use Laravel defaults, off-brand | `resources/views/errors/` absent |
+| ID | Issue | Location | Status |
+|---|---|---|---|
+| H1 | **Referral credit bypasses `PointService`** | `RegisteredUserController.php` | **Fixed 2026-07-09** |
+| H2 | **`featureWithPoints()` points race** | `Listing.php` | **Fixed 2026-07-09** |
+| H3 | **`featureWithPoints()` entitlement race** | `Listing.php` + `EntitlementService.php` | **Fixed 2026-07-09** |
+| H4 | **Search page entirely hardcoded Arabic** | `search-results.blade.php` | Open |
+| H5 | **Search-priority re-sort post-pagination** | `HomeController::search()` | Open |
+| H6 | **OTP gate error not shown** | Middleware + auth view | Open |
+| H7 | **No custom error pages** | `resources/views/errors/` absent | Open |
 
 ### Medium
 
-| ID | Issue | Location |
-|---|---|---|
-| M1 | **`points_balance` desync after featuring** — `decrement('points')` without mirror update | `Listing::featureWithPoints()` |
-| M2 | **Referral `used_count` race** — no lock; concurrent signups can exceed `usage_limit` | `RegisteredUserController` + `CampaignLink` |
+| ID | Issue | Location | Status |
+|---|---|---|---|
+| M1 | **`points_balance` desync after featuring** | `Listing::featureWithPoints()` | **Fixed 2026-07-09** |
+| M2 | **Referral `used_count` race** | `RegisteredUserController` + `CampaignLink` | **Fixed 2026-07-09** |
 | M3 | **IDOR in `buyerLeads()`** — no `listing.user_id === Auth::id()` check (unlike `confirmSaleToBuyer()`) | `UserDashboard.php` ~162–177 |
 | M4 | **WhatsApp click tracking unauthenticated** — no auth/status gate; metric inflation possible | `ListingController::trackWhatsappClick()` |
 | M5 | **Null phone in `revealPhone()`** — `ltrim(null)` on missing phone | `ListingController.php` ~87–88 |
-| M6 | **`featureWithPoints()` not atomic** — failure after debit loses points without featuring | `Listing.php` |
+| M6 | **`featureWithPoints()` not atomic** | `Listing.php` | **Fixed 2026-07-09** |
 | M7 | **Message spam — no rate limit** | `MessageController.php` |
 | M8 | **Pricing Section 6 inaccurate** — advertises daily +1 (not implemented), hardcoded referral +25, omits email +20, hardcoded feature costs | `pricing.blade.php` ~291–337 |
 | M9 | **Payment failed CTA mismatch** — label says "Back to Home", href is `dashboard` | `payment/failed.blade.php` |
@@ -518,6 +518,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Pricing | Plan cards with entitlement bullets; comparison matrix removed |
 | Wizard | Feature costs from `Listing::FEATURE_COSTS` JSON |
 | Security | `public/.well-known/security.txt` added |
+| Points race | `PointService` transfer deadlock fix; referral + `featureWithPoints()` routed through locked transactions; `EntitlementService::recordUsage()` row locks (2026-07-09) |
 
 ---
 
@@ -572,7 +573,7 @@ INDEX (model_type, model_id, collection_name)
 
 | Area | Inconsistency |
 |---|---|
-| Point mutations | Welcome uses `PointService`; referral + feature use direct column writes |
+| Point mutations | All paths use `PointService` with `lockForUpdate()` (fixed 2026-07-09) |
 | Search vs category | Search-priority entitlement boost on search only, not category |
 | Search implementations | `HomeController::search()` vs `ListingGrid.php` — different Meilisearch filter placement |
 | Pricing marketing | Section 6 hardcodes values; hero/wizard use config/model constants |
