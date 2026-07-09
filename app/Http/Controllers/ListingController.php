@@ -100,7 +100,15 @@ class ListingController extends Controller
 
     public function trackWhatsappClick(Listing $listing, ListingLeadTrackingService $leadTracking): JsonResponse
     {
-        if ($leadTracking->recordWhatsappClick($listing, auth()->user())) {
+        if (! Auth::check()) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        if ($listing->status !== Listing::STATUS_PUBLISHED) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if ($leadTracking->recordWhatsappClick($listing, Auth::user())) {
             $listing->increment('whatsapp_clicks');
         }
 

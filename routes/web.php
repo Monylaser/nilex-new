@@ -152,6 +152,7 @@ Route::post('/listings/{listing}/reveal-phone', [ListingController::class, 'reve
     ->middleware('throttle:phone-reveal')
     ->name('listings.reveal-phone');
 Route::post('/listings/{listing}/whatsapp-click', [ListingController::class, 'trackWhatsappClick'])
+    ->middleware('auth')
     ->name('listings.whatsapp-click');
 
 // ❤️ تبديل المفضلة (AJAX) — يتحقق من الـ auth داخلياً مثل reveal-phone

@@ -367,6 +367,24 @@ describe('WhatsApp Click Tracking (TD-01 Phase 1)', function () {
         ]);
     });
 
+    it('returns 401 unauthenticated for a guest', function () {
+        $this->postJson(route('listings.whatsapp-click', $this->listing))
+            ->assertStatus(401);
+    });
+
+    it('returns 404 when listing is not published', function () {
+        $buyer = User::factory()->create(['is_phone_verified' => true]);
+        $this->listing->update(['status' => Listing::STATUS_PENDING]);
+
+        $this->actingAs($buyer)
+            ->postJson(route('listings.whatsapp-click', $this->listing))
+            ->assertStatus(404)
+            ->assertJson(['error' => 'Not found']);
+
+        expect($this->listing->fresh()->whatsapp_clicks)->toBe(0);
+        $this->assertDatabaseCount('listing_whatsapp_clicks', 0);
+    });
+
     it('records first whatsapp click in event table and increments whatsapp_clicks', function () {
         $buyer = User::factory()->create(['is_phone_verified' => true]);
 
