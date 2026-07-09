@@ -191,7 +191,7 @@ Any view displaying points MUST match these values — never hardcode different 
 | Referral signup | `CampaignLink.points_reward` (DB-driven) | `RegisteredUserController` — via `PointService::credit()` inside `DB::transaction` + `CampaignLink::lockForUpdate()` (fixed 2026-07-09) |
 | Points purchase | plan's `points` | `PaymobWebhookService` (webhook, not the callback controller) |
 | Admin adjustment | admin-entered ± | `UserResource::adjustPointsAction()` via `PointService`, description `'تعديل إداري: '…` |
-| Daily login | **NOT IMPLEMENTED** | no scheduler, no credit logic exists — **do not advertise** (pricing Section 6 still shows +1, see §11) |
+| Daily login | **NOT IMPLEMENTED** | no scheduler, no credit logic exists — **do not advertise** |
 
 ### Featuring costs — `Listing::FEATURE_COSTS`
 
@@ -205,7 +205,7 @@ Any view displaying points MUST match these values — never hardcode different 
 - `Listing::featureCost(int $days)` → `null` for unsupported durations (safe for UI).
 - `Listing::featureCostStrict(int $days)` → throws for unsupported (programmatic flows).
 - `$listing->featureWithPoints(int $days)` — checks entitlements + balance inside `DB::transaction` with `User::lockForUpdate()`; debits via `PointService::deduct()`; `recordUsage()` locks entitlement + usage rows under transaction (fixed 2026-07-09).
-- Wizard reads costs from `@json(\App\Models\Listing::FEATURE_COSTS)` — single source. Pricing page Section 6 still hardcodes Arabic strings (see §11).
+- Wizard reads costs from `@json(\App\Models\Listing::FEATURE_COSTS)` — single source. Pricing page Section 6 reads the same constant dynamically (fixed 2026-07-09).
 
 ### Purchase Plans — DB-driven (`point_plans` table via `PointPlanSeeder`, NOT config)
 
@@ -343,7 +343,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 **Analytics:** per-listing views/phone/WhatsApp clicks; entitlement-gated seller analytics + charts; Business dashboard; monthly PDF reports (scheduler); admin widgets.
 
-**i18n:** public frontend + authenticated area bilingual AR/EN (Phases A–C complete); locale on `users.locale`; Carbon locale synced; legal page titles translated. **Gaps remain** — see §11 (pricing Section 6, ad-popup, `lang/en/types.php`).
+**i18n:** public frontend + authenticated area bilingual AR/EN (Phases A–C complete); locale on `users.locale`; Carbon locale synced; legal page titles translated. **Gaps remain** — see §11 (ad-popup, `lang/en/types.php`).
 
 **Admin (Filament, Arabic-only):** listing resource + moderation infolist; `ListingPolicy` (moderators: view/approve/reject only); user management; ad campaign approval; audit logs; TrashedFilter + restore.
 
@@ -356,7 +356,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Item | Status |
 |---|---|
 | **Phase D — Filament admin translation** | Deferred in full by business decision (staff are Arabic speakers). |
-| **Daily login +1 points** | Not implemented (no scheduler/logic). **Pricing Section 6 still advertises it — must fix copy.** |
+| **Daily login +1 points** | Not implemented (no scheduler/logic). Pricing Section 6 no longer advertises it (**Fixed 2026-07-09**). |
 | **Points for positive review** | Deliberately removed from earn-guide; needs product decisions before wiring in `ReviewObserver`. |
 | **Referral credit inconsistency** | **Fixed 2026-07-09** — now routes through `PointService::credit()` with campaign row lock. |
 | **`featureWithPoints()` points race** | **Fixed 2026-07-09** — `DB::transaction` + `lockForUpdate` + `PointService::deduct()`. Entitlement `recordUsage()` row lock also fixed 2026-07-09. |
@@ -473,7 +473,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | M5 | **Null phone in `revealPhone()`** — `ltrim(null)` on missing phone | `ListingController.php` ~87–88 |
 | M6 | **`featureWithPoints()` not atomic** | `Listing.php` | **Fixed 2026-07-09** |
 | M7 | **Message spam — no rate limit** | `MessageController.php` |
-| M8 | **Pricing Section 6 inaccurate** — advertises daily +1 (not implemented), hardcoded referral +25, omits email +20, hardcoded feature costs | `pricing.blade.php` ~291–337 |
+| M8 | **Pricing Section 6 inaccurate** — advertised daily +1 (not implemented), hardcoded referral +25, omitted email +20, hardcoded feature costs | `pricing.blade.php` ~291–337 | **Fixed 2026-07-09** — bilingual `ui.pricing.earn.*` / `spend.*`; config-backed earn values; `Listing::FEATURE_COSTS` loop; referral from active `CampaignLink`; daily login removed |
 | M9 | **Payment failed CTA mismatch** — label says "Back to Home", href is `dashboard` | `payment/failed.blade.php` |
 | M10 | **Payment callbacks use Breeze layout** — not `layouts.frontend` | `payment/success.blade.php`, `failed.blade.php` |
 | M11 | **Ad popup skip strings hardcoded Arabic** | `ad-popup.blade.php` |
@@ -576,8 +576,8 @@ INDEX (model_type, model_id, collection_name)
 | Point mutations | All paths use `PointService` with `lockForUpdate()` (fixed 2026-07-09) |
 | Search vs category | Search-priority entitlement boost on search only, not category |
 | Search implementations | `HomeController::search()` vs `ListingGrid.php` — different Meilisearch filter placement |
-| Pricing marketing | Section 6 hardcodes values; hero/wizard use config/model constants |
-| Translation coverage | Category/detail/profile/search bilingual; pricing-section-6/popup Arabic-only |
+| Pricing marketing | Section 6 reads config + `Listing::FEATURE_COSTS` + active `CampaignLink` rewards (fixed 2026-07-09) |
+| Translation coverage | Category/detail/profile/search bilingual; ad-popup Arabic-only |
 | Payment UX | Success/fail pages use Breeze layout vs frontend chrome elsewhere |
 | Ad tracking | Banners track impressions; popup does not |
-| Feature cost display | Wizard uses `FEATURE_COSTS` JSON; pricing Section 6 hardcoded Arabic |
+| Feature cost display | Wizard and pricing Section 6 both use `Listing::FEATURE_COSTS` |

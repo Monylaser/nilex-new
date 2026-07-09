@@ -460,6 +460,22 @@ return [
             'priority_support' => 'دعم ذو أولوية',
             'business_badge' => 'شارة الأعمال',
         ],
+        'earn' => [
+            'title' => 'كيف تكسب النقاط ببطء؟',
+            'register' => 'إنشاء حساب',
+            'verify_phone' => 'توثيق الهاتف',
+            'verify_email' => 'توثيق البريد الإلكتروني',
+            'referral' => 'إحالة مستخدم',
+            'referral_up_to' => 'حتى +:points',
+            'listing' => 'نشر إعلان مكتمل',
+            'points_positive' => '+:points',
+        ],
+        'spend' => [
+            'title' => 'كيف تستثمر النقاط لسرعة البيع؟',
+            'feature_listing_one' => 'تمييز الإعلان لمدة يوم',
+            'feature_listing' => 'تمييز لمدة :days أيام',
+            'points_cost' => ':points نقطة',
+        ],
     ],
 
     'leads' => [

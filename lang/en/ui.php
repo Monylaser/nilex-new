@@ -460,6 +460,22 @@ return [
             'priority_support' => 'Priority Support',
             'business_badge' => 'Business Badge',
         ],
+        'earn' => [
+            'title' => 'How to earn points steadily',
+            'register' => 'Create an account',
+            'verify_phone' => 'Verify phone number',
+            'verify_email' => 'Verify email address',
+            'referral' => 'Refer a new user',
+            'referral_up_to' => 'up to +:points',
+            'listing' => 'Publish a complete listing',
+            'points_positive' => '+:points',
+        ],
+        'spend' => [
+            'title' => 'How to invest points to sell faster?',
+            'feature_listing_one' => 'Feature listing for 1 day',
+            'feature_listing' => 'Feature listing for :days days',
+            'points_cost' => ':points credits',
+        ],
     ],
 
     'leads' => [

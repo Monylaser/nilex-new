@@ -6,17 +6,20 @@
  * Pricing page UI (plan cards + marketing sections).
  */
 
+use App\Models\CampaignLink;
+use App\Models\Listing;
 use App\Models\PointPlan;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 function seedPricingPlans(): void
 {
     $plans = [
         ['name_ar' => 'مبتدئ',     'name_en' => 'Starter',    'points' => 100,  'price' => 49,  'description' => 'باقة البداية'],
         ['name_ar' => 'نمو',       'name_en' => 'Growth',     'points' => 300,  'price' => 99,  'description' => 'باقة النمو'],
-        ['name_ar' => 'بائع محترف','name_en' => 'Pro Seller', 'points' => 850,  'price' => 249, 'description' => 'باقة المحترف'],
+        ['name_ar' => 'بائع محترف', 'name_en' => 'Pro Seller', 'points' => 850,  'price' => 249, 'description' => 'باقة المحترف'],
         ['name_ar' => 'أعمال',     'name_en' => 'Business',   'points' => 2500, 'price' => 499, 'description' => 'باقة الشركات'],
     ];
 
@@ -114,7 +117,7 @@ describe('Pricing Page UI', function () {
         $this->actingAs($user)
             ->get(route('pricing'))
             ->assertOk()
-            ->assertSee('checkout-' . $plan->id, false)
+            ->assertSee('checkout-'.$plan->id, false)
             ->assertSee(route('payment.checkout'), false);
     });
 
@@ -130,10 +133,61 @@ describe('Pricing Page UI', function () {
         seedPricingPlans();
 
         $this->get(route('pricing'))
-            ->assertSee('كيف تكسب النقاط ببطء؟')
-            ->assertSee('كيف تستثمر النقاط لسرعة البيع؟')
+            ->assertSee(__('ui.pricing.earn.title'))
+            ->assertSee(__('ui.pricing.spend.title'))
+            ->assertSee(__('ui.pricing.earn.verify_email'))
+            ->assertDontSee('تسجيل يومي')
+            ->assertDontSee('Daily login')
             ->assertSee(__('ui.pricing.trust_first_feature'))
             ->assertSee(__('ui.pricing.trust_points_validity'));
+    });
+
+    it('section 6 earn guide uses config-backed point values', function () {
+        seedPricingPlans();
+
+        $welcome = (int) config('pricing.registration_welcome_points');
+        $verify = (int) config('pricing.profile_verification_bonus_points');
+        $listing = (int) config('pricing.listing_creation_points');
+
+        $this->get(route('pricing'))
+            ->assertSee(__('ui.pricing.earn.points_positive', ['points' => number_format($welcome)]))
+            ->assertSee(__('ui.pricing.earn.points_positive', ['points' => number_format($verify)]))
+            ->assertSee(__('ui.pricing.earn.points_positive', ['points' => number_format($listing)]));
+    });
+
+    it('section 6 spend guide uses Listing::FEATURE_COSTS dynamically', function () {
+        seedPricingPlans();
+
+        foreach (Listing::FEATURE_COSTS as $days => $cost) {
+            $label = $days === 1
+                ? __('ui.pricing.spend.feature_listing_one')
+                : __('ui.pricing.spend.feature_listing', ['days' => $days]);
+
+            $this->get(route('pricing'))
+                ->assertSee($label)
+                ->assertSee(__('ui.pricing.spend.points_cost', ['points' => number_format($cost)]));
+        }
+    });
+
+    it('section 6 shows referral reward from active campaign links', function () {
+        seedPricingPlans();
+
+        CampaignLink::query()->create([
+            'code' => 'REF25',
+            'points_reward' => 25,
+            'is_active' => true,
+        ]);
+
+        $this->get(route('pricing'))
+            ->assertSee(__('ui.pricing.earn.referral'))
+            ->assertSee(__('ui.pricing.earn.points_positive', ['points' => number_format(25)]));
+    });
+
+    it('section 6 omits referral row when no active campaign links exist', function () {
+        seedPricingPlans();
+
+        $this->get(route('pricing'))
+            ->assertDontSee(__('ui.pricing.earn.referral'));
     });
 
     it('renders seller dashboard capabilities section with verified features only', function () {

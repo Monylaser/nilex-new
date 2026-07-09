@@ -283,31 +283,65 @@
 
 
         {{-- ════════════════════════════════════════════
-             SECTION 6 — HOW IT WORKS (preserved)
+             SECTION 6 — HOW IT WORKS (earn & spend guide)
         ════════════════════════════════════════════ --}}
+        @php
+            $earnItems = [
+                [
+                    'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+                    'label' => __('ui.pricing.earn.register'),
+                    'points' => $registrationWelcomePoints,
+                ],
+                [
+                    'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z',
+                    'label' => __('ui.pricing.earn.verify_phone'),
+                    'points' => $verificationBonusPoints,
+                ],
+                [
+                    'icon' => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+                    'label' => __('ui.pricing.earn.verify_email'),
+                    'points' => $verificationBonusPoints,
+                ],
+                [
+                    'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+                    'label' => __('ui.pricing.earn.listing'),
+                    'points' => $listingCreationPoints,
+                ],
+            ];
+
+            if ($referralRewards->isNotEmpty()) {
+                $maxReferralReward = (int) $referralRewards->max();
+                $earnItems[] = [
+                    'icon' => 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',
+                    'label' => __('ui.pricing.earn.referral'),
+                    'points' => $maxReferralReward,
+                    'points_key' => $referralRewards->count() > 1
+                        ? 'ui.pricing.earn.referral_up_to'
+                        : 'ui.pricing.earn.points_positive',
+                ];
+            }
+
+            $featureStarIcon = 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z';
+        @endphp
         <section>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 items-stretch">
 
                 <div class="flex flex-col h-full bg-white rounded-2xl border border-zinc-200 p-4 sm:p-5 shadow-sm">
                     <h3 class="text-sm font-semibold text-zinc-900 mb-3.5 leading-snug">
-                        كيف تكسب النقاط ببطء؟
+                        {{ __('ui.pricing.earn.title') }}
                     </h3>
                     <ul class="space-y-2.5">
-                        @foreach([
-                            ['M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', 'إنشاء حساب', '+20'],
-                            ['M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z', 'توثيق الهاتف', '+20'],
-                            ['M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z', 'إحالة مستخدم', '+25'],
-                            ['M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', 'نشر إعلان مكتمل', '+3'],
-                            ['M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'تسجيل يومي', '+1'],
-                        ] as [$icon, $label, $points])
+                        @foreach($earnItems as $item)
                             <li class="flex items-center gap-2.5 sm:gap-3 text-xs text-zinc-600 leading-snug">
                                 <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0">
                                     <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $icon }}"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $item['icon'] }}"/>
                                     </svg>
                                 </span>
-                                <span class="flex-1 min-w-0">{{ $label }}</span>
-                                <span class="font-semibold text-[#1D9E75] shrink-0 tabular-nums">{{ $points }}</span>
+                                <span class="flex-1 min-w-0">{{ $item['label'] }}</span>
+                                <span class="font-semibold text-[#1D9E75] shrink-0 tabular-nums">
+                                    {{ __($item['points_key'] ?? 'ui.pricing.earn.points_positive', ['points' => number_format($item['points'])]) }}
+                                </span>
                             </li>
                         @endforeach
                     </ul>
@@ -315,23 +349,24 @@
 
                 <div class="flex flex-col h-full bg-white rounded-2xl border border-zinc-200 p-4 sm:p-5 shadow-sm">
                     <h3 class="text-sm font-semibold text-zinc-900 mb-3.5 leading-snug">
-                        كيف تستثمر النقاط لسرعة البيع؟
+                        {{ __('ui.pricing.spend.title') }}
                     </h3>
                     <ul class="space-y-2.5">
-                        @foreach([
-                            ['M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', 'تمييز الإعلان لمدة يوم', '40 نقطة'],
-                            ['M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', 'تمييز لمدة 3 أيام', '90 نقطة'],
-                            ['M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', 'تمييز لمدة 7 أيام', '170 نقطة'],
-                            ['M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', 'تمييز لمدة 14 يوم', '300 نقطة'],
-                        ] as [$icon, $label, $cost])
+                        @foreach($featureCosts as $days => $cost)
                             <li class="flex items-center gap-2.5 sm:gap-3 text-xs text-zinc-600 leading-snug">
                                 <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0">
                                     <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $icon }}"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $featureStarIcon }}"/>
                                     </svg>
                                 </span>
-                                <span class="flex-1 min-w-0">{{ $label }}</span>
-                                <span class="font-semibold text-zinc-500 shrink-0">{{ $cost }}</span>
+                                <span class="flex-1 min-w-0">
+                                    {{ $days === 1
+                                        ? __('ui.pricing.spend.feature_listing_one')
+                                        : __('ui.pricing.spend.feature_listing', ['days' => $days]) }}
+                                </span>
+                                <span class="font-semibold text-zinc-500 shrink-0 tabular-nums">
+                                    {{ __('ui.pricing.spend.points_cost', ['points' => number_format($cost)]) }}
+                                </span>
                             </li>
                         @endforeach
                     </ul>

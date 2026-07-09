@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdCampaign;
+use App\Models\CampaignLink;
 use App\Models\CarBrand;
 use App\Models\Category;
 use App\Models\Listing;
@@ -555,11 +556,23 @@ class HomeController extends Controller
     {
         $plans = PointPlan::active()->orderBy('price')->get();
 
+        $referralRewards = CampaignLink::query()
+            ->active()
+            ->where('points_reward', '>', 0)
+            ->pluck('points_reward')
+            ->unique()
+            ->sort()
+            ->values();
+
         return view('frontend.pricing', [
             'plans' => $plans,
             'featureMatrix' => config('pricing.feature_matrix', []),
             'planColumnKeys' => config('pricing.plan_column_keys', []),
             'registrationWelcomePoints' => (int) config('pricing.registration_welcome_points', 0),
+            'listingCreationPoints' => (int) config('pricing.listing_creation_points', 3),
+            'verificationBonusPoints' => (int) config('pricing.profile_verification_bonus_points', 20),
+            'featureCosts' => Listing::FEATURE_COSTS,
+            'referralRewards' => $referralRewards,
         ]);
     }
 
