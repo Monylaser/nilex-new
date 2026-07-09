@@ -343,7 +343,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 **Analytics:** per-listing views/phone/WhatsApp clicks; entitlement-gated seller analytics + charts; Business dashboard; monthly PDF reports (scheduler); admin widgets.
 
-**i18n:** public frontend + authenticated area bilingual AR/EN (Phases A–C complete); locale on `users.locale`; Carbon locale synced; legal page titles translated. **Gaps remain** — see §11 (search page, pricing Section 6, ad-popup, `lang/en/types.php`).
+**i18n:** public frontend + authenticated area bilingual AR/EN (Phases A–C complete); locale on `users.locale`; Carbon locale synced; legal page titles translated. **Gaps remain** — see §11 (pricing Section 6, ad-popup, `lang/en/types.php`).
 
 **Admin (Filament, Arabic-only):** listing resource + moderation infolist; `ListingPolicy` (moderators: view/approve/reject only); user management; ad campaign approval; audit logs; TrashedFilter + restore.
 
@@ -366,12 +366,12 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Notifications: mark-as-read / "view all" page | Bell dropdown only. |
 | Facebook / Instagram / TikTok login | Routes allow them; only Google configured. |
 | `lang/en/types.php` | Missing (`lang/ar/types.php` exists AR-only). |
-| **`search-results.blade.php` i18n** | Entire page hardcoded Arabic — see §11. |
+| **`search-results.blade.php` i18n** | **Fixed 2026-07-09** — moved to `ui.search.*` AR/EN keys. |
 | **Custom error pages** | No `resources/views/errors/` — Laravel defaults. |
 | `PAYMOB_IFRAME_ID` | Referenced by `config/services.php` but absent from `.env`. |
 | Legal page `content` EN | Arabic-only by decision; EN visitors see Arabic body via `ar` fallback. |
 | Re-skin residual green | See §5 — points-badge, Chart.js, prose links, search/category accents. |
-| **Search-priority sort** | Applied post-pagination on search only — global order broken across pages (§11). |
+| **Search-priority sort** | Fixed 2026-07-09 — boost now applies in SQL `ORDER BY` before pagination in `HomeController::search()`. |
 | **Scout production readiness** | `collection` driver locally; Meilisearch + queue indexing needed for prod. |
 
 ---
@@ -442,7 +442,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | **Performance indexes** | Missing `listings.status` composites — see §12. |
 | **High-severity bugs** | Referral + feature points races fixed 2026-07-09; buyerLeads IDOR (M3) still open — see §11. |
 | **UI/UX designer pass** | Planned hire via خمسات (Khamsat). |
-| **Search page i18n** | Hardcoded Arabic — EN users blocked on `/search`. |
+| **Search page i18n** | **Fixed 2026-07-09** — bilingual AR/EN with `ui.search.*`. |
 
 ---
 
@@ -457,9 +457,9 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | H1 | **Referral credit bypasses `PointService`** | `RegisteredUserController.php` | **Fixed 2026-07-09** |
 | H2 | **`featureWithPoints()` points race** | `Listing.php` | **Fixed 2026-07-09** |
 | H3 | **`featureWithPoints()` entitlement race** | `Listing.php` + `EntitlementService.php` | **Fixed 2026-07-09** |
-| H4 | **Search page entirely hardcoded Arabic** | `search-results.blade.php` | Open |
-| H5 | **Search-priority re-sort post-pagination** | `HomeController::search()` | Open |
-| H6 | **OTP gate error not shown** | Middleware + auth view | Open |
+| H4 | **Search page entirely hardcoded Arabic** | `search-results.blade.php` | **Fixed 2026-07-09** |
+| H5 | **Search-priority re-sort post-pagination** | `HomeController::search()` | **Fixed 2026-07-09** |
+| H6 | **OTP gate error not shown** | Middleware + auth view | **Fixed 2026-07-09** |
 | H7 | **No custom error pages** | `resources/views/errors/` absent | Open |
 
 ### Medium
@@ -577,7 +577,7 @@ INDEX (model_type, model_id, collection_name)
 | Search vs category | Search-priority entitlement boost on search only, not category |
 | Search implementations | `HomeController::search()` vs `ListingGrid.php` — different Meilisearch filter placement |
 | Pricing marketing | Section 6 hardcodes values; hero/wizard use config/model constants |
-| Translation coverage | Category/detail/profile bilingual; search/pricing-section-6/popup Arabic-only |
+| Translation coverage | Category/detail/profile/search bilingual; pricing-section-6/popup Arabic-only |
 | Payment UX | Success/fail pages use Breeze layout vs frontend chrome elsewhere |
 | Ad tracking | Banners track impressions; popup does not |
 | Feature cost display | Wizard uses `FEATURE_COSTS` JSON; pricing Section 6 hardcoded Arabic |

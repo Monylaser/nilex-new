@@ -605,7 +605,7 @@ class HomeController extends Controller
 
         $useGeoSort = $lat && $lng && $sort === ListingSort::DEFAULT;
 
-        $listings = Listing::search(
+        $searchBuilder = Listing::search(
             $query,
             function ($meiliSearch, $query, $options) use ($lat, $lng, $radius, $useGeoSort) {
                 if ($meiliSearch instanceof Builder) {
@@ -627,42 +627,77 @@ class HomeController extends Controller
 
                 return $meiliSearch->search($query, $options);
             }
-        )
-            ->query(function ($q) use ($minPrice, $maxPrice, $categoryId, $provinceId, $sort, $useGeoSort) {
-                $q->with(['category', 'location', 'user'])
-                    ->where('listings.status', Listing::STATUS_PUBLISHED);
-
-                if ($minPrice !== null && $minPrice !== '') {
-                    $q->where('listings.price', '>=', (float) $minPrice);
-                }
-                if ($maxPrice !== null && $maxPrice !== '') {
-                    $q->where('listings.price', '<=', (float) $maxPrice);
-                }
-                if ($categoryId) {
-                    $q->where('listings.category_id', (int) $categoryId);
-                }
-                if ($provinceId) {
-                    $q->where('listings.province_id', (int) $provinceId);
-                }
-
-                if (! $useGeoSort) {
-                    ListingSort::apply($q, $sort, qualify: true);
-                }
-            })
-            ->paginate(12)
-            ->withQueryString();
+        );
 
         if ($sort === ListingSort::DEFAULT && ! $useGeoSort) {
-            $entitlements = app(EntitlementService::class);
+            $matchingIds = $searchBuilder->keys();
 
-            $listings->setCollection(
-                $listings->getCollection()
-                    ->sortBy(fn (Listing $listing) => $entitlements->hasFeature(
-                        $listing->user,
-                        EntitlementService::FEATURE_SEARCH_PRIORITY,
-                    ) ? 0 : 1)
-                    ->values()
-            );
+            $listingsQuery = Listing::query()
+                ->with(['category', 'location', 'user'])
+                ->where('listings.status', Listing::STATUS_PUBLISHED)
+                ->whereIn('listings.id', $matchingIds->all());
+
+            if ($matchingIds->isEmpty()) {
+                $listingsQuery->whereRaw('0 = 1');
+            }
+
+            if ($minPrice !== null && $minPrice !== '') {
+                $listingsQuery->where('listings.price', '>=', (float) $minPrice);
+            }
+            if ($maxPrice !== null && $maxPrice !== '') {
+                $listingsQuery->where('listings.price', '<=', (float) $maxPrice);
+            }
+            if ($categoryId) {
+                $listingsQuery->where('listings.category_id', (int) $categoryId);
+            }
+            if ($provinceId) {
+                $listingsQuery->where('listings.province_id', (int) $provinceId);
+            }
+
+            $listings = $listingsQuery
+                ->leftJoin('users', 'users.id', '=', 'listings.user_id')
+                ->leftJoin('user_entitlements', function ($join) {
+                    $join->on('user_entitlements.user_id', '=', 'users.id')
+                        ->where('user_entitlements.feature_key', EntitlementService::FEATURE_SEARCH_PRIORITY)
+                        ->whereIn('user_entitlements.value', ['1', 'true'])
+                        ->where(function ($entitlementQuery) {
+                            $entitlementQuery->whereNull('user_entitlements.expires_at')
+                                ->orWhere('user_entitlements.expires_at', '>', now());
+                        });
+                })
+                ->select('listings.*')
+                ->orderByRaw('CASE WHEN user_entitlements.id IS NULL THEN 1 ELSE 0 END ASC');
+
+            ListingSort::apply($listings, $sort, qualify: true);
+
+            $listings = $listings
+                ->paginate(12)
+                ->withQueryString();
+        } else {
+            $listings = $searchBuilder
+                ->query(function ($q) use ($minPrice, $maxPrice, $categoryId, $provinceId, $sort, $useGeoSort) {
+                    $q->with(['category', 'location', 'user'])
+                        ->where('listings.status', Listing::STATUS_PUBLISHED);
+
+                    if ($minPrice !== null && $minPrice !== '') {
+                        $q->where('listings.price', '>=', (float) $minPrice);
+                    }
+                    if ($maxPrice !== null && $maxPrice !== '') {
+                        $q->where('listings.price', '<=', (float) $maxPrice);
+                    }
+                    if ($categoryId) {
+                        $q->where('listings.category_id', (int) $categoryId);
+                    }
+                    if ($provinceId) {
+                        $q->where('listings.province_id', (int) $provinceId);
+                    }
+
+                    if (! $useGeoSort) {
+                        ListingSort::apply($q, $sort, qualify: true);
+                    }
+                })
+                ->paginate(12)
+                ->withQueryString();
         }
 
         return view('frontend.search-results', compact(
