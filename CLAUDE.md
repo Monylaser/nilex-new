@@ -279,7 +279,7 @@ Seller self-service allows only the first 5 placements.
 
 ### Popup component (`components/ad-popup.blade.php`)
 
-Centred modal card (`max-w-8xl`, `95vh`). Frequency-capped via `localStorage` key `popup_last_seen` (24h). 5-second countdown before X/skip become active; closing writes the timestamp. Image links through `route('ads.click')` when `target_url` set (`target_url` optional — popup renders without it). **No impression tracker** (unlike `<x-ad-banner>`). Skip strings hardcoded Arabic (see §11). Covered by `AdPopupTest` (11+ cases).
+Centred modal card (`max-w-8xl`, `95vh`). Frequency-capped via `localStorage` key `popup_last_seen` (24h). 5-second countdown before X/skip become active; closing writes the timestamp. Image links through `route('ads.click')` when `target_url` set (`target_url` optional — popup renders without it). **No impression tracker** (unlike `<x-ad-banner>`). Skip/countdown/close strings via `ui.ad_popup.*` (bilingual AR/EN). Covered by `AdPopupTest` (11+ cases).
 
 ---
 
@@ -343,7 +343,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 **Analytics:** per-listing views/phone/WhatsApp clicks; entitlement-gated seller analytics + charts; Business dashboard; monthly PDF reports (scheduler); admin widgets.
 
-**i18n:** public frontend + authenticated area bilingual AR/EN (Phases A–C complete); locale on `users.locale`; Carbon locale synced; legal page titles translated. **Gaps remain** — see §11 (ad-popup, `lang/en/types.php`).
+**i18n:** public frontend + authenticated area bilingual AR/EN (Phases A–C complete); locale on `users.locale`; Carbon locale synced; legal page titles translated. **Gaps remain** — see §11 (`lang/en/types.php`).
 
 **Admin (Filament, Arabic-only):** listing resource + moderation infolist; `ListingPolicy` (moderators: view/approve/reject only); user management; ad campaign approval; audit logs; TrashedFilter + restore.
 
@@ -476,7 +476,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | M8 | **Pricing Section 6 inaccurate** — advertised daily +1 (not implemented), hardcoded referral +25, omitted email +20, hardcoded feature costs | `pricing.blade.php` ~291–337 | **Fixed 2026-07-09** — bilingual `ui.pricing.earn.*` / `spend.*`; config-backed earn values; `Listing::FEATURE_COSTS` loop; referral from active `CampaignLink`; daily login removed |
 | M9 | **Payment failed CTA mismatch** — label says "Back to Home", href is `dashboard` | `payment/failed.blade.php` |
 | M10 | **Payment callbacks use Breeze layout** — not `layouts.frontend` | `payment/success.blade.php`, `failed.blade.php` |
-| M11 | **Ad popup skip strings hardcoded Arabic** | `ad-popup.blade.php` |
+| M11 | **Ad popup skip strings hardcoded Arabic** | `ad-popup.blade.php` | **Fixed 2026-07-09** — bilingual `ui.ad_popup.*` keys for skip, countdown, and close |
 | M12 | **Socialite errors not displayed on login** — `withErrors(['error'])` but no `@error('error')` | `SocialiteController` → `login.blade.php` |
 | M13 | **Search GET validation returns 422 page** — no inline form feedback | `HomeController::search()` |
 | M14 | **Category pages lack search-priority boost** — inconsistent with search | `CategoryController.php` | **Fixed 2026-07-09** — same `LEFT JOIN user_entitlements` + `CASE WHEN` ordering as `HomeController::search()` on default sort |
@@ -577,7 +577,7 @@ INDEX (model_type, model_id, collection_name)
 | Search vs category | Search-priority entitlement boost on both search and category pages (default sort only) |
 | Search implementations | `HomeController::search()` vs `ListingGrid.php` — different Meilisearch filter placement |
 | Pricing marketing | Section 6 reads config + `Listing::FEATURE_COSTS` + active `CampaignLink` rewards (fixed 2026-07-09) |
-| Translation coverage | Category/detail/profile/search bilingual; ad-popup Arabic-only |
+| Translation coverage | Category/detail/profile/search/ad-popup bilingual |
 | Payment UX | Success/fail pages use Breeze layout vs frontend chrome elsewhere |
 | Ad tracking | Banners track impressions; popup does not |
 | Feature cost display | Wizard and pricing Section 6 both use `Listing::FEATURE_COSTS` |

@@ -774,6 +774,14 @@ return [
         'generate_ai' => 'ولّد الإعلان بالـ AI',
     ],
 
+    // Full-screen ad popup modal (frequency-capped via localStorage).
+    'ad_popup' => [
+        'skip' => 'تخطي',
+        'skip_ready' => 'تخطي ←',
+        'countdown' => 'يمكنك التخطي بعد :seconds ثوانٍ',
+        'close' => 'إغلاق',
+    ],
+
     // Favorites system (heart toggle on cards + detail page + "My Favorites" dashboard page).
     'favorites' => [
         'title' => 'مفضلتي',

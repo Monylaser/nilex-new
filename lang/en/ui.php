@@ -774,6 +774,14 @@ return [
         'generate_ai' => 'Generate ad with AI',
     ],
 
+    // Full-screen ad popup modal (frequency-capped via localStorage).
+    'ad_popup' => [
+        'skip' => 'Skip',
+        'skip_ready' => 'Skip →',
+        'countdown' => 'You can skip in :seconds seconds',
+        'close' => 'Close',
+    ],
+
     // Favorites system (heart toggle on cards + detail page + "My Favorites" dashboard page).
     'favorites' => [
         'title' => 'My Favorites',

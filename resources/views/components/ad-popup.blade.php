@@ -56,6 +56,7 @@
             @click="close()"
             :class="canSkip ? 'bg-black/50 hover:bg-black/70 cursor-pointer' : 'bg-black/20 cursor-not-allowed'"
             class="absolute top-3 right-3 z-10 text-white rounded-full w-9 h-9 flex items-center justify-center transition-colors"
+            aria-label="{{ __('ui.ad_popup.close') }}"
         >✕</button>
 
         {{-- Image --}}
@@ -74,9 +75,9 @@
                 @click="close()"
                 :class="canSkip ? 'text-[#14A5A8] font-bold cursor-pointer hover:underline' : 'text-zinc-300 cursor-not-allowed'"
                 class="text-sm transition-colors"
-                x-text="canSkip ? 'تخطي ←' : 'تخطي'"
+                x-text="canSkip ? '{{ __('ui.ad_popup.skip_ready') }}' : '{{ __('ui.ad_popup.skip') }}'"
             ></button>
-            <span x-show="!canSkip" class="text-sm text-zinc-400" x-text="'يمكنك التخطي بعد ' + seconds + ' ثوانٍ'"></span>
+            <span x-show="!canSkip" class="text-sm text-zinc-400" x-text="'{{ __('ui.ad_popup.countdown') }}'.replace(':seconds', seconds)"></span>
         </div>
     </div>
 </div>
