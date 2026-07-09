@@ -34,14 +34,14 @@ class HomeController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        $featuredListings = Listing::with(['category', 'location', 'user'])
+        $featuredListings = Listing::with(['category', 'location', 'user', 'media'])
             ->active()
             ->featured()
             ->latest()
             ->take(3)
             ->get();
 
-        $latestListings = Listing::with(['category', 'location', 'user'])
+        $latestListings = Listing::with(['category', 'location', 'user', 'media'])
             ->active()
             ->latest()
             ->paginate(12);
@@ -646,7 +646,7 @@ class HomeController extends Controller
             $matchingIds = $searchBuilder->keys();
 
             $listingsQuery = Listing::query()
-                ->with(['category', 'location', 'user'])
+                ->with(['category', 'location', 'user', 'media'])
                 ->where('listings.status', Listing::STATUS_PUBLISHED)
                 ->whereIn('listings.id', $matchingIds->all());
 
@@ -689,7 +689,7 @@ class HomeController extends Controller
         } else {
             $listings = $searchBuilder
                 ->query(function ($q) use ($minPrice, $maxPrice, $categoryId, $provinceId, $sort, $useGeoSort) {
-                    $q->with(['category', 'location', 'user'])
+                    $q->with(['category', 'location', 'user', 'media'])
                         ->where('listings.status', Listing::STATUS_PUBLISHED);
 
                     if ($minPrice !== null && $minPrice !== '') {
