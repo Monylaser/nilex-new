@@ -472,7 +472,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | M4 | **WhatsApp click tracking unauthenticated** — no auth/status gate; metric inflation possible | `ListingController::trackWhatsappClick()` |
 | M5 | **Null phone in `revealPhone()`** — `ltrim(null)` on missing phone | `ListingController.php` ~87–88 |
 | M6 | **`featureWithPoints()` not atomic** | `Listing.php` | **Fixed 2026-07-09** |
-| M7 | **Message spam — no rate limit** | `MessageController.php` |
+| M7 | **Message spam — no rate limit** | `MessageController.php` | **Fixed 2026-07-09** — 5 messages/min per authenticated user via `RateLimiter`; JSON 429 or redirect with `ui.messages.rate_limit_exceeded` |
 | M8 | **Pricing Section 6 inaccurate** — advertised daily +1 (not implemented), hardcoded referral +25, omitted email +20, hardcoded feature costs | `pricing.blade.php` ~291–337 | **Fixed 2026-07-09** — bilingual `ui.pricing.earn.*` / `spend.*`; config-backed earn values; `Listing::FEATURE_COSTS` loop; referral from active `CampaignLink`; daily login removed |
 | M9 | **Payment failed CTA mismatch** — label says "Back to Home", href is `dashboard` | `payment/failed.blade.php` |
 | M10 | **Payment callbacks use Breeze layout** — not `layouts.frontend` | `payment/success.blade.php`, `failed.blade.php` |

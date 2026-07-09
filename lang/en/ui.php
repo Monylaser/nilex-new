@@ -782,6 +782,11 @@ return [
         'close' => 'Close',
     ],
 
+    // Real-time chat (POST /messages).
+    'messages' => [
+        'rate_limit_exceeded' => 'Too many messages sent. Please try again in :seconds seconds.',
+    ],
+
     // Favorites system (heart toggle on cards + detail page + "My Favorites" dashboard page).
     'favorites' => [
         'title' => 'My Favorites',
