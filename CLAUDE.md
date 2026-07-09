@@ -70,7 +70,7 @@ composer test
 | Controller | Responsibility |
 |---|---|
 | `Frontend/HomeController` | Homepage (`index`, queries `hero_top` campaigns directly), listing wizard create/store (+3 pts) and edit/update (category locked, status→pending, no pts), `aiGenerate()` (Gemini), `pricing()` (point plans page), `search()` with `ListingSort` + geo + search-priority boost |
-| `Frontend/CategoryController` | Category page; increments `views_count`, paginates published listings with `ListingSort`, eager-loads `category,location,user` |
+| `Frontend/CategoryController` | Category page; increments `views_count`, paginates published listings with `ListingSort` + search-priority boost (default sort), eager-loads `category,location,user` |
 | `Frontend/LegalPageController` | Renders `LegalPage` by slug at `/{slug}` |
 | `Frontend/PaymentController` | Points checkout → Paymob iframe (requires `refund_policy_accepted`); user-facing success/failed callback views (credit happens in webhook) |
 | `ListingController` | Detail page + view tracking + similar listings; `revealPhone()` (auth, 401 guests, 20/hr throttle), `trackWhatsappClick()`, `makeOffer()` |
@@ -371,7 +371,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | `PAYMOB_IFRAME_ID` | Referenced by `config/services.php` but absent from `.env`. |
 | Legal page `content` EN | Arabic-only by decision; EN visitors see Arabic body via `ar` fallback. |
 | Re-skin residual green | See §5 — points-badge, Chart.js, prose links, search/category accents. |
-| **Search-priority sort** | Fixed 2026-07-09 — boost now applies in SQL `ORDER BY` before pagination in `HomeController::search()`. |
+| **Search-priority sort** | Fixed 2026-07-09 — boost applies in SQL `ORDER BY` before pagination in `HomeController::search()` and `CategoryController::show()` (default sort only). |
 | **Scout production readiness** | `collection` driver locally; Meilisearch + queue indexing needed for prod. |
 
 ---
@@ -395,7 +395,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 - `Listing` → **`images`**; conversions `thumb`/`card`/`full_hd`, all watermarked + `nonQueued`; original never rendered publicly.
 - `AdCampaign` → **`ad_image`**; conversions `desktop`/`tablet`/`mobile`.
 - Category icons are media-library-backed.
-- **Public grids do not eager-load `media`** — major N+1 (§12).
+- **Public listing grids eager-load `media`** (homepage, category, search) so `getFirstMediaUrl('images', 'card')` resolves from memory — fixed P1 2026-07-09.
 
 ### Soft-delete couplings
 
@@ -479,7 +479,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | M11 | **Ad popup skip strings hardcoded Arabic** | `ad-popup.blade.php` |
 | M12 | **Socialite errors not displayed on login** — `withErrors(['error'])` but no `@error('error')` | `SocialiteController` → `login.blade.php` |
 | M13 | **Search GET validation returns 422 page** — no inline form feedback | `HomeController::search()` |
-| M14 | **Category pages lack search-priority boost** — inconsistent with search | `CategoryController.php` |
+| M14 | **Category pages lack search-priority boost** — inconsistent with search | `CategoryController.php` | **Fixed 2026-07-09** — same `LEFT JOIN user_entitlements` + `CASE WHEN` ordering as `HomeController::search()` on default sort |
 
 ### Low
 
@@ -528,7 +528,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 | Priority | Issue | Location |
 |---|---|---|
-| **P1** | **Media N+1 on all public listing grids** — controllers eager-load relations but not `media`; views call `getFirstMediaUrl()` per card (~12+ queries/page) | `HomeController`, `CategoryController`, `listing-card.blade.php`, `search-results.blade.php` |
+| **P1** | **Media N+1 on all public listing grids** — controllers eager-load relations but not `media`; views call `getFirstMediaUrl()` per card (~12+ queries/page) | `HomeController`, `CategoryController`, `listing-card.blade.php`, `search-results.blade.php` | **Fixed 2026-07-09** — `with('media')` on homepage (`index`), search (`search`), and category (`show`) listing queries |
 | **P2** | **Missing `listings.status` indexes** — no index on `status`, `(status, created_at)`, `(user_id, status)`, `(category_id, status)` | migrations |
 | **P3** | **UserDashboard query storm** — 5+ separate count queries + chart queries + unbounded `incomingOffers->get()` every render | `UserDashboard.php` |
 | **P4** | **Scout `collection` driver** — full in-memory scan; unusable at scale until Meilisearch | `config/scout.php` |
@@ -574,7 +574,7 @@ INDEX (model_type, model_id, collection_name)
 | Area | Inconsistency |
 |---|---|
 | Point mutations | All paths use `PointService` with `lockForUpdate()` (fixed 2026-07-09) |
-| Search vs category | Search-priority entitlement boost on search only, not category |
+| Search vs category | Search-priority entitlement boost on both search and category pages (default sort only) |
 | Search implementations | `HomeController::search()` vs `ListingGrid.php` — different Meilisearch filter placement |
 | Pricing marketing | Section 6 reads config + `Listing::FEATURE_COSTS` + active `CampaignLink` rewards (fixed 2026-07-09) |
 | Translation coverage | Category/detail/profile/search bilingual; ad-popup Arabic-only |
