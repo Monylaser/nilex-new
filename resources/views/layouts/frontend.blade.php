@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#11407A">
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <title>@yield('title', config('app.name', 'Nilex'))</title>
 
     @php
@@ -211,6 +216,14 @@
 
 @stack('scripts')
 @yield('footer-scripts')
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(reg => console.log('SW Registered')).catch(err => console.log('SW Failed'));
+        });
+    }
+</script>
 
 </body>
 </html>
