@@ -1,7 +1,19 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-Last full audit: **2026-07-10** (launch-prep pass; prior full audit 2026-07-09).
+Last full audit: **2026-07-10** (final launch-prep pass; prior full audit 2026-07-09).
+
+### Final Launch Prep — 2026-07-10
+
+Comprehensive pre-deployment review pass (no deletions). **453 tests passing, 0 failures** (1387 assertions).
+
+| Area | Outcome |
+|---|---|
+| **Re-skin** | **Fully completed** — zero `#1D9E75` / `#085041` in application code (`*.php`, `*.blade.php`, `*.css`, `*.js`). Legacy green remains only in archived `docs/` and `reports/` HTML (not served). |
+| **i18n** | Footer social `aria-label`s, ad-spaces link, logo alt, WhatsApp prefill message, Socialite default name, and Paymob 503 message moved to AR/EN lang keys. Cookie consent + hero carousel already bilingual. |
+| **Security** | `makeOffer()` rate-limited (5/min per user, mirrors `MessageController`). No `env()` in controllers. `points_balance` / `points` / `is_banned` guarded on `User`; `Listing` uses `$guarded` for `user_id`/`status`. |
+| **Performance** | Extended `media` eager-load to listing detail + similar listings, seller dashboard listings, homepage category icons (+ wizard categories). P3/P5/P6/P7 deferred (documented §12). |
+| **Deferred (not deleted)** | **L2** Socialite referral — comment in `SocialiteController::callback()`. **L6** `listing-details.blade.php` — header notes active route is `listings/show.blade.php`. |
 
 ---
 
@@ -310,7 +322,7 @@ Token name `nilex` kept, value remapped to navy. Filament `/admin` is fully excl
 
 ### Re-skin status
 
-Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, both pricing pages' CTAs, trust card, footer, dashboard/profile/ads/Livewire CTAs, the **listing wizard** (teal chrome), auth pages + guest layout, points badge, Chart.js dashboards, legal prose links, footer accent bars, search/category breadcrumbs, cookie consent, pricing/ad-pricing pages, PDF report styles, SEO image generator, and profile avatar fallbacks (all committed or fixed in working tree). **Residual legacy green `#1D9E75` fully replaced — Fixed 2026-07-09.**
+**Fully completed (2026-07-10).** Navy/teal (`nilex`, `nilex-teal`) applied across: homepage + shared chrome, listing cards, category/search/detail CTAs, both pricing pages' CTAs, trust card, footer, dashboard/profile/ads/Livewire CTAs, the **listing wizard** (teal chrome), auth pages + guest layout, points badge, Chart.js dashboards, legal prose links, footer accent bars, search/category breadcrumbs, cookie consent, pricing/ad-pricing pages, PDF report styles, SEO image generator, and profile avatar fallbacks. Residual legacy green `#1D9E75` / `#085041` eliminated from all runtime frontend code (2026-07-09); final pass verified no regressions in `*.php` / `*.blade.php` / `*.css` / `*.js`.
 
 ---
 
@@ -320,7 +332,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 2. **AR/EN translation is mandatory for every new user-facing string from the first line** — public + authenticated area. Lang files: `lang/{ar,en}/{ui,wizard,listing,adspaces,server,auth,validation}.php` + root `ar.json`/`en.json`. Exception: `app/Filament/*` (admin) is Arabic-only by deliberate decision (Phase D deferred).
 3. **Never delete code without explicit approval** — deprecate/flag instead, and ask.
 4. **Discovery before implementation** — read the actual code/DB first; never assume from docs or memory. For risky data work, dry-run first (see `users:backfill-verification` pattern: read-only by default, `--execute` to write).
-5. **`php artisan test` after every change** — suite must stay green (currently **453 passing, 0 failures**). Tests use in-memory SQLite, sync queue, `SCOUT_DRIVER=collection` (see `phpunit.xml`).
+5. **`php artisan test` after every change** — suite must stay green (currently **453 passing, 0 failures**, 1387 assertions). Tests use in-memory SQLite, sync queue, `SCOUT_DRIVER=collection` (see `phpunit.xml`).
 6. **Commit after each approved phase/step** — small, labeled commits.
 7. **Western/Latin digits (1,2,3) everywhere, all locales** — never Arabic-Indic numerals in UI strings.
 8. **Persisted `PointTransaction.description` strings stay Arabic** (written once at credit time — the documented permanent exception to rule 2).
@@ -347,7 +359,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 **Admin (Filament, Arabic-only):** listing resource + moderation infolist; `ListingPolicy` (moderators: view/approve/reject only); user management; ad campaign approval; audit logs; TrashedFilter + restore.
 
-**Platform/UX fixes shipped:** OTP boxes LTR order, delete-modal Alpine scope, profile icon overlap, phone-verified badge semantics, footer plans column, admin image-collection unification, email-verify +20 flow, wizard location prefill, pricing page plan cards with entitlement bullets (matrix removed), `public/.well-known/security.txt`, **launch-prep (2026-07-10):** `points_balance` mass-assignment guard, hero carousel bilingual `aria-label`, invalid `sort` HTTP validation + Nilex 422 page, Socialite error display on login, `revealPhone()` null-phone guard, `store()` image-rejection test, Paymob iframe via config only.
+**Platform/UX fixes shipped:** OTP boxes LTR order, delete-modal Alpine scope, profile icon overlap, phone-verified badge semantics, footer plans column, admin image-collection unification, email-verify +20 flow, wizard location prefill, pricing page plan cards with entitlement bullets (matrix removed), `public/.well-known/security.txt`, **launch-prep (2026-07-10):** `points_balance` mass-assignment guard, hero carousel bilingual `aria-label`, invalid `sort` HTTP validation + Nilex 422 page, Socialite error display on login, `revealPhone()` null-phone guard, `store()` image-rejection test, Paymob iframe via config only. **Final launch-prep (2026-07-10):** footer/social i18n, locale-aware WhatsApp prefill, offer rate limit, extended media eager-load (detail/dashboard/categories), bilingual Paymob 503 message.
 
 ---
 
@@ -370,7 +382,10 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | **Custom error pages** | **Fixed 2026-07-09** — custom Nilex-styled pages added for `403/404/419/422/429/500` under `resources/views/errors/` with AR/EN `ui.errors.*` translations. GET validation failures render `errors/422` (2026-07-10). |
 | `PAYMOB_IFRAME_ID` | Referenced by `config/services.php` but absent from `.env`. |
 | Legal page `content` EN | Arabic-only by decision; EN visitors see Arabic body via `ar` fallback. |
-| Re-skin residual green | **Fixed 2026-07-09** — all `#1D9E75` / `#085041` brand accents replaced with `nilex-teal` / `nilex-teal-deep`; semantic emerald retained for success states only. |
+| Re-skin residual green | **Fully completed 2026-07-10** — verified absent from all runtime frontend code; emerald retained for semantic success only. |
+| **Offer spam — no rate limit** | **Fixed 2026-07-10** — `makeOffer()` 5 offers/min per user via `RateLimiter` (parity with `MessageController`). |
+| **Footer i18n gaps** | **Fixed 2026-07-10** — social `aria-label`s, ad-spaces link, logo alt via `ui.footer.*` / `ui.nav.ad_spaces`. |
+| **Detail/dashboard media N+1** | **Fixed 2026-07-10** — `ListingController::show()` + `UserDashboard` + homepage/wizard category icons eager-load `media`. |
 | **Search-priority sort** | Fixed 2026-07-09 — boost applies in SQL `ORDER BY` before pagination in `HomeController::search()` and `CategoryController::show()` (default sort only). |
 | **Scout production readiness** | `collection` driver locally; Meilisearch + queue indexing needed for prod. |
 
@@ -395,7 +410,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 - `Listing` → **`images`**; conversions `thumb`/`card`/`full_hd`, all watermarked + `nonQueued`; original never rendered publicly.
 - `AdCampaign` → **`ad_image`**; conversions `desktop`/`tablet`/`mobile`.
 - Category icons are media-library-backed.
-- **Public listing grids eager-load `media`** (homepage, category, search) so `getFirstMediaUrl('images', 'card')` resolves from memory — fixed P1 2026-07-09.
+- **Public listing grids eager-load `media`** (homepage, category, search, detail, similar listings, seller dashboard) so `getFirstMediaUrl()` resolves from memory — P1 fixed 2026-07-09; extended 2026-07-10.
 
 ### Soft-delete couplings
 
@@ -417,6 +432,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 - Paymob endpoints: `/auth/tokens`, `/acceptance/payment_keys`; always via `config('services.paymob.*')` (never `env()` in controllers).
 - OTP flex container needs explicit `dir="ltr"`.
 - `ListingController::canViewListing()` gates non-published listings (owner/admin only).
+- `users.otp_code` remains in `$fillable` because `OtpService` writes via `update()` — acceptable while only trusted services call it; consider `forceFill()` + removal from `$fillable` in a future hardening pass.
 
 ---
 
@@ -424,14 +440,15 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 ### Done
 - **Tests: 453 passing, 0 failures** (1387 assertions; Pest; in-memory SQLite).
-- Entire public + authenticated frontend bilingual AR/EN (with known gaps in §11); RTL/LTR correct.
+- Entire public + authenticated frontend bilingual AR/EN (known gap: `lang/en/types.php` only); RTL/LTR correct.
 - Paymob integration verified end-to-end **in test mode** (points + ad checkouts).
 - Moderation pipeline complete with notifications + audit trail.
-- Visual identity (navy/teal) applied across frontend incl. wizard + auth pages.
+- **Visual identity (navy/teal) fully completed** across frontend incl. wizard + auth pages (verified 2026-07-10).
 - Image watermarking + backfill command; SEO JSON-LD; OG images command.
-- **Security patch series** (July 2026): XSS, listing exposure, OTP logging, session fixation, throttles, mass assignment, JSON serialization, phone-reveal throttle, store() image validation.
+- **Security patch series** (July 2026): XSS, listing exposure, OTP logging, session fixation, throttles, mass assignment, JSON serialization, phone-reveal throttle, store() image validation, offer rate limit.
 - Listing sort system; hero carousel; popup modal; email verification +20; point economy rebalance.
-- **Launch-prep code hygiene (2026-07-10):** remaining Low audit items L1/L3/L4/L5/L7 fixed; M5/M12 fixed; M13 improved (Nilex 422 page for GET validation); payment callback pages already on `layouts.frontend` (M9/M10 fixed 2026-07-09).
+- **Launch-prep code hygiene (2026-07-10):** remaining Low audit items L1/L3/L4/L5/L7 fixed; M5/M12 fixed; M13 improved (Nilex 422 page for GET validation); payment callback pages on `layouts.frontend` (M9/M10 fixed 2026-07-09).
+- **Final launch-prep (2026-07-10):** footer/social i18n, media eager-load extensions, locale-aware WhatsApp prefill, bilingual gateway error messages, offer throttle parity with messages.
 
 ### Not done yet (launch blockers / decisions)
 | Item | Current state |
@@ -483,6 +500,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | M12 | **Socialite errors not displayed on login** — `withErrors(['error'])` but no `@error('error')` | `SocialiteController` → `login.blade.php` | **Fixed 2026-07-10** — alert block for `error` + `contact` keys |
 | M13 | **Search GET validation returns 422 page** — no inline form feedback | `HomeController::search()` | **Improved 2026-07-10** — Nilex-styled `errors/422` for GET validation (tampered query params); JSON clients get 422 validation JSON; form POST validation unchanged (redirect-back) |
 | M14 | **Category pages lack search-priority boost** — inconsistent with search | `CategoryController.php` | **Fixed 2026-07-09** — same `LEFT JOIN user_entitlements` + `CASE WHEN` ordering as `HomeController::search()` on default sort |
+| M15 | **Offer spam — no rate limit** | `ListingController::makeOffer()` | **Fixed 2026-07-10** — 5 offers/min per authenticated user via `RateLimiter`; JSON 429 with `server.offer.rate_limit_exceeded` |
 
 ### Low
 
@@ -493,8 +511,9 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | L3 | No dedicated test for `store()` image rejection (update tested in `ListingEditTest`) | tests | **Fixed 2026-07-10** — `ListingEditTest` store non-image 422 case |
 | L4 | `env()` fallback in payment checkout | `PaymentController.php` ~68 | **Fixed 2026-07-10** — `config('services.paymob.iframe_id')` only; aborts 503 when blank |
 | L5 | Hero carousel dot `aria-label="Slide N"` English-only | `home.blade.php` | **Fixed 2026-07-10** — `ui.hero.carousel_slide_aria` AR/EN |
-| L6 | Dead file `listing-details.blade.php` (hardcoded Arabic if ever routed) | views | Documented — file header notes active route is `listings/show.blade.php`; not deleted (awaiting approval) |
+| L6 | Dead file `listing-details.blade.php` (hardcoded Arabic if ever routed) | views | **Deferred** — file header documents active route is `listings/show.blade.php`; not deleted (awaiting explicit approval) |
 | L7 | Invalid `sort` query silently falls back to `latest` | `ListingSort::fromRequest()` | **Fixed 2026-07-10** — HTTP validated in `CategoryController` + `HomeController::search()`; `isValid()` helper; defensive fallback documented; tests for 422 JSON + Nilex 422 page |
+| L8 | Footer social `aria-label`s + ad-spaces link hardcoded Arabic | `footer.blade.php` | **Fixed 2026-07-10** — `ui.footer.social_*`, `ui.nav.ad_spaces`, `ui.footer.brand` |
 
 ### Security fixes since 2026-07-05 audit (verified in git)
 
@@ -522,7 +541,8 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Wizard | Feature costs from `Listing::FEATURE_COSTS` JSON |
 | Security | `public/.well-known/security.txt` added |
 | Points race | `PointService` transfer deadlock fix; referral + `featureWithPoints()` routed through locked transactions; `EntitlementService::recordUsage()` row locks (2026-07-09) |
-| Launch prep | L1/L3–L5/L7 Low fixes; M5/M12 fixes; M13 422 page; 453 tests (2026-07-10) |
+| Launch prep | L1/L3–L5/L7/L8 Low fixes; M5/M12/M15 fixes; M13 422 page; 453 tests (2026-07-10) |
+| Final launch prep | Footer i18n, media eager-load extensions, offer throttle, WhatsApp prefill i18n, Paymob 503 i18n (2026-07-10) |
 
 ---
 
@@ -532,7 +552,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 | Priority | Issue | Location |
 |---|---|---|
-| **P1** | **Media N+1 on all public listing grids** — controllers eager-load relations but not `media`; views call `getFirstMediaUrl()` per card (~12+ queries/page) | `HomeController`, `CategoryController`, `listing-card.blade.php`, `search-results.blade.php` | **Fixed 2026-07-09** — `with('media')` on homepage (`index`), search (`search`), and category (`show`) listing queries |
+| **P1** | **Media N+1 on public listing grids** | `HomeController`, `CategoryController`, `listing-card.blade.php`, `search-results.blade.php` | **Fixed 2026-07-09** — `with('media')` on homepage, search, category. **Extended 2026-07-10** — `ListingController::show()` (detail + similar), `UserDashboard`, homepage/wizard category icons. |
 | **P2** | **Missing `listings.status` indexes** — no index on `status`, `(status, created_at)`, `(user_id, status)`, `(category_id, status)` | migrations | **Fixed 2026-07-09** — `2026_07_09_000001_add_performance_indexes_to_core_tables.php` adds: `listings` — `(status)`, `(status, created_at)`, `(user_id, status)`, `(user_id, created_at)`, `(category_id, status)`, `(is_featured, featured_until)`, `(deleted_at)`; `offers` — `(receiver_id, status)`; `media` — `(model_type, model_id, collection_name)` |
 | **P3** | **UserDashboard query storm** — 5+ separate count queries + chart queries + unbounded `incomingOffers->get()` every render | `UserDashboard.php` |
 | **P4** | **Scout `collection` driver** — full in-memory scan; unusable at scale until Meilisearch | `config/scout.php` |
@@ -545,8 +565,8 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Issue | Location |
 |---|---|
 | Entitlement `hasFeature()` per seller badge on listing cards | `business-badge.blade.php` |
-| Category icons media N+1 | `home.blade.php` |
-| Detail page missing `category` eager-load | `ListingController.php` |
+| Category icons media N+1 | `home.blade.php` | **Fixed 2026-07-10** — `with('media')` on homepage + wizard category queries |
+| Detail page missing `category` eager-load | `ListingController.php` | **Fixed 2026-07-10** — `category` + `media` in `show()` |
 | `getMonthlyPerformance()` loads all view rows into PHP | `SellerListingAnalyticsService.php` |
 | Filament listings table no default eager load | `ListingResource` / `ListingTable.php` |
 | Scout: price/category filters applied post-search in SQL callback (sparse pages) | `HomeController::search()` vs `ListingGrid.php` |
@@ -579,7 +599,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Search vs category | Search-priority entitlement boost on both search and category pages (default sort only) |
 | Search implementations | `HomeController::search()` vs `ListingGrid.php` — different Meilisearch filter placement |
 | Pricing marketing | Section 6 reads config + `Listing::FEATURE_COSTS` + active `CampaignLink` rewards (fixed 2026-07-09) |
-| Translation coverage | Category/detail/profile/search/ad-popup bilingual |
+| Translation coverage | Category/detail/profile/search/ad-popup/footer/cookie consent bilingual |
 | Payment UX | Success/fail pages use frontend layout + Nilex branding (fixed 2026-07-09) |
 | Ad tracking | Banners track impressions; popup does not |
 | Feature cost display | Wizard and pricing Section 6 both use `Listing::FEATURE_COSTS` |

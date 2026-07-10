@@ -2,11 +2,6 @@
 
 namespace App\Livewire\Frontend;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use App\Models\Listing;
 use App\Models\Offer;
 use App\Models\SaleConfirmation;
@@ -14,6 +9,13 @@ use App\Models\SellerLead;
 use App\Notifications\SaleConfirmationRequested;
 use App\Services\EntitlementService;
 use App\Services\SellerListingAnalyticsService;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class UserDashboard extends Component
@@ -81,12 +83,12 @@ class UserDashboard extends Component
     {
         $listing = Listing::where('user_id', Auth::id())->findOrFail($id);
 
-        $this->closingListingId    = $listing->id;
+        $this->closingListingId = $listing->id;
         $this->closingListingTitle = $listing->title;
-        $this->closingType         = null;
-        $this->closingStep         = 1;
-        $this->selectedBuyerId     = null;
-        $this->closingModalOpen    = true;
+        $this->closingType = null;
+        $this->closingStep = 1;
+        $this->selectedBuyerId = null;
+        $this->closingModalOpen = true;
     }
 
     // إغلاق النافذة وتصفير الحالة (يمنع تنفيذ إجراء على إعلان خاطئ لاحقاً)
@@ -105,7 +107,7 @@ class UserDashboard extends Component
     // الرجوع من الخطوة 2 إلى الخطوة 1 (يُلغي اختيار المشتري)
     public function backToStep1()
     {
-        $this->closingStep     = 1;
+        $this->closingStep = 1;
         $this->selectedBuyerId = null;
     }
 
@@ -148,7 +150,7 @@ class UserDashboard extends Component
                 // الانتقال للخطوة 2 (اختيار المشتري) داخل نفس النافذة.
                 // لا حذف هنا — الحذف يتم فقط بعد تأكيد المشتري في confirmSaleToBuyer().
                 $this->selectedBuyerId = null;
-                $this->closingStep     = 2;
+                $this->closingStep = 2;
                 break;
 
             default:
@@ -197,6 +199,7 @@ class UserDashboard extends Component
         // 2) البائع لا يمكن أن يكون هو المشتري
         if ($this->selectedBuyerId === Auth::id()) {
             session()->flash('error', __('server.sale_confirmation.invalid_buyer'));
+
             return;
         }
 
@@ -210,6 +213,7 @@ class UserDashboard extends Component
 
         if (! $isEligibleBuyer) {
             session()->flash('error', __('server.sale_confirmation.invalid_buyer'));
+
             return;
         }
 
@@ -217,6 +221,7 @@ class UserDashboard extends Component
         if (! SaleConfirmation::canInitiateForListing($listing->id)) {
             session()->flash('error', __('server.sale_confirmation.already_confirmed'));
             $this->closeClosingModal();
+
             return;
         }
 
@@ -225,15 +230,15 @@ class UserDashboard extends Component
             SaleConfirmation::updateOrCreate(
                 [
                     'listing_id' => $listing->id,
-                    'buyer_id'   => $this->selectedBuyerId,
+                    'buyer_id' => $this->selectedBuyerId,
                 ],
                 [
-                    'seller_id'           => Auth::id(),
-                    'status'              => SaleConfirmation::STATUS_PENDING,
+                    'seller_id' => Auth::id(),
+                    'status' => SaleConfirmation::STATUS_PENDING,
                     'seller_confirmed_at' => now(),
-                    'buyer_confirmed_at'  => null,
-                    'canceled_at'         => null,
-                    'canceled_by'         => null,
+                    'buyer_confirmed_at' => null,
+                    'canceled_at' => null,
+                    'canceled_by' => null,
                 ],
             );
 
@@ -261,6 +266,7 @@ class UserDashboard extends Component
 
         if ($listing->is_featured) {
             session()->flash('error', __('server.dashboard.already_featured'));
+
             return;
         }
 
@@ -271,12 +277,12 @@ class UserDashboard extends Component
                 'success',
                 __('server.dashboard.featured_success')
             );
-        } catch (\Illuminate\Database\QueryException | \PDOException $e) {
+        } catch (QueryException|\PDOException $e) {
             // أخطاء تقنية غير متوقعة: لا نعرض تفاصيل SQL/الاستعلام للمستخدم —
             // رسالة عامة فقط، والتفاصيل تذهب للّوج.
-            \Illuminate\Support\Facades\Log::error('featureListing failed', [
+            Log::error('featureListing failed', [
                 'listing_id' => $listing->id,
-                'message'    => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
             session()->flash('error', __('server.ai.unknown_error'));
         } catch (\Exception $e) {
@@ -293,10 +299,10 @@ class UserDashboard extends Component
         $user = Auth::user();
         $entitlements = app(EntitlementService::class);
         $analyticsService = app(SellerListingAnalyticsService::class);
-        
+
         // جلب الإعلانات الخاصة بالمستخدم الحالي فقط
         $listings = Listing::where('user_id', $user->id)
-            ->with('category')
+            ->with(['category', 'media'])
             ->latest()
             ->paginate(10);
 
@@ -310,35 +316,35 @@ class UserDashboard extends Component
         $isLegacy = $entitlements->isLegacyGrandfathered($user);
 
         $access = [
-            'analytics'       => $entitlements->hasFeature($user, EntitlementService::FEATURE_ANALYTICS_ACCESS) || $isLegacy,
-            'charts'          => $entitlements->hasFeature($user, EntitlementService::FEATURE_ANALYTICS_CHARTS) || $isLegacy,
-            'phone_clicks'    => $entitlements->hasFeature($user, EntitlementService::FEATURE_PHONE_CLICKS_ACCESS) || $isLegacy,
+            'analytics' => $entitlements->hasFeature($user, EntitlementService::FEATURE_ANALYTICS_ACCESS) || $isLegacy,
+            'charts' => $entitlements->hasFeature($user, EntitlementService::FEATURE_ANALYTICS_CHARTS) || $isLegacy,
+            'phone_clicks' => $entitlements->hasFeature($user, EntitlementService::FEATURE_PHONE_CLICKS_ACCESS) || $isLegacy,
             'whatsapp_clicks' => $entitlements->hasFeature($user, EntitlementService::FEATURE_WHATSAPP_CLICKS_ACCESS) || $isLegacy,
-            'event_views'     => $entitlements->hasFeature($user, EntitlementService::FEATURE_EVENT_VIEWS_ACCESS) || $isLegacy,
+            'event_views' => $entitlements->hasFeature($user, EntitlementService::FEATURE_EVENT_VIEWS_ACCESS) || $isLegacy,
         ];
 
         // حساب إحصائيات لوحة التحكم
         $eventStats = $analyticsService->getDashboardStats($user);
 
         $stats = [
-            'total'    => Listing::where('user_id', $user->id)->count(),
-            'active'   => Listing::where('user_id', $user->id)->where('status', Listing::STATUS_PUBLISHED)->count(),
-            'pending'  => Listing::where('user_id', $user->id)->where('status', Listing::STATUS_PENDING)->count(),
+            'total' => Listing::where('user_id', $user->id)->count(),
+            'active' => Listing::where('user_id', $user->id)->where('status', Listing::STATUS_PUBLISHED)->count(),
+            'pending' => Listing::where('user_id', $user->id)->where('status', Listing::STATUS_PENDING)->count(),
             'rejected' => Listing::where('user_id', $user->id)->where('status', Listing::STATUS_REJECTED)->count(),
-            'views'    => Listing::where('user_id', $user->id)->sum('views_count'),
-            'clicks'   => Listing::where('user_id', $user->id)->sum('whatsapp_clicks'),
-            'views_events'           => $eventStats['views_events'],
-            'phone_clicks'           => $eventStats['phone_clicks'],
+            'views' => Listing::where('user_id', $user->id)->sum('views_count'),
+            'clicks' => Listing::where('user_id', $user->id)->sum('whatsapp_clicks'),
+            'views_events' => $eventStats['views_events'],
+            'phone_clicks' => $eventStats['phone_clicks'],
             'whatsapp_clicks_events' => $eventStats['whatsapp_clicks_events'],
-            'total_phone_reveals'    => $access['phone_clicks'] ? $eventStats['phone_clicks'] : null,
-            'total_whatsapp_clicks'  => $access['whatsapp_clicks'] ? $eventStats['whatsapp_clicks_events'] : null,
-            'conversion_rate'        => $access['analytics'] ? $analyticsService->getConversionRate($user) : null,
+            'total_phone_reveals' => $access['phone_clicks'] ? $eventStats['phone_clicks'] : null,
+            'total_whatsapp_clicks' => $access['whatsapp_clicks'] ? $eventStats['whatsapp_clicks_events'] : null,
+            'conversion_rate' => $access['analytics'] ? $analyticsService->getConversionRate($user) : null,
         ];
 
         $chartData = [
-            'views_by_day'          => $access['event_views'] ? $analyticsService->getViewsByDay($user) : ['labels' => [], 'values' => []],
-            'whatsapp_by_listing'   => $access['whatsapp_clicks'] ? $analyticsService->getWhatsappClicksByListing($user) : ['labels' => [], 'values' => []],
-            'category_performance'  => $access['analytics'] ? $analyticsService->getCategoryPerformance($user) : ['labels' => [], 'values' => []],
+            'views_by_day' => $access['event_views'] ? $analyticsService->getViewsByDay($user) : ['labels' => [], 'values' => []],
+            'whatsapp_by_listing' => $access['whatsapp_clicks'] ? $analyticsService->getWhatsappClicksByListing($user) : ['labels' => [], 'values' => []],
+            'category_performance' => $access['analytics'] ? $analyticsService->getCategoryPerformance($user) : ['labels' => [], 'values' => []],
         ];
 
         // قائمة المشترين تُجلب فقط عند فتح الخطوة 2 (sold_platform)

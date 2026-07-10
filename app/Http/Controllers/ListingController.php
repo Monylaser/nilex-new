@@ -7,8 +7,9 @@ use App\Models\Offer; // 🟢 استدعاء موديل العروض
 use App\Services\ListingLeadTrackingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Auth; // 🟢 استدعاء Auth عشان نعرف مين اليوزر
 
 class ListingController extends Controller
 {
@@ -50,6 +51,8 @@ class ListingController extends Controller
             'province',
             'location',
             'user',
+            'category',
+            'media',
         ]);
 
         // إعلانات مشابهة: نفس القسم، باستثناء الإعلان الحالي، المنشور فقط.
@@ -57,7 +60,7 @@ class ListingController extends Controller
         // eager loading لـ category/location/user لمنع N+1 في بطاقة الإعلان
         // (نفس نمط CategoryController::show()).
         $similarListings = Listing::query()
-            ->with(['category', 'location', 'user'])
+            ->with(['category', 'location', 'user', 'media'])
             ->where('category_id', $listing->category_id)
             ->where('id', '!=', $listing->id)
             ->where('status', Listing::STATUS_PUBLISHED)
@@ -67,7 +70,7 @@ class ListingController extends Controller
             ->get();
 
         return view('frontend.listings.show', [
-            'listing'         => $listing,
+            'listing' => $listing,
             'similarListings' => $similarListings,
         ]);
     }
@@ -85,7 +88,7 @@ class ListingController extends Controller
         $listing->loadMissing('user');
 
         $phone = $listing->phone ?? $listing->user?->phone;
-        $message = urlencode("مرحباً، بخصوص إعلانك: {$listing->title} على منصة Nilex. هل ما زال متاحاً؟");
+        $message = urlencode(__('listing.whatsapp_prefill', ['title' => $listing->title]));
         $whatsappUrl = null;
 
         if ($phone) {
@@ -95,7 +98,7 @@ class ListingController extends Controller
         }
 
         return response()->json([
-            'phone'        => $phone,
+            'phone' => $phone,
             'whatsapp_url' => $whatsappUrl,
         ]);
     }
@@ -133,6 +136,16 @@ class ListingController extends Controller
     // 🟢 دالة استقبال العروض الجديدة (Make an Offer)
     public function makeOffer(Request $request, Listing $listing)
     {
+        $rateLimitKey = 'offers|'.Auth::id();
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+
+            return response()->json([
+                'error' => __('server.offer.rate_limit_exceeded', ['seconds' => $seconds]),
+            ], 429);
+        }
+
         // 0. لا يُسمح بتقديم عروض إلا على إعلان منشور (دفاع في العمق:
         //    زر العرض لا يظهر أصلاً على الإعلانات غير المنشورة).
         abort_unless($listing->status === Listing::STATUS_PUBLISHED, 404);
@@ -160,12 +173,14 @@ class ListingController extends Controller
 
         // 4. حفظ العرض في الداتابيز
         Offer::create([
-            'listing_id'  => $listing->id,
-            'sender_id'   => Auth::id(),
+            'listing_id' => $listing->id,
+            'sender_id' => Auth::id(),
             'receiver_id' => $listing->user_id,
-            'amount'      => $request->amount,
-            'message'     => $request->message,
+            'amount' => $request->amount,
+            'message' => $request->message,
         ]);
+
+        RateLimiter::hit($rateLimitKey, 60);
 
         return response()->json(['success' => __('server.offer.sent_success')]);
     }

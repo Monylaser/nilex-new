@@ -37,7 +37,7 @@ class PaymentController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        $user   = Auth::user();
+        $user = Auth::user();
         $points = (int) $plan->points;
         $amount = (float) $plan->price;
 
@@ -46,13 +46,13 @@ class PaymentController extends Controller
         }
 
         $transaction = Transaction::create([
-            'user_id'  => $user->id,
-            'plan_id'  => $plan->id,
-            'amount'   => $amount,
-            'status'   => 'pending',
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'amount' => $amount,
+            'status' => 'pending',
         ]);
 
-        $token   = $this->paymobService->getAuthToken();
+        $token = $this->paymobService->getAuthToken();
         $orderId = $this->paymobService->createOrder(
             $token,
             $amount,
@@ -68,7 +68,7 @@ class PaymentController extends Controller
         $iframeId = config('services.paymob.iframe_id');
 
         if (blank($iframeId)) {
-            abort(503, 'Payment gateway is not configured.');
+            abort(503, __('server.payment.gateway_not_configured'));
         }
 
         return redirect("https://accept.paymob.com/api/acceptance/iframes/{$iframeId}?payment_token={$paymentKey}");

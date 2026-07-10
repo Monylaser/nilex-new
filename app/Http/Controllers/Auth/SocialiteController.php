@@ -64,9 +64,11 @@ class SocialiteController extends Controller
 
             $device = $this->fingerprints->resolveDeviceCookie(request());
 
+            // L2 (deferred): Social signup does not attribute ?ref= campaign referrals.
+            // Product decision pending — mirror RegisteredUserController::store() when approved.
             $user = DB::transaction(function () use ($socialUser, $provider, $device) {
                 $newUser = User::create([
-                    'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? 'مستخدم نايلكس',
+                    'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? __('server.auth.default_social_name'),
                     'email' => $socialUser->getEmail(),
                     'password' => Hash::make(Str::random(24)),
                     'provider_name' => $provider,

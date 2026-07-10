@@ -32,6 +32,7 @@ class HomeController extends Controller
         $categories = Category::whereNull('parent_id')
             ->where('is_active', true)
             ->orderBy('sort_order')
+            ->with('media')
             ->get();
 
         $featuredListings = Listing::with(['category', 'location', 'user', 'media'])
@@ -98,7 +99,7 @@ class HomeController extends Controller
             ->orderBy('sort_order')
             ->with(['children' => function ($query) {
                 $query->where('is_active', true)->orderBy('sort_order');
-            }])
+            }, 'media', 'children.media'])
             ->get();
 
         // Expose the locale-aware `name` accessor in the JSON payload the wizard
