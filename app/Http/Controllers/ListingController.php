@@ -84,17 +84,19 @@ class ListingController extends Controller
 
         $listing->loadMissing('user');
 
-        $phone = $listing->phone ?? $listing->user->phone;
-        $phoneForWhatsapp = '2'.ltrim($phone, '0');
+        $phone = $listing->phone ?? $listing->user?->phone;
         $message = urlencode("مرحباً، بخصوص إعلانك: {$listing->title} على منصة Nilex. هل ما زال متاحاً؟");
+        $whatsappUrl = null;
 
         if ($phone) {
+            $phoneForWhatsapp = '2'.ltrim((string) $phone, '0');
+            $whatsappUrl = "https://wa.me/{$phoneForWhatsapp}?text={$message}";
             $leadTracking->recordPhoneClick($listing, Auth::user());
         }
 
         return response()->json([
             'phone'        => $phone,
-            'whatsapp_url' => "https://wa.me/{$phoneForWhatsapp}?text={$message}",
+            'whatsapp_url' => $whatsappUrl,
         ]);
     }
 

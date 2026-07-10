@@ -314,6 +314,36 @@ describe('Phone Reveal Endpoint', function () {
             ->assertJsonFragment(['phone' => '01001234567']);
     });
 
+    it('returns null phone and whatsapp_url when seller has no phone', function () {
+        $seller = User::factory()->create([
+            'is_phone_verified' => true,
+            'phone' => null,
+        ]);
+
+        $listing = Listing::create([
+            'title'       => 'Listing without phone',
+            'slug'        => 'listing-without-phone',
+            'description' => 'وصف تجريبي بدون رقم هاتف.',
+            'price'       => 1_000,
+            'phone'       => null,
+            'category_id' => $this->category->id,
+            'user_id'     => $seller->id,
+            'status'      => Listing::STATUS_PUBLISHED,
+        ]);
+
+        $buyer = User::factory()->create(['is_phone_verified' => true]);
+
+        $this->actingAs($buyer)
+            ->postJson(route('listings.reveal-phone', $listing))
+            ->assertOk()
+            ->assertJson([
+                'phone' => null,
+                'whatsapp_url' => null,
+            ]);
+
+        $this->assertDatabaseCount('listing_phone_clicks', 0);
+    });
+
     it('records a phone click on reveal without incrementing whatsapp_clicks', function () {
         $buyer = User::factory()->create(['is_phone_verified' => true]);
 

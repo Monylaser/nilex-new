@@ -228,6 +228,7 @@ return [
             ['label' => 'Furniture',          'query' => 'أثاث'],
             ['label' => 'Jobs',               'query' => 'وظائف'],
         ],
+        'carousel_slide_aria' => 'Slide :num',
     ],
 
     'sections' => [
@@ -607,6 +608,9 @@ return [
         '419_message' => 'Your session expired for security reasons. Please refresh and try again.',
         '429_title' => 'Too Many Requests',
         '429_message' => 'You sent too many requests in a short time. Please wait a bit and try again.',
+        '422_title' => 'Invalid Request',
+        '422_message' => 'Some of the information in your request is invalid. Please check the link or form and try again.',
+        'go_back' => 'Go Back',
     ],
 
     'pages' => [

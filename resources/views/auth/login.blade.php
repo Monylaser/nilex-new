@@ -19,6 +19,17 @@
     {{-- ── Session Status ── --}}
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    @if ($errors->has('error') || $errors->has('contact'))
+        <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
+            @error('error')
+                <p style="margin:0;">{{ $message }}</p>
+            @enderror
+            @error('contact')
+                <p style="margin:0;">{{ $message }}</p>
+            @enderror
+        </div>
+    @endif
+
     @if(config('features.self_service_ads'))
         <x-ad-banner placement="login_page" />
     @endif

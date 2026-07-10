@@ -50,5 +50,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Web GET validation (e.g. tampered ?sort=) cannot redirect back without a
+        // referrer — render the Nilex 422 page instead of a broken default view.
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
+            if ($request->expectsJson() || ! $request->isMethod('GET')) {
+                return null;
+            }
+
+            return response()->view('errors.422', [], 422);
+        });
     })->create();

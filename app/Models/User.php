@@ -40,11 +40,10 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'governorate',
         'city',
         'location_id',
-        // ملاحظة أمان: 'points' و'is_banned' و'is_phone_verified' حقول حسّاسة
+        // ملاحظة أمان: 'points' و'points_balance' و'is_banned' و'is_phone_verified' حقول حسّاسة
         // أُخرجت عمداً من $fillable — تُكتب فقط عبر خدمات موثوقة (PointService،
         // User::ban()/unban()، OtpService) باستخدام increment/decrement أو forceFill،
         // ولا يجوز ملؤها من إدخال المستخدم عبر mass-assignment.
-        'points_balance',
         'ban_reason',
         'strike_count',
         'avatar',

@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-Last full audit: **2026-07-09** (every fact below was verified against the actual source files on that date).
+Last full audit: **2026-07-10** (launch-prep pass; prior full audit 2026-07-09).
 
 ---
 
@@ -89,12 +89,12 @@ composer test
 
 | Class | Role |
 |---|---|
-| `ListingSort` | Shared sort options: `latest` / `oldest` / `price_asc` / `price_desc`; `fromRequest()` defaults invalid to `latest`; `apply()` with tie-breaker `id`. Used by `CategoryController` and `HomeController::search()`. UI: `partials/listing-sort-select.blade.php`. |
+| `ListingSort` | Shared sort options: `latest` / `oldest` / `price_asc` / `price_desc`; `fromRequest()` defaults invalid to `latest` (defensive — HTTP controllers validate with `Rule::in()` first); `isValid()` helper; `apply()` with tie-breaker `id`. Used by `CategoryController` and `HomeController::search()`. UI: `partials/listing-sort-select.blade.php`. |
 
 ### Models (`app/Models`) — key facts
 
 - **`Listing`** — `SoftDeletes`, Scout `Searchable`, `InteractsWithMedia`, `LogsActivity`. Statuses: `pending / published / rejected / flagged`. `STRIKE_REASONS`: `inappropriate_content`, `scam_fraud`, `prohibited_items`. Media collection **`images`** (never `listings`); conversions `thumb` (300 webp), `card` (600×450 webp), `full_hd` (1920×1080 webp) — all watermarked (`public/images/watermark.png`, bottom-right, 40% opacity), all `nonQueued`; the original stays clean and is never linked publicly. `FEATURE_COSTS` — see §3.
-- **`User`** — `points` (source of truth) + `points_balance` (mirror). Verification columns: `is_phone_verified`, `phone_verified_at`, `email_verified_at`, `pending_phone`, `pending_email`, `otp_channel`, `phone_bonus_claimed_at`, `email_bonus_claimed_at`, `anonymized_at`. `$hidden` includes phone + device fields + 2FA placeholders. Ratings: `ratings_avg` / `ratings_count` (denormalized by `ReviewObserver`). Also `plan_tier`, `plan_type`, `locale`, `strike_count`, `is_banned`, device-fingerprint fields.
+- **`User`** — `points` (source of truth) + `points_balance` (mirror; **not** in `$fillable` — synced only by `PointService`). Verification columns: `is_phone_verified`, `phone_verified_at`, `email_verified_at`, `pending_phone`, `pending_email`, `otp_channel`, `phone_bonus_claimed_at`, `email_bonus_claimed_at`, `anonymized_at`. `$hidden` includes phone + device fields + 2FA placeholders. Ratings: `ratings_avg` / `ratings_count` (denormalized by `ReviewObserver`). Also `plan_tier`, `plan_type`, `locale`, `strike_count`, `is_banned`, device-fingerprint fields.
 - **`AdCampaign`** — `SoftDeletes`, media collection **`ad_image`**, conversions `desktop` 1200×400 / `tablet` 768×256 / `mobile` 390×130. Scopes: `active`, `displayable`, `paid`, `pending`, `approved`, `rejected`, `byPlacement`. `display_duration_seconds` drives hero carousel slide timing.
 - **`Category` / `Location` / `CarBrand` / `CarModel`** — plain `name_ar` + `name_en` columns with a locale-aware `getNameAttribute()` accessor (NOT Spatie translatable). City-level `Location.name_en` = Arabic by seeder design (data gap). `Location::getCachedAll()` exists but wizard still hits DB directly.
 - **`SaleConfirmation`** — state machine `pending → confirmed / canceled`; `confirmed` locked permanently; `canInitiateForListing()` = one confirmed sale per listing. `listing()` is `withTrashed()`.
@@ -320,7 +320,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 2. **AR/EN translation is mandatory for every new user-facing string from the first line** — public + authenticated area. Lang files: `lang/{ar,en}/{ui,wizard,listing,adspaces,server,auth,validation}.php` + root `ar.json`/`en.json`. Exception: `app/Filament/*` (admin) is Arabic-only by deliberate decision (Phase D deferred).
 3. **Never delete code without explicit approval** — deprecate/flag instead, and ask.
 4. **Discovery before implementation** — read the actual code/DB first; never assume from docs or memory. For risky data work, dry-run first (see `users:backfill-verification` pattern: read-only by default, `--execute` to write).
-5. **`php artisan test` after every change** — suite must stay green (currently **439 passing, 0 failures**). Tests use in-memory SQLite, sync queue, `SCOUT_DRIVER=collection` (see `phpunit.xml`).
+5. **`php artisan test` after every change** — suite must stay green (currently **453 passing, 0 failures**). Tests use in-memory SQLite, sync queue, `SCOUT_DRIVER=collection` (see `phpunit.xml`).
 6. **Commit after each approved phase/step** — small, labeled commits.
 7. **Western/Latin digits (1,2,3) everywhere, all locales** — never Arabic-Indic numerals in UI strings.
 8. **Persisted `PointTransaction.description` strings stay Arabic** (written once at credit time — the documented permanent exception to rule 2).
@@ -347,7 +347,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 
 **Admin (Filament, Arabic-only):** listing resource + moderation infolist; `ListingPolicy` (moderators: view/approve/reject only); user management; ad campaign approval; audit logs; TrashedFilter + restore.
 
-**Platform/UX fixes shipped:** OTP boxes LTR order, delete-modal Alpine scope, profile icon overlap, phone-verified badge semantics, footer plans column, admin image-collection unification, email-verify +20 flow, wizard location prefill, pricing page plan cards with entitlement bullets (matrix removed), `public/.well-known/security.txt`.
+**Platform/UX fixes shipped:** OTP boxes LTR order, delete-modal Alpine scope, profile icon overlap, phone-verified badge semantics, footer plans column, admin image-collection unification, email-verify +20 flow, wizard location prefill, pricing page plan cards with entitlement bullets (matrix removed), `public/.well-known/security.txt`, **launch-prep (2026-07-10):** `points_balance` mass-assignment guard, hero carousel bilingual `aria-label`, invalid `sort` HTTP validation + Nilex 422 page, Socialite error display on login, `revealPhone()` null-phone guard, `store()` image-rejection test, Paymob iframe via config only.
 
 ---
 
@@ -367,7 +367,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Facebook / Instagram / TikTok login | Routes allow them; only Google configured. |
 | `lang/en/types.php` | Missing (`lang/ar/types.php` exists AR-only). |
 | **`search-results.blade.php` i18n** | **Fixed 2026-07-09** — moved to `ui.search.*` AR/EN keys. |
-| **Custom error pages** | **Fixed 2026-07-09** — custom Nilex-styled pages added for `403/404/419/429/500` under `resources/views/errors/` with AR/EN `ui.errors.*` translations. |
+| **Custom error pages** | **Fixed 2026-07-09** — custom Nilex-styled pages added for `403/404/419/422/429/500` under `resources/views/errors/` with AR/EN `ui.errors.*` translations. GET validation failures render `errors/422` (2026-07-10). |
 | `PAYMOB_IFRAME_ID` | Referenced by `config/services.php` but absent from `.env`. |
 | Legal page `content` EN | Arabic-only by decision; EN visitors see Arabic body via `ar` fallback. |
 | Re-skin residual green | **Fixed 2026-07-09** — all `#1D9E75` / `#085041` brand accents replaced with `nilex-teal` / `nilex-teal-deep`; semantic emerald retained for success states only. |
@@ -414,7 +414,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 - Blade: never put the literal token `@php` inside a `{{-- --}}` comment.
 - JSON-LD rendered with escaped slashes (no `JSON_UNESCAPED_SLASHES`) to prevent `</script>` breakout XSS.
 - Livewire modals: prefer `@if($flag)` server-rendered wrappers over `x-show`+`@entangle`.
-- Paymob endpoints: `/auth/tokens`, `/acceptance/payment_keys`; always via `config('services.paymob.*')`.
+- Paymob endpoints: `/auth/tokens`, `/acceptance/payment_keys`; always via `config('services.paymob.*')` (never `env()` in controllers).
 - OTP flex container needs explicit `dir="ltr"`.
 - `ListingController::canViewListing()` gates non-published listings (owner/admin only).
 
@@ -423,7 +423,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 ## 10. Launch Notes (as of July 2026)
 
 ### Done
-- **Tests: 439 passing, 0 failures** (1331 assertions; Pest; in-memory SQLite).
+- **Tests: 453 passing, 0 failures** (1387 assertions; Pest; in-memory SQLite).
 - Entire public + authenticated frontend bilingual AR/EN (with known gaps in §11); RTL/LTR correct.
 - Paymob integration verified end-to-end **in test mode** (points + ad checkouts).
 - Moderation pipeline complete with notifications + audit trail.
@@ -431,18 +431,21 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 - Image watermarking + backfill command; SEO JSON-LD; OG images command.
 - **Security patch series** (July 2026): XSS, listing exposure, OTP logging, session fixation, throttles, mass assignment, JSON serialization, phone-reveal throttle, store() image validation.
 - Listing sort system; hero carousel; popup modal; email verification +20; point economy rebalance.
+- **Launch-prep code hygiene (2026-07-10):** remaining Low audit items L1/L3/L4/L5/L7 fixed; M5/M12 fixed; M13 improved (Nilex 422 page for GET validation); payment callback pages already on `layouts.frontend` (M9/M10 fixed 2026-07-09).
 
 ### Not done yet (launch blockers / decisions)
 | Item | Current state |
 |---|---|
-| **SMS gateway** | `SmsService` logs OTPs locally; production API is a placeholder. No `SMS_*` keys in `.env`. |
-| **Paymob live mode** | Test credentials only; `PAYMOB_IFRAME_ID` missing from `.env`. |
+| **SMS gateway** | `SmsService` logs OTPs locally; production API is a placeholder. No `SMS_*` keys in `.env`. **Must configure before production OTP/SMS.** |
+| **Paymob live mode** | Test credentials only; `PAYMOB_IFRAME_ID` must be set in `.env` for checkout (config reads via `config/services.php`; missing value aborts 503). |
 | **Hosting / deployment** | Not deployed — local Laragon only. Plan: Laravel Forge. |
 | **Production infra switches** | Queue `sync`→Redis, cache `file`→Redis, Scout `collection`→Meilisearch, `MAIL_MAILER` `log`→real SMTP. |
 | **Performance indexes** | **Fixed 2026-07-09** — migration `2026_07_09_000001_add_performance_indexes_to_core_tables.php` (see §12). |
-| **High-severity bugs** | Referral + feature points races fixed 2026-07-09; buyerLeads IDOR (M3) **fixed 2026-07-09**. |
+| **High-severity bugs** | All patched as of 2026-07-09; launch-prep fixed remaining Medium/Low items M5/M12 and Low L1–L5/L7. |
 | **UI/UX designer pass** | Planned hire via خمسات (Khamsat). |
 | **Search page i18n** | **Fixed 2026-07-09** — bilingual AR/EN with `ui.search.*`. |
+| **Socialite referral (L2)** | Social signup still skips referral attribution — product decision deferred. |
+| **Extra social logins** | Facebook/Instagram/TikTok routes exist; only Google configured in `.env`. |
 
 ---
 
@@ -470,28 +473,28 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | M2 | **Referral `used_count` race** | `RegisteredUserController` + `CampaignLink` | **Fixed 2026-07-09** |
 | M3 | **IDOR in `buyerLeads()`** — no `listing.user_id === Auth::id()` check (unlike `confirmSaleToBuyer()`) | `UserDashboard.php` ~162–177 | **Fixed 2026-07-09** — ownership re-verified via `Listing::where('user_id', Auth::id())`; `abort(403)` on mismatch |
 | M4 | **WhatsApp click tracking unauthenticated** — no auth/status gate; metric inflation possible | `ListingController::trackWhatsappClick()` | **Fixed 2026-07-09** — `auth` middleware + published-only guard; 401 guests, 404 non-published |
-| M5 | **Null phone in `revealPhone()`** — `ltrim(null)` on missing phone | `ListingController.php` ~87–88 |
+| M5 | **Null phone in `revealPhone()`** — `ltrim(null)` on missing phone | `ListingController.php` ~87–88 | **Fixed 2026-07-10** — null-safe phone lookup; `whatsapp_url` null when no phone; no lead row recorded |
 | M6 | **`featureWithPoints()` not atomic** | `Listing.php` | **Fixed 2026-07-09** |
 | M7 | **Message spam — no rate limit** | `MessageController.php` | **Fixed 2026-07-09** — 5 messages/min per authenticated user via `RateLimiter`; JSON 429 or redirect with `ui.messages.rate_limit_exceeded` |
 | M8 | **Pricing Section 6 inaccurate** — advertised daily +1 (not implemented), hardcoded referral +25, omitted email +20, hardcoded feature costs | `pricing.blade.php` ~291–337 | **Fixed 2026-07-09** — bilingual `ui.pricing.earn.*` / `spend.*`; config-backed earn values; `Listing::FEATURE_COSTS` loop; referral from active `CampaignLink`; daily login removed |
 | M9 | **Payment failed CTA mismatch** — label says "Back to Home", href is `dashboard` | `payment/failed.blade.php` | **Fixed 2026-07-09** — primary CTA links to `route('home')`; secondary retry links to pricing |
 | M10 | **Payment callbacks use Breeze layout** — not `layouts.frontend` | `payment/success.blade.php`, `failed.blade.php` | **Fixed 2026-07-09** — both pages extend `layouts.frontend` with Nilex branding |
 | M11 | **Ad popup skip strings hardcoded Arabic** | `ad-popup.blade.php` | **Fixed 2026-07-09** — bilingual `ui.ad_popup.*` keys for skip, countdown, and close |
-| M12 | **Socialite errors not displayed on login** — `withErrors(['error'])` but no `@error('error')` | `SocialiteController` → `login.blade.php` |
-| M13 | **Search GET validation returns 422 page** — no inline form feedback | `HomeController::search()` |
+| M12 | **Socialite errors not displayed on login** — `withErrors(['error'])` but no `@error('error')` | `SocialiteController` → `login.blade.php` | **Fixed 2026-07-10** — alert block for `error` + `contact` keys |
+| M13 | **Search GET validation returns 422 page** — no inline form feedback | `HomeController::search()` | **Improved 2026-07-10** — Nilex-styled `errors/422` for GET validation (tampered query params); JSON clients get 422 validation JSON; form POST validation unchanged (redirect-back) |
 | M14 | **Category pages lack search-priority boost** — inconsistent with search | `CategoryController.php` | **Fixed 2026-07-09** — same `LEFT JOIN user_entitlements` + `CASE WHEN` ordering as `HomeController::search()` on default sort |
 
 ### Low
 
-| ID | Issue | Location |
-|---|---|---|
-| L1 | `points_balance` remains `$fillable` on User | `User.php` |
-| L2 | Socialite signup skips referral flow | `SocialiteController.php` |
-| L3 | No dedicated test for `store()` image rejection (update tested in `ListingEditTest`) | tests |
-| L4 | `env()` fallback in payment checkout | `PaymentController.php` ~68 |
-| L5 | Hero carousel dot `aria-label="Slide N"` English-only | `home.blade.php` |
-| L6 | Dead file `listing-details.blade.php` (hardcoded Arabic if ever routed) | views |
-| L7 | Invalid `sort` query silently falls back to `latest` | `ListingSort::fromRequest()` |
+| ID | Issue | Location | Status |
+|---|---|---|---|
+| L1 | `points_balance` remains `$fillable` on User | `User.php` | **Fixed 2026-07-10** — removed from `$fillable`; mirror synced only via `PointService` |
+| L2 | Socialite signup skips referral flow | `SocialiteController.php` | Deferred — product decision |
+| L3 | No dedicated test for `store()` image rejection (update tested in `ListingEditTest`) | tests | **Fixed 2026-07-10** — `ListingEditTest` store non-image 422 case |
+| L4 | `env()` fallback in payment checkout | `PaymentController.php` ~68 | **Fixed 2026-07-10** — `config('services.paymob.iframe_id')` only; aborts 503 when blank |
+| L5 | Hero carousel dot `aria-label="Slide N"` English-only | `home.blade.php` | **Fixed 2026-07-10** — `ui.hero.carousel_slide_aria` AR/EN |
+| L6 | Dead file `listing-details.blade.php` (hardcoded Arabic if ever routed) | views | Documented — file header notes active route is `listings/show.blade.php`; not deleted (awaiting approval) |
+| L7 | Invalid `sort` query silently falls back to `latest` | `ListingSort::fromRequest()` | **Fixed 2026-07-10** — HTTP validated in `CategoryController` + `HomeController::search()`; `isValid()` helper; defensive fallback documented; tests for 422 JSON + Nilex 422 page |
 
 ### Security fixes since 2026-07-05 audit (verified in git)
 
@@ -519,6 +522,7 @@ Applied: homepage + shared chrome, listing cards, category/search/detail CTAs, b
 | Wizard | Feature costs from `Listing::FEATURE_COSTS` JSON |
 | Security | `public/.well-known/security.txt` added |
 | Points race | `PointService` transfer deadlock fix; referral + `featureWithPoints()` routed through locked transactions; `EntitlementService::recordUsage()` row locks (2026-07-09) |
+| Launch prep | L1/L3–L5/L7 Low fixes; M5/M12 fixes; M13 422 page; 453 tests (2026-07-10) |
 
 ---
 

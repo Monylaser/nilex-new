@@ -65,7 +65,11 @@ class PaymentController extends Controller
 
         $paymentKey = $this->paymobService->getPaymentKey($token, $orderId, $amount, $user);
 
-        $iframeId = config('services.paymob.iframe_id', env('PAYMOB_IFRAME_ID'));
+        $iframeId = config('services.paymob.iframe_id');
+
+        if (blank($iframeId)) {
+            abort(503, 'Payment gateway is not configured.');
+        }
 
         return redirect("https://accept.paymob.com/api/acceptance/iframes/{$iframeId}?payment_token={$paymentKey}");
     }

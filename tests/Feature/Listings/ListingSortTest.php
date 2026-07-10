@@ -123,6 +123,39 @@ test('search page sorts listings by price descending', function () {
     $response->assertSeeInOrder(['Premium item', 'Budget item'], false);
 });
 
-test('invalid sort parameter falls back to latest', function () {
+test('invalid sort parameter on category page returns 422', function () {
+    makeSortTestListing($this->seller, $this->category);
+
+    $this->getJson(route('category.show', [
+        'category' => $this->category,
+        'sort' => 'invalid',
+    ]))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['sort']);
+});
+
+test('invalid sort parameter on search page returns 422', function () {
+    makeSortTestListing($this->seller, $this->category);
+
+    $this->getJson(route('listings.search', ['sort' => 'invalid']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['sort']);
+});
+
+test('invalid sort parameter on category page shows Nilex 422 page for web GET', function () {
+    makeSortTestListing($this->seller, $this->category);
+
+    $this->get(route('category.show', [
+        'category' => $this->category,
+        'sort' => 'invalid',
+    ]))
+        ->assertStatus(422)
+        ->assertSee(__('ui.errors.422_title'), false);
+});
+
+test('invalid sort parameter falls back to latest for internal callers', function () {
     expect(ListingSort::fromRequest('invalid'))->toBe(ListingSort::DEFAULT);
+    expect(ListingSort::isValid('invalid'))->toBeFalse();
+    expect(ListingSort::isValid('latest'))->toBeTrue();
+    expect(ListingSort::isValid(null))->toBeTrue();
 });

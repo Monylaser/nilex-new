@@ -228,7 +228,7 @@
                                 @click="goTo({{ $index }})"
                                 :class="current === {{ $index }} ? 'bg-white w-6' : 'bg-white/50 w-2'"
                                 class="h-2 rounded-full transition-all duration-300"
-                                aria-label="Slide {{ $index + 1 }}"></button>
+                                aria-label="{{ __('ui.hero.carousel_slide_aria', ['num' => $index + 1]) }}"></button>
                     @endforeach
                 </div>
             </div>

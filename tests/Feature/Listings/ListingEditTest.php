@@ -413,6 +413,28 @@ it('returns 404 when a non-owner tries to update the listing', function () {
 // 10) store() remains unaffected — still creates pending + grants +3 points
 // ═══════════════════════════════════════════════════════════════════════════
 
+it('rejects a non-image upload on store server-side', function () {
+    $before = $this->seller->fresh()->points;
+
+    $this->actingAs($this->seller)
+        ->post(route('listings.store'), [
+            'title'        => 'Should not be created',
+            'description'  => 'A sufficiently long description for store.',
+            'category_id'  => $this->category->id,
+            'price'        => 5000,
+            'condition'    => 'new',
+            'price_type'   => 'fixed',
+            'phone'        => '01000000000',
+            'feature_days' => 0,
+            'images'       => [UploadedFile::fake()->create('document.pdf', 100, 'application/pdf')],
+        ], jsonHeaders())
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['images.0']);
+
+    expect(Listing::where('title', 'Should not be created')->exists())->toBeFalse();
+    expect($this->seller->fresh()->points)->toBe($before);
+});
+
 it('keeps the create flow working: store creates a pending listing and grants 3 points', function () {
     Storage::fake('public');
 
