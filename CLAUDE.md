@@ -1,11 +1,25 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-Last full audit: **2026-07-10** (final launch-prep pass; prior full audit 2026-07-09).
+Last full audit: **2026-07-16** (pre-launch comprehensive audit; prior final launch-prep 2026-07-10).
+
+### Pre-Launch Security Fixes — 2026-07-16
+
+Critical findings from the 2026-07-16 audit, fixed before launch:
+
+| Fix | Detail |
+|---|---|
+| **JSON-LD stored XSS** | `listings/show.blade.php` now embeds schema via Blade `@json($ld)` (HEX-escaped tags). `search-results.blade.php` geo i18n payload uses the same HEX flags (`JSON_HEX_TAG\|APOS\|AMP\|QUOT`). Tests: `ListingJsonLdXssTest`. |
+| **Login email hardcode removed** | Deleted `admin@gmail.com` → `/admin` shortcut in `AuthenticatedSessionController`. OTP gate runs first; then `hasAnyRole(['super_admin','admin','moderator'])` → `/admin`. Regular users (including that email) go to dashboard. Tests: `AdminLoginRedirectTest`. |
+| **`.gitignore` encoding** | `docs/architecture/.docgen/node_modules/` entry rewritten as clean UTF-8 (prior commit had UTF-16 nulls so ignore never matched). |
+
+No migrations in this pass. **Suite after fixes: 457 passed, 0 failures** (1401 assertions; +4 vs prior 453 baseline).
 
 ### Final Launch Prep — 2026-07-10
 
-Comprehensive pre-deployment review pass (no deletions). **453 tests passing, 0 failures** (1387 assertions).
+Comprehensive pre-deployment review pass (no deletions). **453 tests passing, 0 failures** (1387 assertions) at that date.
+
+
 
 | Area | Outcome |
 |---|---|

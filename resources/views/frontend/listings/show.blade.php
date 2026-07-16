@@ -135,8 +135,10 @@
             }
         }
     @endphp
+    {{-- @json applies JSON_HEX_TAG|APOS|AMP|QUOT so user-controlled title/description
+         cannot break out of this <script> tag (stored XSS). --}}
     <script type="application/ld+json">
-{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+@json($ld)
     </script>
 @endpush
 

@@ -277,12 +277,13 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        {{-- Explicit HEX flags (same as Blade @json defaults) — multi-line @json([...]) breaks Blade parsing. --}}
         const searchI18n = {!! json_encode([
             'geoUnsupported' => __('ui.search.geo_unsupported'),
             'nearMeLoading' => __('ui.search.near_me_loading'),
             'nearMe' => __('ui.search.near_me'),
             'geoDenied' => __('ui.search.geo_denied'),
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!};
+        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!};
         const btn      = document.getElementById('getLocationBtn');
         const label    = document.getElementById('locBtnLabel');
         const latInput = document.getElementById('latInput');

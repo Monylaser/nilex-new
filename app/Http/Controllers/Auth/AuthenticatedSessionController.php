@@ -28,13 +28,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        if ($request->user()->email === 'admin@gmail.com') {
-            return redirect()->intended('/admin');
-        }
-
         $authUser = $request->user();
+
+        // OTP gate first — never bypass verification for staff (removed email hardcode).
         if (! $authUser->is_phone_verified && $authUser->email_verified_at === null) {
             return redirect()->intended(route('otp.notice', absolute: false));
+        }
+
+        // Role-based admin panel redirect (Filament also has /admin/login).
+        if ($authUser->hasAnyRole(['super_admin', 'admin', 'moderator'])) {
+            return redirect()->intended('/admin');
         }
 
         return redirect()->intended(route('dashboard', absolute: false));
