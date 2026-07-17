@@ -64,7 +64,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:otp-verify')
         ->name('otp.verify');
     Route::post('/verify-otp/resend', [OtpController::class, 'resend'])
-        ->middleware('throttle:otp-resend')
+        ->middleware('throttle:5,1')
         ->name('otp.resend');
 });
 

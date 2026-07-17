@@ -60,9 +60,13 @@ class OtpVerificationTest extends TestCase
     #[Test]
     public function it_rate_limits_otp_resend_attempts(): void
     {
+        // Cooldown would otherwise block rapid resends; isolate the HTTP throttle layer.
+        config(['auth-security.otp.resend_cooldown_seconds' => 0]);
+        config(['auth-security.otp.max_resends_per_window' => 100]);
+
         $user = User::factory()->withPendingOtp('1111')->create();
 
-        foreach (range(1, 3) as $i) {
+        foreach (range(1, 5) as $i) {
             $this->actingAs($user)->post(route('otp.resend'))->assertRedirect();
         }
 

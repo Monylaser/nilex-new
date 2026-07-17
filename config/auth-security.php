@@ -7,6 +7,10 @@ return [
         'expires_minutes' => (int) env('OTP_EXPIRES_MINUTES', 5),
         'max_verify_attempts' => (int) env('OTP_MAX_VERIFY_ATTEMPTS', 5),
         'progressive_delays' => [30, 60, 120],
+        // Resend hardening (audit #4): server cooldown + per-window cap + long lock.
+        'resend_cooldown_seconds' => (int) env('OTP_RESEND_COOLDOWN_SECONDS', 60),
+        'max_resends_per_window' => (int) env('OTP_MAX_RESENDS_PER_WINDOW', 5),
+        'resend_lock_minutes' => (int) env('OTP_RESEND_LOCK_MINUTES', 30),
     ],
 
     'device_limit' => [

@@ -18,12 +18,13 @@ class AuthSecurityServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Kept for reference / possible reuse; registration resend route uses throttle:5,1.
         RateLimiter::for('otp-resend', function (Request $request) {
             $user = $request->user();
             $identity = $user?->email ?? $user?->phone ?? 'guest';
 
             return [
-                Limit::perMinute(3)->by($request->ip().'|'.$identity),
+                Limit::perMinute(5)->by($request->ip().'|'.$identity),
             ];
         });
 

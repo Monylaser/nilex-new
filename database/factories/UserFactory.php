@@ -78,6 +78,7 @@ class UserFactory extends Factory
             'otp_code' => \Illuminate\Support\Facades\Hash::make($plain),
             'otp_expires_at' => now()->addMinutes(5),
             'otp_attempts' => 0,
+            'otp_resend_count' => 0,
         ]);
     }
 }

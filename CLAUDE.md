@@ -13,8 +13,9 @@ Critical findings from the 2026-07-16 audit, fixed before launch:
 | **Login email hardcode removed** | Deleted `admin@gmail.com` → `/admin` shortcut in `AuthenticatedSessionController`. OTP gate runs first; then `hasAnyRole(['super_admin','admin','moderator'])` → `/admin`. Regular users (including that email) go to dashboard. Tests: `AdminLoginRedirectTest`. |
 | **`.gitignore` encoding** | `docs/architecture/.docgen/node_modules/` entry rewritten as clean UTF-8 (prior commit had UTF-16 nulls so ignore never matched). |
 | **No `env()` outside `config/`** | Removed all `env()` fallbacks from `app/` (Paymob HMAC/iframe, SmsService, SmartAdCreator Gemini). SMS credentials live under `config/services.php` → `services.sms.*`. **Permanent rule:** never call `env()` inside `app/` — always `config()` with the key defined in a config file. |
+| **OTP resend lock bypass** | `OtpService::resend()` / profile phone|email re-issue now call `assertAllowedToResend()`: respects `ensureNotLocked()`, 60s server cooldown (derived from `otp_expires_at − expires_minutes`), max **5** resends per code window (`users.otp_resend_count`), then unified **30**-minute Cache lock with remaining-time message. Route `otp.resend` uses `throttle:5,1`. Tests: `OtpResendHardeningTest`. **Run `php artisan migrate`** for `otp_resend_count`. |
 
-No migrations in this pass. **Suite after fixes: 457 passed, 0 failures** (1401 assertions; +4 vs prior 453 baseline).
+No migrations in the XSS/`env()` passes. OTP resend fix adds migration `2026_07_17_000001_add_otp_resend_count_to_users_table.php`.
 
 ### Final Launch Prep — 2026-07-10
 
@@ -141,7 +142,7 @@ composer test
 | `AdCampaignPaymentService` | Ad checkout price from `config/ad_pricing.php`; merchant order id `nilex-ad:{campaignId}:{attemptId}`. |
 | `PaymobService` | Auth → Order → Payment Key against `https://accept.paymob.com/api` (`/auth/tokens`, `/ecommerce/orders`, `/acceptance/payment_keys`); reads `config('services.paymob.*')`; shared by points + ads checkouts. |
 | `PaymobWebhookService` / `PaymobAdWebhookService` | HMAC-validated fulfillment: credit points + fire `PointsPurchased` / mark campaign paid. |
-| `OtpService` (`app/Auth/Services`) | `issue()` (channel-aware: email→`SendOtpEmailJob`, phone→`SendOtpSmsJob`), `verify()` (registration gate — stamps `email_verified_at` OR `is_phone_verified`+`phone_verified_at` by channel, **no points**), `issueForPhone()`/`verifyPhone()` + `issueForEmail()`/`verifyEmail()` (profile flows, side-effect-free verify), `ensureNotLocked()` progressive throttle. |
+| `OtpService` (`app/Auth/Services`) | `issue()` (channel-aware: email→`SendOtpEmailJob`, phone→`SendOtpSmsJob`), `verify()` (registration gate — stamps `email_verified_at` OR `is_phone_verified`+`phone_verified_at` by channel, **no points**), `issueForPhone()`/`verifyPhone()` + `issueForEmail()`/`verifyEmail()` (profile flows, side-effect-free verify), `ensureNotLocked()` progressive throttle, `assertAllowedToResend()` (60s cooldown + 5/window + 30-min lock; same gates on profile re-issue). |
 | `SmsService` | Local env: logs OTP to `laravel.log` and returns true. Production API is a placeholder — **no real SMS gateway yet**. |
 | `SellerListingAnalyticsService` | Seller dashboards, competitor pricing, `responseRate()` (min 5 offers), monthly-report stats. ⚠️ `getCompetitorPriceComparison()` N+1 AVG queries; `getMonthlyPerformance()` loads all view rows into PHP. |
 | `DeviceLimitService` | Max 3 accounts per device (`device_id` / `fingerprint_hash` / `ip_address`). |

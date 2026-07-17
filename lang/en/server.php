@@ -24,6 +24,8 @@ return [
         'otp_invalid' => 'The code is incorrect or has expired.',
         'otp_resent' => 'A new code has been sent successfully.',
         'otp_throttled' => 'Too many attempts. Try again in :seconds seconds.',
+        'otp_locked_minutes' => 'Too many attempts. Try again in :minutes minutes.',
+        'otp_resend_cooldown' => 'Please wait :seconds seconds before requesting a new code.',
         'contact_invalid' => 'Please enter a valid email address or a valid Egyptian phone number (01XXXXXXXXX).',
         'email_taken' => 'This email address is already registered.',
         'phone_taken' => 'This phone number is already registered.',
