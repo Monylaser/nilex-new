@@ -2,12 +2,11 @@
 
 <x-app-layout>
 
-    {{-- JSON constant for the location picker (profile + email verify sections). --}}
-    @push('footer-scripts')
+    {{-- Must be inline in the slot (layouts.app uses @yield, not @stack for footer-scripts).
+         Available before Alpine starts so city children can be resolved client-side. --}}
     <script>
-        const PROFILE_LOCATIONS = @json($governorates);
+        window.PROFILE_LOCATIONS = @json($governorates ?? []);
     </script>
-    @endpush
 
     <div class="bg-zinc-50 min-h-screen py-8" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"
          x-data="{ deleteOpen: false }">
@@ -149,37 +148,66 @@
                     </div>
 
                     {{-- Governorate + City (dependent dropdowns using locations table) --}}
+                    {{-- Governorate options are Blade-rendered (reliable). Cities stay Alpine-driven. --}}
+                    @php
+                        $profileLocName = app()->getLocale() === 'ar' ? 'name_ar' : 'name_en';
+                        $profileGovId   = (string) old('governorate_id', $userGovernorateId ?? '');
+                        $profileCityId  = (string) old('location_id', $userLocationId ?? '');
+                    @endphp
                     <div class="grid grid-cols-2 gap-3"
                          x-data="{
-                             governorates: typeof PROFILE_LOCATIONS !== 'undefined' ? PROFILE_LOCATIONS : [],
-                             governorateId: '{{ old('governorate_id', $userGovernorateId) }}',
-                             locationId: '{{ old('location_id', $userLocationId) }}',
+                             governorates: Array.isArray(window.PROFILE_LOCATIONS) ? window.PROFILE_LOCATIONS : [],
+                             governorateId: @js($profileGovId),
+                             locationId: @js($profileCityId),
                              get cities() {
-                                 const gov = this.governorates.find(g => g.id == this.governorateId);
-                                 return gov?.children ?? [];
+                                 const gov = this.governorates.find(g => String(g.id) === String(this.governorateId));
+                                 return (gov && Array.isArray(gov.children)) ? gov.children : [];
                              },
                              onGovChange() { this.locationId = ''; }
                          }">
                         <div>
-                            <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.info.governorate') }}</label>
-                            <select name="governorate_id" x-model="governorateId" @change="onGovChange()"
-                                    class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all bg-white">
-                                <option value="">{{ __('ui.profile.info.gov_placeholder') }}</option>
-                                <template x-for="gov in governorates" :key="gov.id">
-                                    <option :value="gov.id" x-text="gov.{{ app()->getLocale() === 'ar' ? 'name_ar' : 'name_en' }}" :selected="gov.id == governorateId"></option>
-                                </template>
-                            </select>
+                            <label for="profile-governorate" class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.info.governorate') }}</label>
+                            <div class="relative">
+                                <select id="profile-governorate"
+                                        name="governorate_id"
+                                        x-model="governorateId"
+                                        @change="onGovChange()"
+                                        class="w-full appearance-none bg-white border border-zinc-200 rounded-xl ps-4 pe-10 py-2.5 text-sm cursor-pointer focus:outline-none focus:border-nilex-teal focus:ring-2 focus:ring-nilex-teal/15 transition-all [&::-ms-expand]:hidden"
+                                        style="-webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none;">
+                                    <option value="">{{ __('ui.profile.info.gov_placeholder') }}</option>
+                                    @foreach(($governorates ?? []) as $gov)
+                                        <option value="{{ $gov->id }}" @selected((string) $gov->id === $profileGovId)>
+                                            {{ $gov->{$profileLocName} }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <svg class="pointer-events-none absolute top-1/2 end-3 -translate-y-1/2 w-4 h-4 text-zinc-400"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.info.city') }}</label>
-                            <select name="location_id" x-model="locationId"
-                                    :disabled="!governorateId"
-                                    class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all bg-white disabled:bg-zinc-50 disabled:text-zinc-400 disabled:cursor-not-allowed">
-                                <option value="" x-text="governorateId ? '{{ __('ui.profile.info.city_placeholder') }}' : '{{ __('ui.profile.info.city_placeholder_no_gov') }}'"></option>
-                                <template x-for="city in cities" :key="city.id">
-                                    <option :value="city.id" x-text="city.{{ app()->getLocale() === 'ar' ? 'name_ar' : 'name_en' }}" :selected="city.id == locationId"></option>
-                                </template>
-                            </select>
+                            <label for="profile-city" class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.info.city') }}</label>
+                            <div class="relative">
+                                <select id="profile-city"
+                                        name="location_id"
+                                        x-model="locationId"
+                                        :disabled="!governorateId"
+                                        class="w-full appearance-none bg-white border border-zinc-200 rounded-xl ps-4 pe-10 py-2.5 text-sm cursor-pointer focus:outline-none focus:border-nilex-teal focus:ring-2 focus:ring-nilex-teal/15 transition-all disabled:bg-zinc-50 disabled:text-zinc-400 disabled:cursor-not-allowed [&::-ms-expand]:hidden"
+                                        style="-webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none;">
+                                    <option value="" x-text="governorateId ? @js(__('ui.profile.info.city_placeholder')) : @js(__('ui.profile.info.city_placeholder_no_gov'))"></option>
+                                    <template x-for="city in cities" :key="city.id">
+                                        <option :value="city.id"
+                                                x-text="city.{{ $profileLocName }}"
+                                                :selected="String(city.id) === String(locationId)"></option>
+                                    </template>
+                                </select>
+                                <svg class="pointer-events-none absolute top-1/2 end-3 -translate-y-1/2 w-4 h-4 text-zinc-400"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
