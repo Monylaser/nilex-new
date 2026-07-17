@@ -7,6 +7,7 @@ Last full audit: **2026-07-16** (pre-launch comprehensive audit; prior final lau
 
 | Fix | Detail |
 |---|---|
+| **Paymob webhook coverage + points idempotency (#8)** | Hardened `PaymobWebhookService` to mirror ads: early reject on already-processed `gateway_reference` (Paymob txn id); treat `status=completed` **or** `is_processed` as fulfilled (200 `already_processed`, zero extra points). Full feature tests for points + ads webhooks: valid HMAC credit/mark-paid, bad/missing HMAC, duplicate delivery, `success=false`, amount mismatch vs stored order (not plan catalog), anonymized user (no crash). Tests: `PaymobPointsWebhookTest`, `PaymobAdWebhookTest`. **No migration** (`is_processed` / `status` / `gateway_reference` already on `transactions`). |
 | **Sensitive-route throttles (#3 / #10)** | Missing rate limits added: `listings.store`/`update` `throttle:20,60`; `listings.ai-generate` named `ai-generate` (**3/min + 20/hour**); `password.email`/`password.store` `throttle:5,1`; offers **10/min**; phone-reveal **15/min**; messages **30/min**; Livewire reviews **5/min**. Polite AR/EN 429 UX for AI wizard, listing submit, phone reveal, chat JSON. Tests: `SensitiveRouteThrottleTest`. **No migration.** |
 
 ### Pre-Launch Security Fixes — 2026-07-16
@@ -21,7 +22,7 @@ Critical findings from the 2026-07-16 audit, fixed before launch:
 | **No `env()` outside `config/`** | Removed all `env()` fallbacks from `app/` (Paymob HMAC/iframe, SmsService, SmartAdCreator Gemini). SMS credentials live under `config/services.php` → `services.sms.*`. **Permanent rule:** never call `env()` inside `app/` — always `config()` with the key defined in a config file. |
 | **OTP resend lock bypass** | `OtpService::resend()` / profile phone|email re-issue now call `assertAllowedToResend()`: respects `ensureNotLocked()`, 60s server cooldown (derived from `otp_expires_at − expires_minutes`), max **5** resends per code window (`users.otp_resend_count`), then unified **30**-minute Cache lock with remaining-time message. Route `otp.resend` uses `throttle:5,1`. Tests: `OtpResendHardeningTest`. **Run `php artisan migrate`** for `otp_resend_count`. |
 
-No migrations in the XSS/`env()` / sensitive-throttle passes. OTP resend fix adds migration `2026_07_17_000001_add_otp_resend_count_to_users_table.php`.
+No migrations in the XSS/`env()` / sensitive-throttle / Paymob-webhook-#8 passes. OTP resend fix adds migration `2026_07_17_000001_add_otp_resend_count_to_users_table.php`.
 
 ### Final Launch Prep — 2026-07-10
 
@@ -147,7 +148,7 @@ composer test
 | `AdCampaignService` | Placement queries + cache (§4), approve/reject campaigns, impression/click tracking via queued jobs. |
 | `AdCampaignPaymentService` | Ad checkout price from `config/ad_pricing.php`; merchant order id `nilex-ad:{campaignId}:{attemptId}`. |
 | `PaymobService` | Auth → Order → Payment Key against `https://accept.paymob.com/api` (`/auth/tokens`, `/ecommerce/orders`, `/acceptance/payment_keys`); reads `config('services.paymob.*')`; shared by points + ads checkouts. |
-| `PaymobWebhookService` / `PaymobAdWebhookService` | HMAC-validated fulfillment: credit points + fire `PointsPurchased` / mark campaign paid. |
+| `PaymobWebhookService` / `PaymobAdWebhookService` | HMAC-validated fulfillment: credit points + fire `PointsPurchased` / mark campaign paid. Points path idempotent via `gateway_reference` + `is_processed`/`status=completed` (hardened 2026-07-17); ads via `paymob_transaction_id` + attempt/campaign paid flags. |
 | `OtpService` (`app/Auth/Services`) | `issue()` (channel-aware: email→`SendOtpEmailJob`, phone→`SendOtpSmsJob`), `verify()` (registration gate — stamps `email_verified_at` OR `is_phone_verified`+`phone_verified_at` by channel, **no points**), `issueForPhone()`/`verifyPhone()` + `issueForEmail()`/`verifyEmail()` (profile flows, side-effect-free verify), `ensureNotLocked()` progressive throttle, `assertAllowedToResend()` (60s cooldown + 5/window + 30-min lock; same gates on profile re-issue). |
 | `SmsService` | Local env: logs OTP to `laravel.log` and returns true. Production API is a placeholder — **no real SMS gateway yet**. |
 | `SellerListingAnalyticsService` | Seller dashboards, competitor pricing, `responseRate()` (min 5 offers), monthly-report stats. ⚠️ `getCompetitorPriceComparison()` N+1 AVG queries; `getMonthlyPerformance()` loads all view rows into PHP. |

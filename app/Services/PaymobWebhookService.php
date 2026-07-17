@@ -45,13 +45,25 @@ class PaymobWebhookService
             return response()->json(['error' => 'Invalid payload'], 400);
         }
 
+        $gatewayReference = (string) data_get($payload, 'id', '');
+
+        // Mirror PaymobAdWebhookService: reject duplicate Paymob txn ids before credit.
+        if ($gatewayReference !== '' && $this->isGatewayReferenceAlreadyProcessed($gatewayReference)) {
+            Log::info('Paymob callback: duplicate gateway reference ignored', [
+                'gateway_reference' => $gatewayReference,
+                'ip'                => $request->ip(),
+            ]);
+
+            return response()->json(['status' => 'already_processed']);
+        }
+
         $transaction = $this->findTransaction($payload);
 
         if (! $transaction) {
             Log::warning('Paymob callback: transaction not found', [
                 'order_id'           => data_get($payload, 'order.id'),
                 'merchant_order_id'  => data_get($payload, 'order.merchant_order_id'),
-                'gateway_reference'  => data_get($payload, 'id'),
+                'gateway_reference'  => $gatewayReference,
             ]);
 
             return response()->json(['error' => 'Transaction not found'], 404);
@@ -70,10 +82,11 @@ class PaymobWebhookService
             return response()->json(['status' => 'ignored']);
         }
 
-        if ($transaction->is_processed) {
+        if ($this->isTransactionAlreadyFulfilled($transaction)) {
             Log::info('Paymob callback: duplicate callback for already processed transaction', [
                 'transaction_id' => $transaction->id,
                 'user_id'        => $transaction->user_id,
+                'status'         => $transaction->status,
             ]);
 
             return response()->json(['status' => 'already_processed']);
@@ -168,6 +181,29 @@ class PaymobWebhookService
         return null;
     }
 
+    /**
+     * Local order already credited (status completed and/or is_processed flag).
+     */
+    protected function isTransactionAlreadyFulfilled(Transaction $transaction): bool
+    {
+        return (bool) $transaction->is_processed || $transaction->status === 'completed';
+    }
+
+    /**
+     * Same Paymob gateway transaction id already fulfilled on any local order.
+     * Mirrors PaymobAdWebhookService::isTransactionAlreadyProcessed().
+     */
+    protected function isGatewayReferenceAlreadyProcessed(string $gatewayReference): bool
+    {
+        return Transaction::query()
+            ->where('gateway_reference', $gatewayReference)
+            ->where(function ($query) {
+                $query->where('is_processed', true)
+                    ->orWhere('status', 'completed');
+            })
+            ->exists();
+    }
+
     protected function fulfill(Transaction $transaction, array $payload): bool
     {
         return DB::transaction(function () use ($transaction, $payload) {
@@ -181,7 +217,13 @@ class PaymobWebhookService
                 throw new \RuntimeException('Transaction record disappeared during fulfillment.');
             }
 
-            if ($lockedTransaction->is_processed) {
+            if ($this->isTransactionAlreadyFulfilled($lockedTransaction)) {
+                return false;
+            }
+
+            $paymobReference = (string) data_get($payload, 'id', '');
+
+            if ($paymobReference !== '' && $this->isGatewayReferenceAlreadyProcessed($paymobReference)) {
                 return false;
             }
 
@@ -198,7 +240,6 @@ class PaymobWebhookService
             }
 
             $points = (int) $plan->points;
-            $paymobReference = (string) data_get($payload, 'id', '');
 
             $this->pointService->credit(
                 $user,

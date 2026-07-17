@@ -195,15 +195,16 @@ describe('Real-time Chat', function () {
                 ->assertCreated();
         }
 
-        $this->actingAs($this->sender)
+        $blocked = $this->actingAs($this->sender)
             ->postJson(route('messages.store'), [
                 'receiver_id' => $this->receiver->id,
                 'body'        => 'Message 31 — should be blocked',
             ])
-            ->assertStatus(429)
-            ->assertJsonPath('message', __('ui.messages.rate_limit_exceeded', ['seconds' => 60]));
+            ->assertStatus(429);
 
-        expect(Message::count())->toBe(30);
+        expect($blocked->json('message'))
+            ->toMatch('/تمهل قليلاً — أرسلت رسائل كثيرة\. حاول مرة أخرى بعد \d+ ثانية\./')
+            ->and(Message::count())->toBe(30);
     });
 
     it('does not count failed validation toward the message rate limit', function () {
