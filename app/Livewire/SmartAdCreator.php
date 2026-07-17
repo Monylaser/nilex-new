@@ -113,7 +113,7 @@ class SmartAdCreator extends Component
         try {
             $this->updateProgress(5, __('server.ai.step_checking'));
 
-            $apiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY');
+            $apiKey = config('services.gemini.key');
             if (empty($apiKey)) {
                 throw new \Exception(__('server.ai.no_api_key'));
             }

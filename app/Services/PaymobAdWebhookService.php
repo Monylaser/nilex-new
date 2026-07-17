@@ -26,7 +26,7 @@ class PaymobAdWebhookService
             return response()->json(['error' => 'Feature disabled'], 404);
         }
 
-        $hmacSecret = config('services.paymob.hmac_secret', env('PAYMOB_HMAC_SECRET', ''));
+        $hmacSecret = (string) config('services.paymob.hmac_secret', '');
 
         if ($hmacSecret === '') {
             Log::error('Paymob ad webhook: HMAC secret is not configured', [

@@ -12,6 +12,7 @@ Critical findings from the 2026-07-16 audit, fixed before launch:
 | **JSON-LD stored XSS** | `listings/show.blade.php` now embeds schema via Blade `@json($ld)` (HEX-escaped tags). `search-results.blade.php` geo i18n payload uses the same HEX flags (`JSON_HEX_TAG\|APOS\|AMP\|QUOT`). Tests: `ListingJsonLdXssTest`. |
 | **Login email hardcode removed** | Deleted `admin@gmail.com` → `/admin` shortcut in `AuthenticatedSessionController`. OTP gate runs first; then `hasAnyRole(['super_admin','admin','moderator'])` → `/admin`. Regular users (including that email) go to dashboard. Tests: `AdminLoginRedirectTest`. |
 | **`.gitignore` encoding** | `docs/architecture/.docgen/node_modules/` entry rewritten as clean UTF-8 (prior commit had UTF-16 nulls so ignore never matched). |
+| **No `env()` outside `config/`** | Removed all `env()` fallbacks from `app/` (Paymob HMAC/iframe, SmsService, SmartAdCreator Gemini). SMS credentials live under `config/services.php` → `services.sms.*`. **Permanent rule:** never call `env()` inside `app/` — always `config()` with the key defined in a config file. |
 
 No migrations in this pass. **Suite after fixes: 457 passed, 0 failures** (1401 assertions; +4 vs prior 453 baseline).
 

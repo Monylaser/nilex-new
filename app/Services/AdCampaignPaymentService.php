@@ -110,7 +110,7 @@ class AdCampaignPaymentService
                 throw new RuntimeException(__('server.ads.paymob_key_failed'));
             }
 
-            $iframeId = config('services.paymob.iframe_id', env('PAYMOB_IFRAME_ID'));
+            $iframeId = config('services.paymob.iframe_id');
 
             return "https://egypt.paymob.com/api/acceptance/iframes/{$iframeId}?payment_token={$paymentKey}";
         });

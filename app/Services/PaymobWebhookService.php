@@ -18,7 +18,7 @@ class PaymobWebhookService
 
     public function handle(Request $request): JsonResponse
     {
-        $hmacSecret = config('services.paymob.hmac_secret', env('PAYMOB_HMAC_SECRET', ''));
+        $hmacSecret = (string) config('services.paymob.hmac_secret', '');
 
         if ($hmacSecret === '') {
             Log::error('Paymob callback: HMAC secret is not configured');

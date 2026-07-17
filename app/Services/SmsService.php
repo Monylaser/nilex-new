@@ -24,9 +24,9 @@ class SmsService
         // 🟢 كود الربط الحقيقي مع شركة الـ SMS (كمثال: SMS Misr أو أي شركة API)
         try {
             $response = Http::post('https://api.smsprovider.com/v1/send', [
-                'username' => env('SMS_USERNAME'),
-                'password' => env('SMS_PASSWORD'),
-                'sender'   => env('SMS_SENDER_NAME', 'Nilex'),
+                'username' => config('services.sms.username'),
+                'password' => config('services.sms.password'),
+                'sender'   => config('services.sms.sender'),
                 'mobile'   => $phone,
                 'message'  => $message,
             ]);
