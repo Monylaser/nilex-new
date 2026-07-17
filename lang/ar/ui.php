@@ -796,7 +796,7 @@ return [
 
     // Real-time chat (POST /messages).
     'messages' => [
-        'rate_limit_exceeded' => 'أرسلت رسائل كثيرة. يرجى المحاولة مرة أخرى بعد :seconds ثانية.',
+        'rate_limit_exceeded' => 'تمهل قليلاً — أرسلت رسائل كثيرة. حاول مرة أخرى بعد :seconds ثانية.',
     ],
 
     // Favorites system (heart toggle on cards + detail page + "My Favorites" dashboard page).

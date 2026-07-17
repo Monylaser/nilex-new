@@ -138,7 +138,8 @@ class ListingController extends Controller
     {
         $rateLimitKey = 'offers|'.Auth::id();
 
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+        // 10 عروض/دقيقة لكل مستخدم — يمنع السبام مع السماح بعدة عروض متتالية شرعية.
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
 
             return response()->json([

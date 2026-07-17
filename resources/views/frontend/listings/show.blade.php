@@ -238,6 +238,7 @@
          phone: '',
          whatsappUrl: '',
          loading: false,
+         revealError: null,
          offerOpen: false,
          offerAmount: '',
          offerMsg: '',
@@ -247,11 +248,19 @@
              @guest window.location.href = '{{ route('login') }}'; return; @endguest
              if (this.revealed) return;
              this.loading = true;
+             this.revealError = null;
              fetch('{{ route('listings.reveal-phone', $listing->id) }}', {
                  method: 'POST',
                  headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
              })
-             .then(r => r.status === 401 ? (window.location.href = '{{ route('login') }}', null) : r.json())
+             .then(async r => {
+                 if (r.status === 401) { window.location.href = '{{ route('login') }}'; return null; }
+                 if (r.status === 429) {
+                     this.revealError = @json(__('listing.detail.reveal_rate_limited'));
+                     return null;
+                 }
+                 return r.json();
+             })
              .then(data => {
                  if (data && data.phone) { this.phone = data.phone; this.whatsappUrl = data.whatsapp_url; this.revealed = true; }
              })
@@ -579,6 +588,7 @@
                                 </span>
                                 <span x-show="loading" style="display:none;">{{ __('listing.detail.loading') }}</span>
                             </button>
+                            <p x-show="revealError" x-text="revealError" x-cloak class="text-xs text-center text-amber-700 mt-2"></p>
                             @guest
                                 <p class="text-xs text-center text-zinc-400 mt-2">{{ __('listing.detail.login_to_view') }}</p>
                             @endguest

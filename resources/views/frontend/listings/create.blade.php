@@ -1472,6 +1472,8 @@
                         this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.ai.invalid_prompt };
                     } else if (res.status === 419) {
                         this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.errors.session_expired };
+                    } else if (res.status === 429) {
+                        this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.ai.rate_limited };
                     } else {
                         this.aiMessage = { type: 'error', text: NILEX_WIZARD_I18N.ai.connection_failed };
                     }
@@ -1568,6 +1570,8 @@
                         this.mapServerErrors(data.errors || {});
                     } else if (res.status === 419) {
                         this.submitError = NILEX_WIZARD_I18N.errors.session_expired;
+                    } else if (res.status === 429) {
+                        this.submitError = NILEX_WIZARD_I18N.errors.rate_limited;
                     } else {
                         this.submitError = NILEX_WIZARD_I18N.errors.unexpected;
                     }

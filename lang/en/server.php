@@ -73,7 +73,7 @@ return [
         'own_listing' => 'You cannot make an offer on your own listing!',
         'duplicate' => 'You already have a pending offer for this listing.',
         'sent_success' => 'Your offer has been sent to the seller successfully! 🚀',
-        'rate_limit_exceeded' => 'Too many offers sent. Please try again in :seconds seconds.',
+        'rate_limit_exceeded' => 'Please slow down — too many offers. Try again in :seconds seconds.',
     ],
 
     'message' => [
@@ -136,6 +136,7 @@ return [
         'submitted' => 'Thank you! Your review has been submitted successfully. ⭐',
         'rating_required' => 'Please choose a rating from 1 to 5 stars.',
         'not_allowed' => 'You cannot review this transaction.',
+        'rate_limit_exceeded' => 'Please slow down — too many reviews. Try again in :seconds seconds.',
     ],
 
     'ai' => [

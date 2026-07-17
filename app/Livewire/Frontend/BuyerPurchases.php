@@ -5,6 +5,7 @@ namespace App\Livewire\Frontend;
 use App\Models\Review;
 use App\Models\SaleConfirmation;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -41,7 +42,7 @@ class BuyerPurchases extends Component
         }
     }
 
-    // ضبط قيمة النجوم لصف معيّن (1–5)
+    // تخزين تقييم النجوم مؤقتاً قبل الإرسال (1–5 فقط)
     public function setRating(int $id, int $value): void
     {
         if ($value < 1 || $value > 5) {
@@ -54,6 +55,14 @@ class BuyerPurchases extends Component
     // إرسال التقييم: يتحقق من الملكية + اكتمال البيع + عدم وجود تقييم سابق
     public function submitReview(int $id): void
     {
+        $rateLimitKey = 'reviews|'.Auth::id();
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            session()->flash('error', __('server.review.rate_limit_exceeded', ['seconds' => $seconds]));
+            abort(429, __('server.review.rate_limit_exceeded', ['seconds' => $seconds]));
+        }
+
         $sale = SaleConfirmation::where('id', $id)
             ->where('buyer_id', Auth::id())
             ->with('review')
@@ -82,6 +91,8 @@ class BuyerPurchases extends Component
             'rating'               => $rating,
             'comment'              => $comment !== '' ? $comment : null,
         ]);
+
+        RateLimiter::hit($rateLimitKey, 60);
 
         unset($this->ratingValues[$id], $this->ratingComments[$id]);
 

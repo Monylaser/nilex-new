@@ -73,14 +73,21 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
 
     // 1. إدارة الإعلانات (يجب أن تكون قبل مسار عرض الإعلان العام)
     Route::get('/listings/create', [HomeController::class, 'create'])->name('listings.create');
-    Route::post('/listings/store', [HomeController::class, 'store'])->name('listings.store');
+    Route::post('/listings/store', [HomeController::class, 'store'])
+        ->middleware('throttle:20,60')
+        ->name('listings.store');
     // ✏️ تعديل إعلان موجود (نفس الويزارد، وضع "تعديل") — قبل مسار العرض العام
     // GET يعرض النموذج معبّأً، PUT يحفظ التعديل (القسم مقفول، بلا نقاط، الـ slug ثابت،
     // الحالة تعود pending دائماً). الملكية تُفرض في الكنترولر (404 لغير المالك/المغلق).
     Route::get('/listings/{listing}/edit', [HomeController::class, 'edit'])->name('listings.edit');
-    Route::put('/listings/{listing}', [HomeController::class, 'update'])->name('listings.update');
+    Route::put('/listings/{listing}', [HomeController::class, 'update'])
+        ->middleware('throttle:20,60')
+        ->name('listings.update');
     // 🤖 المساعد الذكي لتوليد بيانات الإعلان (Gemini) — يُستخدم داخل ويزارد الإضافة
-    Route::post('/listings/ai-generate', [HomeController::class, 'aiGenerate'])->name('listings.ai-generate');
+    // throttle:ai-generate = 3/دقيقة + 20/ساعة (تكلفة API)
+    Route::post('/listings/ai-generate', [HomeController::class, 'aiGenerate'])
+        ->middleware('throttle:ai-generate')
+        ->name('listings.ai-generate');
 
     // 2. لوحة التحكم
     Route::get('/dashboard', UserDashboard::class)
@@ -147,7 +154,7 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
 Route::get('/listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
 
 // 🟢 كشف الرقم وتتبع النقرات (يجب أن يكونوا هنا تحت الـ middleware جروب أو داخله حسب متطلباتك)
-// throttle:phone-reveal = 20 كشفاً/ساعة لكل مستخدم — يمنع حصاد أرقام البائعين بالجملة.
+// throttle:phone-reveal = 15 كشفاً/دقيقة لكل مستخدم — يمنع رشقات حصاد الأرقام الآلي.
 Route::post('/listings/{listing}/reveal-phone', [ListingController::class, 'revealPhone'])
     ->middleware('throttle:phone-reveal')
     ->name('listings.reveal-phone');

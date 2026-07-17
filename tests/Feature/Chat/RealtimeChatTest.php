@@ -185,8 +185,8 @@ describe('Real-time Chat', function () {
         Event::assertNotDispatched(NewMessage::class);
     });
 
-    it('rate limits authenticated users to 5 messages per minute', function () {
-        for ($i = 1; $i <= 5; $i++) {
+    it('rate limits authenticated users to 30 messages per minute', function () {
+        for ($i = 1; $i <= 30; $i++) {
             $this->actingAs($this->sender)
                 ->postJson(route('messages.store'), [
                     'receiver_id' => $this->receiver->id,
@@ -198,16 +198,16 @@ describe('Real-time Chat', function () {
         $this->actingAs($this->sender)
             ->postJson(route('messages.store'), [
                 'receiver_id' => $this->receiver->id,
-                'body'        => 'Message 6 — should be blocked',
+                'body'        => 'Message 31 — should be blocked',
             ])
             ->assertStatus(429)
             ->assertJsonPath('message', __('ui.messages.rate_limit_exceeded', ['seconds' => 60]));
 
-        expect(Message::count())->toBe(5);
+        expect(Message::count())->toBe(30);
     });
 
     it('does not count failed validation toward the message rate limit', function () {
-        for ($i = 1; $i <= 5; $i++) {
+        for ($i = 1; $i <= 30; $i++) {
             $this->actingAs($this->sender)
                 ->postJson(route('messages.store'), [
                     'receiver_id' => $this->receiver->id,

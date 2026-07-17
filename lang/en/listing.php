@@ -23,6 +23,7 @@ return [
         'reveal_phone' => 'Show contact number',
         'loading' => 'Loading...',
         'login_to_view' => 'You must log in to view the number',
+        'reveal_rate_limited' => 'Please slow down — too many phone reveals. Try again in a moment.',
         'whatsapp' => 'Contact on WhatsApp',
         'category' => 'Category',
         'location' => 'Location',

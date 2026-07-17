@@ -52,14 +52,24 @@ class AuthSecurityServiceProvider extends ServiceProvider
             ];
         });
 
-        // كشف رقم الهاتف في الإعلانات: 20 كشفاً في الساعة لكل مستخدم
+        // كشف رقم الهاتف في الإعلانات: 15 كشفاً في الدقيقة لكل مستخدم
         // (أو IP للزوّار — يصلهم 401 أصلاً لكن نحدّ الطرق قبل الوصول للمنطق)
-        // لمنع حصاد أرقام البائعين بالجملة (scraping).
+        // يمنع رشقات الحصاد الآلي مع السماح بتصفّح شرعي لعدة إعلانات.
         RateLimiter::for('phone-reveal', function (Request $request) {
             $key = $request->user()?->id ?? $request->ip();
 
             return [
-                Limit::perHour(20)->by('phone-reveal|'.$key),
+                Limit::perMinute(15)->by('phone-reveal|'.$key),
+            ];
+        });
+
+        // توليد إعلان بالذكاء الاصطناعي (Gemini): حدّان — رشقة قصيرة + سقف ساعي للتكلفة.
+        RateLimiter::for('ai-generate', function (Request $request) {
+            $key = $request->user()?->id ?? $request->ip();
+
+            return [
+                Limit::perMinute(3)->by('ai-generate-min|'.$key),
+                Limit::perHour(20)->by('ai-generate-hour|'.$key),
             ];
         });
     }

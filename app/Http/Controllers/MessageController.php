@@ -19,7 +19,8 @@ class MessageController extends Controller
     {
         $rateLimitKey = 'messages|'.$request->user()->id;
 
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+        // 30 رسالة/دقيقة — يكفي محادثة سريعة دون حظر شرعي؛ الواجهة تعرض الرسالة المترجمة.
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
             $errorMessage = __('ui.messages.rate_limit_exceeded', ['seconds' => $seconds]);
 

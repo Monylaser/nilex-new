@@ -272,6 +272,7 @@ return [
         'failed'            => 'Could not generate the listing right now, you can continue manually.',
         'invalid_prompt'    => 'Write a valid short description first (at least 3 characters).',
         'connection_failed' => 'Could not connect to the AI assistant, you can continue manually.',
+        'rate_limited'      => 'Please slow down — too many AI requests. Wait a moment and try again.',
     ],
 
     // Submit / network / image error strings (B.3c). `:name` is the filename.
@@ -283,6 +284,7 @@ return [
         'unexpected'         => 'An unexpected error occurred, please try again',
         'network'            => 'Could not connect to the server, check your internet connection',
         'fix_errors'         => 'Please correct the highlighted errors',
+        'rate_limited'       => 'Please slow down — too many requests. Wait a bit and try again.',
     ],
 
     // Completion checklist labels (B.3c).

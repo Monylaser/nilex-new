@@ -3,6 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 Last full audit: **2026-07-16** (pre-launch comprehensive audit; prior final launch-prep 2026-07-10).
 
+### Pre-Launch Security Fixes — 2026-07-17
+
+| Fix | Detail |
+|---|---|
+| **Sensitive-route throttles (#3 / #10)** | Missing rate limits added: `listings.store`/`update` `throttle:20,60`; `listings.ai-generate` named `ai-generate` (**3/min + 20/hour**); `password.email`/`password.store` `throttle:5,1`; offers **10/min**; phone-reveal **15/min**; messages **30/min**; Livewire reviews **5/min**. Polite AR/EN 429 UX for AI wizard, listing submit, phone reveal, chat JSON. Tests: `SensitiveRouteThrottleTest`. **No migration.** |
+
 ### Pre-Launch Security Fixes — 2026-07-16
 
 Critical findings from the 2026-07-16 audit, fixed before launch:
@@ -15,7 +21,7 @@ Critical findings from the 2026-07-16 audit, fixed before launch:
 | **No `env()` outside `config/`** | Removed all `env()` fallbacks from `app/` (Paymob HMAC/iframe, SmsService, SmartAdCreator Gemini). SMS credentials live under `config/services.php` → `services.sms.*`. **Permanent rule:** never call `env()` inside `app/` — always `config()` with the key defined in a config file. |
 | **OTP resend lock bypass** | `OtpService::resend()` / profile phone|email re-issue now call `assertAllowedToResend()`: respects `ensureNotLocked()`, 60s server cooldown (derived from `otp_expires_at − expires_minutes`), max **5** resends per code window (`users.otp_resend_count`), then unified **30**-minute Cache lock with remaining-time message. Route `otp.resend` uses `throttle:5,1`. Tests: `OtpResendHardeningTest`. **Run `php artisan migrate`** for `otp_resend_count`. |
 
-No migrations in the XSS/`env()` passes. OTP resend fix adds migration `2026_07_17_000001_add_otp_resend_count_to_users_table.php`.
+No migrations in the XSS/`env()` / sensitive-throttle passes. OTP resend fix adds migration `2026_07_17_000001_add_otp_resend_count_to_users_table.php`.
 
 ### Final Launch Prep — 2026-07-10
 
@@ -27,7 +33,7 @@ Comprehensive pre-deployment review pass (no deletions). **453 tests passing, 0 
 |---|---|
 | **Re-skin** | **Fully completed** — zero `#1D9E75` / `#085041` in application code (`*.php`, `*.blade.php`, `*.css`, `*.js`). Legacy green remains only in archived `docs/` and `reports/` HTML (not served). |
 | **i18n** | Footer social `aria-label`s, ad-spaces link, logo alt, WhatsApp prefill message, Socialite default name, and Paymob 503 message moved to AR/EN lang keys. Cookie consent + hero carousel already bilingual. |
-| **Security** | `makeOffer()` rate-limited (5/min per user, mirrors `MessageController`). No `env()` in controllers. `points_balance` / `points` / `is_banned` guarded on `User`; `Listing` uses `$guarded` for `user_id`/`status`. |
+| **Security** | `makeOffer()` rate-limited (10/min per user); messages 30/min. No `env()` in controllers. `points_balance` / `points` / `is_banned` guarded on `User`; `Listing` uses `$guarded` for `user_id`/`status`. |
 | **Performance** | Extended `media` eager-load to listing detail + similar listings, seller dashboard listings, homepage category icons (+ wizard categories). P3/P5/P6/P7 deferred (documented §12). |
 | **Deferred (not deleted)** | **L2** Socialite referral — comment in `SocialiteController::callback()`. **L6** `listing-details.blade.php` — header notes active route is `listings/show.blade.php`. |
 
@@ -101,7 +107,7 @@ composer test
 | `Frontend/CategoryController` | Category page; increments `views_count`, paginates published listings with `ListingSort` + search-priority boost (default sort), eager-loads `category,location,user` |
 | `Frontend/LegalPageController` | Renders `LegalPage` by slug at `/{slug}` |
 | `Frontend/PaymentController` | Points checkout → Paymob iframe (requires `refund_policy_accepted`); user-facing success/failed callback views (credit happens in webhook) |
-| `ListingController` | Detail page + view tracking + similar listings; `revealPhone()` (auth, 401 guests, 20/hr throttle), `trackWhatsappClick()` (auth, 401 guests, published-only), `makeOffer()` |
+| `ListingController` | Detail page + view tracking + similar listings; `revealPhone()` (auth, 401 guests, 15/min throttle), `trackWhatsappClick()` (auth, 401 guests, published-only), `makeOffer()` (10/min) |
 | `ProfileController` | Profile edit/update (phone/email managed via OTP flows, not here); `destroy()` **anonymizes** (see §9) |
 | `PhoneVerificationController` | Profile phone add+verify: `send()` stages `pending_phone`, `verify()` commits + one-time **+20** (`phone_bonus_claimed_at`) |
 | `EmailVerificationProfileController` | Mirror flow for email: `pending_email`, one-time **+20** (`email_bonus_claimed_at`) |
@@ -359,7 +365,7 @@ Token name `nilex` kept, value remapped to navy. Filament `/admin` is fully excl
 
 ## 7. Completed Features
 
-**Auth & accounts:** OTP registration gate (4-digit, 5-min expiry, progressive throttle) with **email/phone channel separation** (§9); device fingerprinting (3 accounts/device); Google social login; ban system; account **anonymization** on delete; profile page with staged phone (`pending_phone`) and email (`pending_email`) OTP verification flows, each with a one-time +20 bonus; password reset; roles `super_admin/admin/moderator/user` via FilamentShield. **Security hardening (July 2026):** session fixation fix, OTP throttles, mass-assignment hardening, phone hidden from JSON, phone-reveal throttle (20/hr), search param validation, auth-page no-store cache, XSS/JSON-LD fix, pending-listing exposure fix, OTP removed from logs, socialite email-only verify, chat channel auth, email-change re-auth, HTTPS in prod.
+**Auth & accounts:** OTP registration gate (4-digit, 5-min expiry, progressive throttle) with **email/phone channel separation** (§9); device fingerprinting (3 accounts/device); Google social login; ban system; account **anonymization** on delete; profile page with staged phone (`pending_phone`) and email (`pending_email`) OTP verification flows, each with a one-time +20 bonus; password reset; roles `super_admin/admin/moderator/user` via FilamentShield. **Security hardening (July 2026):** session fixation fix, OTP throttles, mass-assignment hardening, phone hidden from JSON, phone-reveal throttle (15/min), search param validation, auth-page no-store cache, XSS/JSON-LD fix, pending-listing exposure fix, OTP removed from logs, socialite email-only verify, chat channel auth, email-change re-auth, HTTPS in prod; **2026-07-17** sensitive-route throttles (listing store/update/AI, password reset, offers 10/min, messages 30/min, reviews 5/min).
 
 **Listings:** multi-step Alpine wizard (create + edit; edit locks category, forces re-moderation, preserves slug, no points); cars + real-estate category fields; dynamic `custom_fields_schema`; AI generation via Gemini; watermarked image conversions; **server-side image validation on both `store()` and `update()`**; moderation queue with 3-strike auto-ban; soft deletes; closing flow; listing detail with lightbox, share, similar listings, JSON-LD; favorites; search (Scout) + category pages with **AR/EN sort dropdown** (`ListingSort`: latest/oldest/price asc/desc).
 
@@ -399,7 +405,7 @@ Token name `nilex` kept, value remapped to navy. Filament `/admin` is fully excl
 | `PAYMOB_IFRAME_ID` | Referenced by `config/services.php` but absent from `.env`. |
 | Legal page `content` EN | Arabic-only by decision; EN visitors see Arabic body via `ar` fallback. |
 | Re-skin residual green | **Fully completed 2026-07-10** — verified absent from all runtime frontend code; emerald retained for semantic success only. |
-| **Offer spam — no rate limit** | **Fixed 2026-07-10** — `makeOffer()` 5 offers/min per user via `RateLimiter` (parity with `MessageController`). |
+| **Offer spam — no rate limit** | **Fixed 2026-07-10** — `makeOffer()`; raised to **10/min** on 2026-07-17. |
 | **Footer i18n gaps** | **Fixed 2026-07-10** — social `aria-label`s, ad-spaces link, logo alt via `ui.footer.*` / `ui.nav.ad_spaces`. |
 | **Detail/dashboard media N+1** | **Fixed 2026-07-10** — `ListingController::show()` + `UserDashboard` + homepage/wizard category icons eager-load `media`. |
 | **Search-priority sort** | Fixed 2026-07-09 — boost applies in SQL `ORDER BY` before pagination in `HomeController::search()` and `CategoryController::show()` (default sort only). |
@@ -508,7 +514,7 @@ Token name `nilex` kept, value remapped to navy. Filament `/admin` is fully excl
 | M4 | **WhatsApp click tracking unauthenticated** — no auth/status gate; metric inflation possible | `ListingController::trackWhatsappClick()` | **Fixed 2026-07-09** — `auth` middleware + published-only guard; 401 guests, 404 non-published |
 | M5 | **Null phone in `revealPhone()`** — `ltrim(null)` on missing phone | `ListingController.php` ~87–88 | **Fixed 2026-07-10** — null-safe phone lookup; `whatsapp_url` null when no phone; no lead row recorded |
 | M6 | **`featureWithPoints()` not atomic** | `Listing.php` | **Fixed 2026-07-09** |
-| M7 | **Message spam — no rate limit** | `MessageController.php` | **Fixed 2026-07-09** — 5 messages/min per authenticated user via `RateLimiter`; JSON 429 or redirect with `ui.messages.rate_limit_exceeded` |
+| M7 | **Message spam — no rate limit** | `MessageController.php` | **Fixed 2026-07-09** — raised to **30/min** (2026-07-17); JSON 429 or redirect with `ui.messages.rate_limit_exceeded` |
 | M8 | **Pricing Section 6 inaccurate** — advertised daily +1 (not implemented), hardcoded referral +25, omitted email +20, hardcoded feature costs | `pricing.blade.php` ~291–337 | **Fixed 2026-07-09** — bilingual `ui.pricing.earn.*` / `spend.*`; config-backed earn values; `Listing::FEATURE_COSTS` loop; referral from active `CampaignLink`; daily login removed |
 | M9 | **Payment failed CTA mismatch** — label says "Back to Home", href is `dashboard` | `payment/failed.blade.php` | **Fixed 2026-07-09** — primary CTA links to `route('home')`; secondary retry links to pricing |
 | M10 | **Payment callbacks use Breeze layout** — not `layouts.frontend` | `payment/success.blade.php`, `failed.blade.php` | **Fixed 2026-07-09** — both pages extend `layouts.frontend` with Nilex branding |
@@ -516,7 +522,7 @@ Token name `nilex` kept, value remapped to navy. Filament `/admin` is fully excl
 | M12 | **Socialite errors not displayed on login** — `withErrors(['error'])` but no `@error('error')` | `SocialiteController` → `login.blade.php` | **Fixed 2026-07-10** — alert block for `error` + `contact` keys |
 | M13 | **Search GET validation returns 422 page** — no inline form feedback | `HomeController::search()` | **Improved 2026-07-10** — Nilex-styled `errors/422` for GET validation (tampered query params); JSON clients get 422 validation JSON; form POST validation unchanged (redirect-back) |
 | M14 | **Category pages lack search-priority boost** — inconsistent with search | `CategoryController.php` | **Fixed 2026-07-09** — same `LEFT JOIN user_entitlements` + `CASE WHEN` ordering as `HomeController::search()` on default sort |
-| M15 | **Offer spam — no rate limit** | `ListingController::makeOffer()` | **Fixed 2026-07-10** — 5 offers/min per authenticated user via `RateLimiter`; JSON 429 with `server.offer.rate_limit_exceeded` |
+| M15 | **Offer spam — no rate limit** | `ListingController::makeOffer()` | **Fixed 2026-07-10** — **10/min** (2026-07-17); JSON 429 with `server.offer.rate_limit_exceeded` |
 
 ### Low
 
