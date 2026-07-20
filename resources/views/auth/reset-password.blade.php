@@ -43,13 +43,13 @@
                 <label for="password" class="block text-sm font-semibold text-zinc-700 mb-1.5">
                     {{ __('ui.auth.label_new_password') }}
                 </label>
-                <input type="password"
-                       id="password"
-                       name="password"
-                       placeholder="••••••••"
-                       class="input-field"
-                       required
-                       autocomplete="new-password">
+                <x-password-input
+                    name="password"
+                    id="password"
+                    autocomplete="new-password"
+                    required
+                    class="input-field"
+                />
                 @error('password')
                     <p class="text-red-500 text-xs mt-1" role="alert">{{ $message }}</p>
                 @enderror
@@ -60,13 +60,13 @@
                 <label for="password_confirmation" class="block text-sm font-semibold text-zinc-700 mb-1.5">
                     {{ __('ui.auth.label_password_confirm') }}
                 </label>
-                <input type="password"
-                       id="password_confirmation"
-                       name="password_confirmation"
-                       placeholder="••••••••"
-                       class="input-field"
-                       required
-                       autocomplete="new-password">
+                <x-password-input
+                    name="password_confirmation"
+                    id="password_confirmation"
+                    autocomplete="new-password"
+                    required
+                    class="input-field"
+                />
                 @error('password_confirmation')
                     <p class="text-red-500 text-xs mt-1" role="alert">{{ $message }}</p>
                 @enderror

@@ -24,6 +24,10 @@ Critical findings from the 2026-07-16 audit, fixed before launch:
 
 No migrations in the XSS/`env()` / sensitive-throttle / Paymob-webhook-#8 passes. OTP resend fix adds migration `2026_07_17_000001_add_otp_resend_count_to_users_table.php`.
 
+### UX — Password show/hide toggle (2026-07-20)
+
+Unified `<x-password-input>` (Alpine eye toggle, logical `end-*`/`pe-*`) on all 9 live password fields (register×2, login, reset×2, confirm-password, profile×4). **No migration.**
+
 ### Final Launch Prep — 2026-07-10
 
 Comprehensive pre-deployment review pass (no deletions). **453 tests passing, 0 failures** (1387 assertions) at that date.
@@ -411,6 +415,7 @@ Token name `nilex` kept, value remapped to navy. Filament `/admin` is fully excl
 | **Detail/dashboard media N+1** | **Fixed 2026-07-10** — `ListingController::show()` + `UserDashboard` + homepage/wizard category icons eager-load `media`. |
 | **Search-priority sort** | Fixed 2026-07-09 — boost applies in SQL `ORDER BY` before pagination in `HomeController::search()` and `CategoryController::show()` (default sort only). |
 | **Scout production readiness** | `collection` driver locally; Meilisearch + queue indexing needed for prod. |
+| **Dead auth/profile password UI leftovers** | `auth/unified.blade.php` (unrouted) and Breeze partials `profile/partials/update-password-form.blade.php` + `delete-user-form.blade.php` (unused) — cleanup later; live pages use `<x-password-input>` (2026-07-20). |
 
 ---
 

@@ -477,8 +477,11 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.password.current') }}</label>
-                        <input type="password" name="current_password" autocomplete="current-password"
-                               class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                        <x-password-input
+                            name="current_password"
+                            autocomplete="current-password"
+                            class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all"
+                        />
                         @error('current_password', 'updatePassword')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -486,8 +489,12 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.password.new') }}</label>
-                        <input type="password" name="password" autocomplete="new-password"
-                               class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                        <x-password-input
+                            name="password"
+                            id="profile_new_password"
+                            autocomplete="new-password"
+                            class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all"
+                        />
                         @error('password', 'updatePassword')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -495,8 +502,11 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.password.confirm') }}</label>
-                        <input type="password" name="password_confirmation" autocomplete="new-password"
-                               class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all">
+                        <x-password-input
+                            name="password_confirmation"
+                            autocomplete="new-password"
+                            class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-nilex focus:ring-2 focus:ring-nilex/15 transition-all"
+                        />
                     </div>
 
                     <button type="submit"
@@ -550,8 +560,12 @@
 
                 <div>
                     <label class="block text-sm font-semibold text-zinc-700 mb-1.5">{{ __('ui.profile.delete.password_label') }}</label>
-                    <input type="password" name="password" placeholder="{{ __('ui.profile.delete.password_placeholder') }}"
-                           class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/15 transition-all">
+                    <x-password-input
+                        name="password"
+                        id="delete_account_password"
+                        :placeholder="__('ui.profile.delete.password_placeholder')"
+                        class="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/15 transition-all"
+                    />
                     @error('password', 'userDeletion')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
